@@ -46,11 +46,15 @@ export default function App() {
 
   return (
     <div
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => e.preventDefault()} // ❌ right click
+      onCopy={(e) => e.preventDefault()} // ❌ copy block
+      onCut={(e) => e.preventDefault()} // ❌ cut block
+      onSelectStart={(e) => e.preventDefault()} // ❌ text select block
       style={{
         fontFamily: "Arial, sans-serif",
         background: "#f1f2f6",
         minHeight: "100vh",
+        userSelect: "none", // 🔥 global block
       }}
     >
       {/* Navbar */}
@@ -94,7 +98,7 @@ export default function App() {
                 cursor: "pointer",
               }}
             >
-              {/* Image with tap effect */}
+              {/* Image */}
               <div style={{ position: "relative" }}>
                 <img
                   src={post.image}
@@ -109,7 +113,6 @@ export default function App() {
                         ? "brightness(100%)"
                         : "brightness(60%)",
                     transition: "0.4s ease",
-                    userSelect: "none",
                     pointerEvents: "none",
                   }}
                 />

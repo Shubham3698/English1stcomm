@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function App() {
   const posts = [
@@ -26,8 +26,27 @@ export default function App() {
 
   const [activeIndex, setActiveIndex] = useState(null);
 
+  // 🔒 Block inspect shortcuts
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (
+        e.ctrlKey &&
+        (e.key === "u" || e.key === "U" || e.key === "i" || e.key === "I")
+      ) {
+        e.preventDefault();
+      }
+      if (e.key === "F12") {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, []);
+
   return (
     <div
+      onContextMenu={(e) => e.preventDefault()} // ❌ right click block
       style={{
         fontFamily: "Arial, sans-serif",
         background: "#f1f2f6",
@@ -77,11 +96,12 @@ export default function App() {
                 cursor: "pointer",
               }}
             >
-              {/* Image with dim effect */}
+              {/* Image with dim + protection */}
               <div style={{ position: "relative" }}>
                 <img
                   src={post.image}
                   alt={post.word}
+                  draggable={false}
                   style={{
                     width: "100%",
                     height: "280px",
@@ -91,6 +111,8 @@ export default function App() {
                         ? "brightness(100%)"
                         : "brightness(60%)",
                     transition: "0.4s ease",
+                    userSelect: "none",
+                    pointerEvents: "none", // 🔥 strong block
                   }}
                 />
               </div>

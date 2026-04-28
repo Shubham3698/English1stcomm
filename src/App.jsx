@@ -46,7 +46,7 @@ export default function App() {
 
   return (
     <div
-      onContextMenu={(e) => e.preventDefault()} // ❌ right click block
+      onContextMenu={(e) => e.preventDefault()}
       style={{
         fontFamily: "Arial, sans-serif",
         background: "#f1f2f6",
@@ -82,11 +82,9 @@ export default function App() {
           {posts.map((post, index) => (
             <div
               key={index}
-              onMouseDown={() => setActiveIndex(index)}
-              onMouseUp={() => setActiveIndex(null)}
-              onMouseLeave={() => setActiveIndex(null)}
-              onTouchStart={() => setActiveIndex(index)}
-              onTouchEnd={() => setActiveIndex(null)}
+              onClick={() =>
+                setActiveIndex(activeIndex === index ? null : index)
+              }
               style={{
                 background: "white",
                 marginBottom: "25px",
@@ -96,7 +94,7 @@ export default function App() {
                 cursor: "pointer",
               }}
             >
-              {/* Image with dim + protection */}
+              {/* Image with tap effect */}
               <div style={{ position: "relative" }}>
                 <img
                   src={post.image}
@@ -112,7 +110,7 @@ export default function App() {
                         : "brightness(60%)",
                     transition: "0.4s ease",
                     userSelect: "none",
-                    pointerEvents: "none", // 🔥 strong block
+                    pointerEvents: "none",
                   }}
                 />
               </div>

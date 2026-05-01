@@ -1,38 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import CommunityPost from "./pages/CommunityPost";
+import User from "./pages/User"; 
+import EnglishAppMyPosts from "./pages/EnglishAppMyPosts"; // 👈 1. Isse pehle import karo
 
 export default function App() {
-  const posts = [
-    {
-      word: "Gratitude",
-      meaning: "कृतज्ञता",
-      image: "https://i.pinimg.com/736x/01/c6/13/01c61342e1caa249d41d0ccfa2f9ac7f.jpg",
-    },
-    {
-      word: "Courage",
-      meaning: "साहस",
-      image: "https://i.pinimg.com/736x/28/cb/d5/28cbd5dc8d50c7311cd67f53104cf275.jpg",
-    },
-    {
-      word: "Peace",
-      meaning: "शांति",
-      image: "https://i.pinimg.com/736x/cb/06/9e/cb069e70b3e556abd90693efb343c87f.jpg",
-    },
-    {
-      word: "Success",
-      meaning: "सफलता",
-      image: "https://i.pinimg.com/736x/cb/06/9e/cb069e70b3e556abd90693efb343c87f.jpg",
-    },
-  ];
-
-  const [activeIndex, setActiveIndex] = useState(null);
-
-  // 🔒 Block inspect shortcuts
   useEffect(() => {
     const handleKey = (e) => {
-      if (
-        e.ctrlKey &&
-        (e.key === "u" || e.key === "U" || e.key === "i" || e.key === "I")
-      ) {
+      if (e.ctrlKey && (e.key === "u" || e.key === "i")) {
         e.preventDefault();
       }
       if (e.key === "F12") {
@@ -45,95 +23,22 @@ export default function App() {
   }, []);
 
   return (
-    <div
-      onContextMenu={(e) => e.preventDefault()} // ❌ right click
-      onCopy={(e) => e.preventDefault()} // ❌ copy block
-      onCut={(e) => e.preventDefault()} // ❌ cut block
-      onSelectStart={(e) => e.preventDefault()} // ❌ text select block
-      style={{
-        fontFamily: "Arial, sans-serif",
-        background: "#f1f2f6",
-        minHeight: "100vh",
-        userSelect: "none", // 🔥 global block
-      }}
-    >
-      {/* Navbar */}
-      <nav
-        style={{
-          background: "#ff3b3b",
-          color: "white",
-          padding: "15px",
-          textAlign: "center",
-          fontSize: "20px",
-          fontWeight: "bold",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        English Community
-      </nav>
-
-      {/* Posts */}
+    <BrowserRouter>
       <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          padding: "20px",
-        }}
+        onContextMenu={(e) => e.preventDefault()}
+        style={{ background: "#f1f2f6", minHeight: "100vh" }}
       >
-        <div style={{ width: "100%", maxWidth: "380px" }}>
-          {posts.map((post, index) => (
-            <div
-              key={index}
-              onClick={() =>
-                setActiveIndex(activeIndex === index ? null : index)
-              }
-              style={{
-                background: "white",
-                marginBottom: "25px",
-                borderRadius: "16px",
-                overflow: "hidden",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-                cursor: "pointer",
-              }}
-            >
-              {/* Image */}
-              <div style={{ position: "relative" }}>
-                <img
-                  src={post.image}
-                  alt={post.word}
-                  draggable={false}
-                  style={{
-                    width: "100%",
-                    height: "280px",
-                    objectFit: "cover",
-                    filter:
-                      activeIndex === index
-                        ? "brightness(100%)"
-                        : "brightness(60%)",
-                    transition: "0.4s ease",
-                    pointerEvents: "none",
-                  }}
-                />
-              </div>
+        <Navbar />
 
-              {/* Text Row */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "14px 16px",
-                  alignItems: "center",
-                }}
-              >
-                <h3 style={{ margin: 0 }}>{post.word}</h3>
-                <span>{post.meaning}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/community" element={<CommunityPost />} />
+          <Route path="/user" element={<User />} /> 
+          
+          {/* 👈 2. Ye naya route add kiya taaki error hat jaye */}
+          <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
+        </Routes>
       </div>
-    </div>
+    </BrowserRouter>
   );
 }

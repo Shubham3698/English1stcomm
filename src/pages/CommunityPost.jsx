@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import CommentModal from "../components/CommentModal"; // Make sure path is correct
+import CommentModal from "../components/CommentModal"; 
 
 export default function CommunityPost() {
   const [dbPosts, setDbPosts] = useState([]);
@@ -80,22 +80,17 @@ export default function CommunityPost() {
               </div>
 
               {/* --- 📸 Post Image (Double Tap to Like) --- */}
-             <div 
-  className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer" 
-  onDoubleClick={(e) => handleVote(e, post._id)}
->
-  <img 
-    src={post.image} 
-    alt="post"
-    className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-700 hover:scale-[1.01]" 
-    /* 
-       Note: 
-       - h-auto se image apni original height le legi.
-       - object-contain se image box ke andar fit ho jayegi bina cut hue.
-       - max-h-[600px] isliye taaki agar koi bahut lambi image ho toh screen na bhar jaye.
-    */
-  />
-</div>
+              <div 
+                className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer" 
+                onDoubleClick={(e) => handleVote(e, post._id)}
+              >
+                <img 
+                  src={post.image} 
+                  alt="post"
+                  className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-700 hover:scale-[1.01]" 
+                />
+              </div>
+
               {/* --- ⚡ Action Bar --- */}
               <div className="flex items-center gap-4 px-4 pt-4">
                 <button onClick={(e) => handleVote(e, post._id)} className="transition-transform active:scale-150">
@@ -104,14 +99,12 @@ export default function CommunityPost() {
                   </svg>
                 </button>
                 
-                {/* Comment Trigger */}
                 <button onClick={() => setSelectedPostForComments(post)} className="transition-transform active:scale-125">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785 0 00.19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 011.008.204 9.07 9.07 0 002.972.524z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0 0 0 .19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 0 1 1.008.204 9.07 9.07 0 0 0 2.972.524z" />
                   </svg>
                 </button>
 
-                {/* Stat Trigger */}
                 <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="ml-auto transition-transform active:rotate-12">
                   <svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h.187c.306 0 .599.124.815.347l1.17 1.201 2.203-2.58a.513.513 0 01.384-.184h.345c.302 0 .594.12.809.33l2.127 2.083 3.578-7.352a.511.511 0 01.462-.286h.348c.302 0 .593.12.808.33l3.564 3.476c.247.242.387.577.387.926v3.97c0 .622-.504 1.125-1.125 1.125h-17.25c-.621 0-1.125-.503-1.125-1.125v-3.97z" />
@@ -127,7 +120,6 @@ export default function CommunityPost() {
                   <span className="text-sm text-red-500 font-bold italic tracking-tight">{post.meaning}</span>
                 </div>
                 
-                {/* View All Comments Link */}
                 <p 
                   onClick={() => setSelectedPostForComments(post)}
                   className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-2 cursor-pointer hover:text-gray-600 transition-colors"
@@ -136,23 +128,58 @@ export default function CommunityPost() {
                 </p>
               </div>
 
-              {/* --- 📊 Expanded Progress (Radio Style) --- */}
-              <div className={`px-4 mt-3 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-40" : "max-h-0"}`}>
-                <div className="bg-gray-50/80 backdrop-blur-sm rounded-[1.5rem] p-4 grid grid-cols-3 gap-3 border border-gray-100">
-                  {[
-                    { id: 'neverHeard', icon: '🌑', label: 'New', count: post.commandStats?.neverHeard, color: 'text-red-500' },
-                    { id: 'heardButNotUsed', icon: '🌓', label: 'Heard', count: post.commandStats?.heardButNotUsed, color: 'text-blue-500' },
-                    { id: 'dailyUse', icon: '🌟', label: 'Pro', count: post.commandStats?.dailyUse, color: 'text-green-600' }
-                  ].map((stat) => (
-                    <button 
-                      key={stat.id}
-                      onClick={(e) => handleStatUpdate(e, post._id, stat.id)}
-                      className={`flex flex-col items-center py-3 rounded-2xl border-2 transition-all duration-300 ${userLevel === stat.id ? 'border-gray-900 bg-white shadow-md scale-105' : 'border-transparent bg-white/50'}`}
-                    >
-                      <span className="text-lg mb-1">{stat.icon}</span>
-                      <span className={`text-[11px] font-black ${stat.color}`}>{stat.count || 0}</span>
-                    </button>
-                  ))}
+              {/* --- 📊 Command Mastery (4 Hindi Options Grid) --- */}
+              <div className={`px-4 mt-3 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
+                <div className="bg-gray-50/80 backdrop-blur-sm rounded-[1.5rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
+                  
+                  {/* AASAN */}
+                  <button 
+                    onClick={(e) => handleStatUpdate(e, post._id, 'easy')}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'easy' ? 'border-green-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">✅</span>
+                      <span className="text-[10px] font-black uppercase text-gray-500">आसान</span>
+                    </div>
+                    <span className="text-[11px] font-black text-green-600">{post.commandStats?.easy || 0}</span>
+                  </button>
+
+                  {/* MUSHKIL */}
+                  <button 
+                    onClick={(e) => handleStatUpdate(e, post._id, 'hard')}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'hard' ? 'border-red-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🔥</span>
+                      <span className="text-[10px] font-black uppercase text-gray-500">मुश्किल</span>
+                    </div>
+                    <span className="text-[11px] font-black text-red-600">{post.commandStats?.hard || 0}</span>
+                  </button>
+
+                  {/* SUNA HAI */}
+                  <button 
+                    onClick={(e) => handleStatUpdate(e, post._id, 'heard')}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'heard' ? 'border-orange-400 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">👂</span>
+                      <span className="text-[10px] font-black uppercase text-gray-500">सुना है</span>
+                    </div>
+                    <span className="text-[11px] font-black text-orange-500">{post.commandStats?.heard || 0}</span>
+                  </button>
+
+                  {/* ROZANA */}
+                  <button 
+                    onClick={(e) => handleStatUpdate(e, post._id, 'dailyUse')}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'dailyUse' ? 'border-blue-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">💬</span>
+                      <span className="text-[10px] font-black uppercase text-gray-500">रोज़ाना</span>
+                    </div>
+                    <span className="text-[11px] font-black text-blue-600">{post.commandStats?.dailyUse || 0}</span>
+                  </button>
+
                 </div>
               </div>
             </div>
@@ -160,7 +187,6 @@ export default function CommunityPost() {
         })}
       </div>
 
-      {/* --- 🔥 Comment Modal Component --- */}
       {selectedPostForComments && (
         <CommentModal 
           post={selectedPostForComments}
@@ -169,7 +195,6 @@ export default function CommunityPost() {
           onClose={() => setSelectedPostForComments(null)}
           onRefresh={() => {
             fetchPosts();
-            // Update the modal with fresh data
             const updated = dbPosts.find(p => p._id === selectedPostForComments._id);
             if(updated) setSelectedPostForComments(updated);
           }}

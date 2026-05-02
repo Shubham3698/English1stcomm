@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import CommentModal from "../components/CommentModal"; 
+import toast from 'react-hot-toast'; // 1. Import Toaster
 
 export default function CommunityPost() {
   const [dbPosts, setDbPosts] = useState([]);
@@ -28,28 +29,97 @@ export default function CommunityPost() {
 
   const handleVote = async (e, postId) => {
     if (e) e.stopPropagation();
-    if (!userEmail) return alert("Bhai, pehle login kar lo!");
+    if (!userEmail) return toast.error("Bhai, pehle login kar lo! 😅");
+    
     try {
       const res = await fetch(`${API_URL}/api/english-posts/vote/${postId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail })
       });
-      if (res.ok) fetchPosts();
-    } catch (err) { console.error(err); }
+      if (res.ok) {
+        toast.success("Voted! 🔥", { duration: 1000 });
+        fetchPosts();
+      }
+    } catch (err) { 
+      toast.error("Error voting!"); 
+      console.error(err); 
+    }
   };
 
-  const handleStatUpdate = async (e, postId, level) => {
-    e.stopPropagation();
-    if (!userEmail) return alert("Login first!");
+  // 🛠️ API Call ke liye alag function (Logic Clean rakhne ke liye)
+// 🛠️ API Call Logic
+  const submitStatUpdate = async (postId, level) => {
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update-stat/${postId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ level, email: userEmail })
       });
-      if (res.ok) fetchPosts();
-    } catch (err) { console.error(err); }
+      if (res.ok) {
+        toast.success(`Marked as ${level} ✅`, {
+          style: { borderRadius: '10px', background: '#333', color: '#fff', fontSize: '12px', fontWeight: 'bold' }
+        });
+        fetchPosts();
+      }
+    } catch (err) { toast.error("Update Failed!"); }
+  };
+
+  // 🔥 Professional Popup Layout
+  const handleStatUpdate = async (e, postId, level) => {
+    e.stopPropagation();
+    if (!userEmail) return toast.error("Login first! 🔑");
+
+    const currentPost = dbPosts.find(p => p._id === postId);
+    const existingStat = currentPost?.userStats?.find(v => v.email === userEmail);
+
+    if (existingStat && existingStat.level !== level) {
+      toast((t) => (
+        <div className="flex flex-col gap-3 min-w-[220px] p-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🔄</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Status Change</span>
+              <span className="text-[13px] font-black text-gray-800 leading-tight mt-1">
+                Move to <span className="text-red-500 uppercase italic">{level}</span>?
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                submitStatUpdate(postId, level);
+              }}
+              className="flex-1 bg-black text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter active:scale-95 transition-all shadow-lg shadow-black/20"
+            >
+              Update
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 bg-gray-100 text-gray-400 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter active:scale-95 transition-all"
+            >
+              Deny
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          padding: '12px',
+          borderRadius: '24px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid #f0f0f0',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        }
+      });
+      return;
+    }
+
+    submitStatUpdate(postId, level);
   };
 
   if (loading) return <div className="flex justify-center p-20 animate-pulse font-black text-slate-300 tracking-widest uppercase italic text-sm">Hub Updating...</div>;
@@ -79,7 +149,7 @@ export default function CommunityPost() {
                 </span>
               </div>
 
-              {/* --- 📸 Post Image (Original Ratio) --- */}
+              {/* --- 📸 Post Image --- */}
               <div 
                 className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden" 
                 onDoubleClick={(e) => handleVote(e, post._id)}
@@ -112,19 +182,16 @@ export default function CommunityPost() {
                 </button>
               </div>
 
-              {/* --- 📝 Caption Area (High Impact & Animated) --- */}
+              {/* --- 📝 Caption Area --- */}
               <div className="px-5 py-4">
                 <p className="text-[12px] font-black text-gray-400 mb-2 tracking-tighter uppercase italic">
                   🔥 {post.voteCount || 0} Likes
                 </p>
 
                 <div className="flex flex-col gap-0 transition-all">
-                  {/* WORD: Bada aur Bold */}
                   <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-[0.85] mb-2 transform transition-transform hover:translate-x-1">
                     {post.word}
                   </h2>
-                  
-                  {/* MEANING: High-Contrast Gradient */}
                   <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-none">
                     {post.meaning}
                   </p>
@@ -138,11 +205,9 @@ export default function CommunityPost() {
                 </p>
               </div>
 
-              {/* --- 📊 Command Mastery (4 Options Grid) --- */}
+              {/* --- 📊 Command Mastery --- */}
               <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
                 <div className="bg-gray-50/50 backdrop-blur-sm rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
-                  
-                  {/* AASAN */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'easy')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'easy' ? 'border-green-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
@@ -154,7 +219,6 @@ export default function CommunityPost() {
                     <span className="text-[11px] font-black text-green-600">{post.commandStats?.easy || 0}</span>
                   </button>
 
-                  {/* MUSHKIL */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'hard')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'hard' ? 'border-red-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
@@ -166,7 +230,6 @@ export default function CommunityPost() {
                     <span className="text-[11px] font-black text-red-600">{post.commandStats?.hard || 0}</span>
                   </button>
 
-                  {/* SUNA HAI */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'heard')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'heard' ? 'border-orange-400 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
@@ -178,7 +241,6 @@ export default function CommunityPost() {
                     <span className="text-[11px] font-black text-orange-500">{post.commandStats?.heard || 0}</span>
                   </button>
 
-                  {/* ROZANA */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'dailyUse')}
                     className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'dailyUse' ? 'border-blue-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
@@ -189,7 +251,6 @@ export default function CommunityPost() {
                     </div>
                     <span className="text-[11px] font-black text-blue-600">{post.commandStats?.dailyUse || 0}</span>
                   </button>
-
                 </div>
               </div>
             </div>
@@ -197,7 +258,6 @@ export default function CommunityPost() {
         })}
       </div>
 
-      {/* --- 🔥 Comment Modal --- */}
       {selectedPostForComments && (
         <CommentModal 
           post={selectedPostForComments}

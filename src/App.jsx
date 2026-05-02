@@ -1,3 +1,4 @@
+import { Toaster } from 'react-hot-toast'; // Pehle se import hai, good!
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -5,7 +6,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import CommunityPost from "./pages/CommunityPost";
 import User from "./pages/User"; 
-import EnglishAppMyPosts from "./pages/EnglishAppMyPosts"; // 👈 1. Isse pehle import karo
+import EnglishAppMyPosts from "./pages/EnglishAppMyPosts";
 
 export default function App() {
   useEffect(() => {
@@ -24,6 +25,23 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {/* ✅ 1. Toaster yahan add karo taaki ye har page par kaam kare */}
+      <Toaster 
+        position="top-center" 
+        reverseOrder={false} 
+        toastOptions={{
+          // Optional: yahan se tu default style bhi set kar sakta hai
+          duration: 2000,
+          style: {
+            background: '#333',
+            color: '#fff',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            borderRadius: '10px'
+          }
+        }}
+      />
+
       <div
         onContextMenu={(e) => e.preventDefault()}
         style={{ background: "#f1f2f6", minHeight: "100vh" }}
@@ -34,8 +52,6 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/community" element={<CommunityPost />} />
           <Route path="/user" element={<User />} /> 
-          
-          {/* 👈 2. Ye naya route add kiya taaki error hat jaye */}
           <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
         </Routes>
       </div>

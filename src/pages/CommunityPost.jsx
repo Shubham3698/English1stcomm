@@ -52,7 +52,7 @@ export default function CommunityPost() {
     } catch (err) { console.error(err); }
   };
 
-  if (loading) return <div className="flex justify-center p-20 animate-pulse font-black text-slate-300 tracking-widest uppercase italic">Hub Updating...</div>;
+  if (loading) return <div className="flex justify-center p-20 animate-pulse font-black text-slate-300 tracking-widest uppercase italic text-sm">Hub Updating...</div>;
 
   return (
     <div className="flex justify-center bg-white min-h-screen font-sans">
@@ -64,7 +64,7 @@ export default function CommunityPost() {
           const userLevel = post.userStats?.find(v => v.email === userEmail)?.level;
 
           return (
-            <div key={post._id} className="mb-8 border-b border-gray-50 pb-4">
+            <div key={post._id} className="mb-12 border-b border-gray-100 pb-6">
               
               {/* --- 👤 User Info Strip --- */}
               <div className="flex items-center px-4 py-3 gap-3">
@@ -74,26 +74,26 @@ export default function CommunityPost() {
                   </div>
                 </div>
                 <span className="text-[11px] font-black text-gray-800 tracking-tight">{post.userEmail?.split('@')[0]}</span>
-                <span className="text-[9px] ml-auto bg-gray-100 px-3 py-1.5 rounded-full text-gray-500 font-black uppercase tracking-widest border border-gray-50">
+                <span className="text-[9px] ml-auto bg-gray-50 px-3 py-1.5 rounded-full text-gray-400 font-black uppercase tracking-widest border border-gray-100">
                   {post.badgeName || "Vocabulary"}
                 </span>
               </div>
 
-              {/* --- 📸 Post Image (Double Tap to Like) --- */}
+              {/* --- 📸 Post Image (Original Ratio) --- */}
               <div 
-                className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer" 
+                className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer overflow-hidden" 
                 onDoubleClick={(e) => handleVote(e, post._id)}
               >
                 <img 
                   src={post.image} 
                   alt="post"
-                  className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-700 hover:scale-[1.01]" 
+                  className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-1000 hover:scale-[1.05]" 
                 />
               </div>
 
               {/* --- ⚡ Action Bar --- */}
-              <div className="flex items-center gap-4 px-4 pt-4">
-                <button onClick={(e) => handleVote(e, post._id)} className="transition-transform active:scale-150">
+              <div className="flex items-center gap-5 px-5 pt-5">
+                <button onClick={(e) => handleVote(e, post._id)} className="transition-transform active:scale-150 duration-300">
                   <svg xmlns="http://www.w3.org/2000/svg" fill={isVoted ? "#ef4444" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isVoted ? "#ef4444" : "currentColor"} className="w-7 h-7">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                   </svg>
@@ -105,40 +105,50 @@ export default function CommunityPost() {
                   </svg>
                 </button>
 
-                <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="ml-auto transition-transform active:rotate-12">
+                <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="ml-auto transition-all active:scale-90">
                   <svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h.187c.306 0 .599.124.815.347l1.17 1.201 2.203-2.58a.513.513 0 01.384-.184h.345c.302 0 .594.12.809.33l2.127 2.083 3.578-7.352a.511.511 0 01.462-.286h.348c.302 0 .593.12.808.33l3.564 3.476c.247.242.387.577.387.926v3.97c0 .622-.504 1.125-1.125 1.125h-17.25c-.621 0-1.125-.503-1.125-1.125v-3.97z" />
                   </svg>
                 </button>
               </div>
 
-              {/* --- 📝 Caption Area --- */}
-              <div className="px-4 py-2">
-                <p className="text-[13px] font-black text-gray-900 mb-1 tracking-tight">{post.voteCount || 0} likes</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[13px] font-black text-gray-900 uppercase tracking-tighter">{post.word}</span>
-                  <span className="text-sm text-red-500 font-bold italic tracking-tight">{post.meaning}</span>
+              {/* --- 📝 Caption Area (High Impact & Animated) --- */}
+              <div className="px-5 py-4">
+                <p className="text-[12px] font-black text-gray-400 mb-2 tracking-tighter uppercase italic">
+                  🔥 {post.voteCount || 0} Likes
+                </p>
+
+                <div className="flex flex-col gap-0 transition-all">
+                  {/* WORD: Bada aur Bold */}
+                  <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-[0.85] mb-2 transform transition-transform hover:translate-x-1">
+                    {post.word}
+                  </h2>
+                  
+                  {/* MEANING: High-Contrast Gradient */}
+                  <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-none">
+                    {post.meaning}
+                  </p>
                 </div>
                 
                 <p 
                   onClick={() => setSelectedPostForComments(post)}
-                  className="text-[11px] font-black text-gray-400 uppercase tracking-widest mt-2 cursor-pointer hover:text-gray-600 transition-colors"
+                  className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black transition-all inline-block border-b border-gray-100 pb-1"
                 >
                   View all {post.comments?.length || 0} comments
                 </p>
               </div>
 
-              {/* --- 📊 Command Mastery (4 Hindi Options Grid) --- */}
-              <div className={`px-4 mt-3 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
-                <div className="bg-gray-50/80 backdrop-blur-sm rounded-[1.5rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
+              {/* --- 📊 Command Mastery (4 Options Grid) --- */}
+              <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
+                <div className="bg-gray-50/50 backdrop-blur-sm rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
                   
                   {/* AASAN */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'easy')}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'easy' ? 'border-green-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'easy' ? 'border-green-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">✅</span>
+                      <span className="text-base">✅</span>
                       <span className="text-[10px] font-black uppercase text-gray-500">आसान</span>
                     </div>
                     <span className="text-[11px] font-black text-green-600">{post.commandStats?.easy || 0}</span>
@@ -147,10 +157,10 @@ export default function CommunityPost() {
                   {/* MUSHKIL */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'hard')}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'hard' ? 'border-red-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'hard' ? 'border-red-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">🔥</span>
+                      <span className="text-base">🔥</span>
                       <span className="text-[10px] font-black uppercase text-gray-500">मुश्किल</span>
                     </div>
                     <span className="text-[11px] font-black text-red-600">{post.commandStats?.hard || 0}</span>
@@ -159,10 +169,10 @@ export default function CommunityPost() {
                   {/* SUNA HAI */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'heard')}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'heard' ? 'border-orange-400 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'heard' ? 'border-orange-400 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">👂</span>
+                      <span className="text-base">👂</span>
                       <span className="text-[10px] font-black uppercase text-gray-500">सुना है</span>
                     </div>
                     <span className="text-[11px] font-black text-orange-500">{post.commandStats?.heard || 0}</span>
@@ -171,10 +181,10 @@ export default function CommunityPost() {
                   {/* ROZANA */}
                   <button 
                     onClick={(e) => handleStatUpdate(e, post._id, 'dailyUse')}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${userLevel === 'dailyUse' ? 'border-blue-500 bg-white shadow-sm' : 'border-transparent bg-white/50'}`}
+                    className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all duration-300 ${userLevel === 'dailyUse' ? 'border-blue-500 bg-white shadow-md scale-[1.02]' : 'border-transparent bg-white/50 hover:bg-white'}`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">💬</span>
+                      <span className="text-base">💬</span>
                       <span className="text-[10px] font-black uppercase text-gray-500">रोज़ाना</span>
                     </div>
                     <span className="text-[11px] font-black text-blue-600">{post.commandStats?.dailyUse || 0}</span>
@@ -187,6 +197,7 @@ export default function CommunityPost() {
         })}
       </div>
 
+      {/* --- 🔥 Comment Modal --- */}
       {selectedPostForComments && (
         <CommentModal 
           post={selectedPostForComments}

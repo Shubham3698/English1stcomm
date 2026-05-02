@@ -1,15 +1,22 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKbr-DYSWHo0a21MTVX7YHtaN1lfnj1cc",
-  authDomain: "frtry2.firebaseapp.com",
-  projectId: "frtry2",
-  storageBucket: "frtry2.firebasestorage.app",
-  messagingSenderId: "766786046338",
-  appId: "1:766786046338:web:c4007259a28ed16653a79b"
+  apiKey: "AIzaSyCaZhAb3W_EOgltO9C9W5FaNWgCWWCVifA",
+  authDomain: "my-english-community.firebaseapp.com",
+  projectId: "my-english-community",
+  storageBucket: "my-english-community.firebasestorage.app",
+  messagingSenderId: "41659771794",
+  appId: "1:41659771794:web:bbd997b29621ad5a28af4b",
+  measurementId: "G-70XHY22MLS"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
+// Initialize Analytics (Optional)
+const analytics = getAnalytics(app);
+
+// Auth Export (Sabse important login ke liye)
 export const auth = getAuth(app);

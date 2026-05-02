@@ -80,13 +80,22 @@ export default function CommunityPost() {
               </div>
 
               {/* --- 📸 Post Image (Double Tap to Like) --- */}
-              <div 
-                className="relative aspect-square overflow-hidden bg-gray-50 cursor-pointer" 
-                onDoubleClick={(e) => handleVote(e, post._id)}
-              >
-                <img src={post.image} className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.02]" alt="post" />
-              </div>
-
+             <div 
+  className="relative w-full bg-gray-50 flex items-center justify-center cursor-pointer" 
+  onDoubleClick={(e) => handleVote(e, post._id)}
+>
+  <img 
+    src={post.image} 
+    alt="post"
+    className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-700 hover:scale-[1.01]" 
+    /* 
+       Note: 
+       - h-auto se image apni original height le legi.
+       - object-contain se image box ke andar fit ho jayegi bina cut hue.
+       - max-h-[600px] isliye taaki agar koi bahut lambi image ho toh screen na bhar jaye.
+    */
+  />
+</div>
               {/* --- ⚡ Action Bar --- */}
               <div className="flex items-center gap-4 px-4 pt-4">
                 <button onClick={(e) => handleVote(e, post._id)} className="transition-transform active:scale-150">

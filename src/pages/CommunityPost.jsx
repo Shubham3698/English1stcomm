@@ -234,7 +234,7 @@ export default function CommunityPost() {
                     <span className="text-[11px] font-black text-green-600">{post.commandStats?.easy || 0}</span>
                   </button>
                   <button onClick={(e) => handleStatUpdate(e, post._id, 'hard')} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === 'hard' ? 'border-red-500 bg-white' : 'border-transparent bg-white/50'}`}>
-                    <div className="flex items-center gap-2"><span>🔥</span><span className="text-[10px] font-black uppercase text-gray-500">मुश्किल</span></div>
+                    <div className="flex items-center gap-2"><span>🔥</span><span className="text-[10px] font-black uppercase text-gray-500">एकदम नया</span></div>
                     <span className="text-[11px] font-black text-red-600">{post.commandStats?.hard || 0}</span>
                   </button>
                   <button onClick={(e) => handleStatUpdate(e, post._id, 'heard')} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === 'heard' ? 'border-orange-400 bg-white' : 'border-transparent bg-white/50'}`}>

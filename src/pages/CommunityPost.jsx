@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react"; // Added useRef
 import CommentModal from "../components/CommentModal"; 
 import toast from 'react-hot-toast';
+import { useLocation } from "react-router-dom"; // Added useLocation
 
 // --- Swiper Core Imports ---
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -14,6 +15,8 @@ export default function CommunityPost() {
   const [selectedPostForComments, setSelectedPostForComments] = useState(null);
   const [loading, setLoading] = useState(true);
   const userEmail = localStorage.getItem("eng_userEmail");
+  
+  const location = useLocation(); // To detectpostId in URL
 
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
@@ -33,21 +36,56 @@ export default function CommunityPost() {
     return () => clearInterval(interval);
   }, []);
 
+  // 🎯 SPECIFIC POST SCROLL LOGIC
+  useEffect(() => {
+    if (!loading && dbPosts.length > 0) {
+      const params = new URLSearchParams(location.search);
+      const postId = params.get("postId");
+      if (postId) {
+        setTimeout(() => {
+          const element = document.getElementById(postId);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Briefly highlight the post
+            element.classList.add("bg-red-50/50");
+            setTimeout(() => element.classList.remove("bg-red-50/50"), 2000);
+          }
+        }, 500);
+      }
+    }
+  }, [loading, dbPosts, location]);
+
+  // 🚀 UPDATED: Specific Post Share Logic
+  const handleShare = async (post) => {
+    // Creating a unique link for this specific post
+    const shareUrl = `${window.location.origin}${window.location.pathname}?postId=${post._id}`;
+    
+    const shareData = {
+      title: `Check out: ${post.word}`,
+      text: `Bhai, ye word dekh: "${post.word}" (${post.meaning}). Seekh le kaam aayega! 🔥`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast.success("Link copied! Ab WhatsApp pe chipka do. 📋");
+      }
+    } catch (err) { console.error("Share failed", err); }
+  };
+
   const renderMedia = (post) => {
     const mediaItems = post.media && post.media.length > 0 
       ? post.media 
       : [{ type: 'image', url: post.image }];
 
     return (
-      <Swiper
-        modules={[Pagination]}
-        pagination={{ clickable: true }}
-        className="w-full h-[600px] bg-gray-50" 
-      >
+      <Swiper modules={[Pagination]} pagination={{ clickable: true }} className="w-full h-[600px] bg-gray-50">
         {mediaItems.map((item, idx) => {
           let finalUrl = item.url;
           let isShorts = false;
-
           if (item.type === 'embed') {
             if (finalUrl.includes('youtube.com/shorts/')) {
               finalUrl = finalUrl.replace('youtube.com/shorts/', 'youtube.com/embed/');
@@ -59,7 +97,6 @@ export default function CommunityPost() {
             }
             finalUrl = finalUrl.split('?')[0];
           }
-
           return (
             <SwiperSlide key={idx} className="bg-gray-50">
               <div className="w-full h-full flex items-center justify-center bg-black overflow-hidden">
@@ -96,18 +133,12 @@ export default function CommunityPost() {
     } catch (err) { toast.error("Error voting!"); }
   };
 
-  // 🧠 UPDATED: Community se vote karne par nextReview null jayegi
-  // Isse word Vault me hamesha rahega jab tak practice na karo
   const submitStatUpdate = async (postId, level) => {
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update-stat/${postId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          level, 
-          email: userEmail,
-          nextReview: null // 👈 Yeh ensure karta hai ki Profile me hamesha dikhe
-        })
+        body: JSON.stringify({ level, email: userEmail, nextReview: null })
       });
       if (res.ok) {
         toast.success(`Marked as ${level.toUpperCase()} ✅`);
@@ -121,7 +152,6 @@ export default function CommunityPost() {
     if (!userEmail) return toast.error("Login first! 🔑");
     const currentPost = dbPosts.find(p => p._id === postId);
     const existingStat = currentPost?.userStats?.find(v => v.email === userEmail);
-
     if (existingStat && existingStat.level !== level) {
       toast((t) => (
         <div className="flex flex-col gap-3 min-w-[220px] p-1 text-black">
@@ -154,7 +184,7 @@ export default function CommunityPost() {
           const userLevel = post.userStats?.find(v => v.email === userEmail)?.level;
 
           return (
-            <div key={post._id} className="mb-12 border-b border-gray-100 pb-6">
+            <div id={post._id} key={post._id} className="mb-12 border-b border-gray-100 pb-6 transition-colors duration-1000">
               <div className="flex items-center px-4 py-3 gap-3">
                 <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] font-black text-white">
                   {post.userEmail?.charAt(0).toUpperCase()}
@@ -177,6 +207,11 @@ export default function CommunityPost() {
                 </button>
                 <button onClick={() => setSelectedPostForComments(post)} className="transition-transform active:scale-125">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0 0 0 .19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 0 1 1.008.204 9.07 9.07 0 0 0 2.972.524z" /></svg>
+                </button>
+                <button onClick={() => handleShare(post)} className="transition-transform active:scale-125">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-10.628a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5m0 10.628a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5" />
+                  </svg>
                 </button>
                 <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="ml-auto">
                   <svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h.187c.306 0 .599.124.815.347l1.17 1.201 2.203-2.58a.513.513 0 01.384-.184h.345c.302 0 .594.12.809.33l2.127 2.083 3.578-7.352a.511.511 0 01.462-.286h.348c.302 0 .593.12.808.33l3.564 3.476c.247.242.387.577.387.926v3.97c0 .622-.504 1.125-1.125 1.125h-17.25c-.621 0-1.125-.503-1.125-1.125v-3.97z" /></svg>

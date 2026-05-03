@@ -154,9 +154,15 @@ export default function EnglishAppMyPosts() {
     e.preventDefault();
     if (!word.trim()) return toast.error("Bhai, Word toh likho! ✍️");
     
-    // 🛑 Hindi Validation (Regex)
+    // 🛑 Hindi Validation (Deals with English characters check)
     const hindiRegex = /[\u0900-\u097F]/;
+    const englishRegex = /[a-zA-Z]/;
+
     if (!meaning.trim()) return toast.error("Hindi Meaning anivarya hai! ❌");
+    
+    if (englishRegex.test(meaning)) {
+        return toast.error("Hindi Meaning mein English allow nahi hai! ✋");
+    }
     if (!hindiRegex.test(meaning)) {
         return toast.error("Hindi Meaning mein Hindi characters hone chahiye! ✋");
     }
@@ -201,7 +207,7 @@ export default function EnglishAppMyPosts() {
           <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-4 px-1">
                <h3 className="text-[10px] font-black uppercase text-gray-400 italic">{isCropping ? "1. High-Res Crop" : "2. HD Markup"}</h3>
-               <button onClick={() => {setTempImage(null); setCanvasReady(false);}} className="text-[10px] font-black text-red-500 uppercase">Cancel</button>
+               <button onClick={() => {setTempImage(null); setCanvasReady(false);}} className="text-[10px] font-black text-red-500 uppercase p-2">Cancel</button>
             </div>
 
             {isCropping ? (

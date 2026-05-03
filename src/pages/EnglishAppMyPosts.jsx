@@ -122,11 +122,16 @@ export default function EnglishAppMyPosts() {
     fabricCanvasRef.current.renderAll();
   };
 
+  // 🔥 FIXED: Chaining issue solved by splitting functions
   const deleteSelected = () => {
     if (!fabricCanvasRef.current) return;
-    const active = fabricCanvasRef.current.getActiveObjects();
-    active.forEach(obj => fabricCanvasRef.current.remove(obj));
-    fabricCanvasRef.current.discardActiveObject().renderAll();
+    const canvas = fabricCanvasRef.current;
+    const active = canvas.getActiveObjects();
+    if (active.length > 0) {
+      active.forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject();
+      canvas.renderAll();
+    }
   };
 
   // --- ✂️ Crop & Merge Logic ---
@@ -166,7 +171,7 @@ export default function EnglishAppMyPosts() {
         const blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
         updateMediaValue(activeEditIndex, new File([blob], `final_${Date.now()}.png`, { type: "image/png" }), "file");
         setTempImage(null);
-        toast.success("Image Applied! ✨");
+        toast.success("Design Saved! 🚀");
       };
     };
   };
@@ -261,7 +266,7 @@ export default function EnglishAppMyPosts() {
             </div>
 
             {isCropping ? (
-              <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border max-h-[400px] overflow-auto">
+              <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border border-gray-100 max-h-[400px] overflow-auto">
                 <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
                   <img ref={imgRef} src={tempImage} onLoad={e => setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, undefined, e.currentTarget.width, e.currentTarget.height), e.currentTarget.width, e.currentTarget.height))} alt="" className="max-w-full h-auto" />
                 </ReactCrop>
@@ -273,7 +278,7 @@ export default function EnglishAppMyPosts() {
                   <button onClick={addRect} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Rect</button>
                   <button onClick={addCircle} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Circle</button>
                   <button onClick={addArrow} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Arrow</button>
-                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase">Del</button>
+                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase font-sans">Del</button>
                 </div>
                 <div className="rounded-3xl overflow-hidden border bg-gray-50 relative mx-auto shadow-inner" style={{ width: displayDims.w, height: displayDims.h }}>
                   <img src={tempImage} className="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="" />
@@ -299,7 +304,7 @@ export default function EnglishAppMyPosts() {
       )}
 
       {/* 📤 FORM AREA */}
-      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
+      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8 font-sans">
         <h2 className="text-xl font-black italic uppercase mb-4 px-1">{editingId ? "Edit Sequence" : "New Sequence"}</h2>
         <form onSubmit={handleFinalSubmit} className="space-y-3">
           <input type="text" placeholder="Word" value={word} className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setWord(e.target.value)} />
@@ -349,26 +354,23 @@ export default function EnglishAppMyPosts() {
       </div>
 
       {/* 🖼️ My Archive Section */}
-      <div className="w-full max-w-sm">
-        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-2 italic">My Archive</h3>
-        {loading ? <p className="text-center font-bold text-gray-300 animate-pulse">Syncing...</p> : 
-          myPosts.map((post) => (
-            <div key={post._id} className="bg-white mb-8 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 relative">
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
-                <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-xs border border-gray-100">✍️</button>
-                <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs font-sans font-bold">×</button>
-              </div>
-              <img src={post.media?.[0]?.url || post.image} className="w-full h-64 object-cover" alt="" />
-              <div className="flex justify-between items-center px-6 py-5">
-                <div className="flex flex-col">
-                  <h3 className="font-black text-xl text-gray-800 uppercase italic tracking-tighter">{post.word}</h3>
-                  <span className="text-[8px] font-black text-gray-300 uppercase mt-1 tracking-widest">Items: {post.media?.length || 1}</span>
-                </div>
-                <span className="text-red-500 font-bold text-sm bg-red-50 px-4 py-1.5 rounded-xl italic">{post.meaning}</span>
-              </div>
+      <div className="w-full max-w-sm font-sans">
+        {myPosts.map((post) => (
+          <div key={post._id} className="bg-white mb-8 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 relative">
+            <div className="absolute top-4 right-4 flex gap-2 z-10">
+              <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-xs border border-gray-100">✍️</button>
+              <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs font-bold font-sans">×</button>
             </div>
-          ))
-        }
+            <img src={post.media?.[0]?.url || post.image} className="w-full h-64 object-cover" alt="" />
+            <div className="flex justify-between items-center px-6 py-5">
+              <div className="flex flex-col">
+                <h3 className="font-black text-xl text-gray-800 uppercase leading-none italic tracking-tighter">{post.word}</h3>
+                <span className="text-[8px] font-black text-gray-300 uppercase mt-1 tracking-widest">Items: {post.media?.length || 1}</span>
+              </div>
+              <span className="text-red-500 font-bold text-sm bg-red-50 px-4 py-1.5 rounded-xl italic">{post.meaning}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

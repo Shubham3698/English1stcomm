@@ -22,22 +22,29 @@ export default function Navbar() {
   return (
     <>
       {/* 🔴 Top Navbar */}
-      <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
-        <h1
-          className="font-black text-xl cursor-pointer italic tracking-tighter"
-          onClick={() => navigate("/")}
-        >
-          ENGLISH HUB
-        </h1>
+ <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
+  
+  {/* 🔴 Updated Logo Section */}
+  <div 
+    className="flex flex-col cursor-pointer active:scale-95 transition-transform"
+    onClick={() => navigate("/")}
+  >
+    <h1 className="font-black text-xl italic tracking-tighter leading-none">
+      LEARNING-LISH
+    </h1>
+    <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-70 leading-relaxed italic">
+      Serial Learners
+    </span>
+  </div>
 
-        {/* ☰ Hamburger */}
-        <button
-          onClick={() => setOpen(true)}
-          className="text-2xl hover:scale-110 transition-transform"
-        >
-          ☰
-        </button>
-      </nav>
+  {/* ☰ Hamburger */}
+  <button
+    onClick={() => setOpen(true)}
+    className="text-2xl hover:scale-110 transition-transform"
+  >
+    ☰
+  </button>
+</nav>
 
       {/* 🔲 Overlay */}
       <div

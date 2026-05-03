@@ -34,6 +34,7 @@ export default function CommunityPost() {
   }, []);
 
   // --- 🎥 Professional Multi-Media Renderer ---
+// --- 🎥 Full Width + Height Centered Renderer ---
   const renderMedia = (post) => {
     const mediaItems = post.media && post.media.length > 0 
       ? post.media 
@@ -43,13 +44,14 @@ export default function CommunityPost() {
       <Swiper
         modules={[Pagination]}
         pagination={{ clickable: true }}
-        className="w-full h-auto bg-gray-50"
+        // Container height fixed rakhi hai taaki layout stable rahe
+        className="w-full h-[600px] bg-gray-50" 
       >
         {mediaItems.map((item, idx) => {
           let finalUrl = item.url;
           let isShorts = false;
 
-          // 🔥 YouTube URL Fix Logic
+          // 🛠️ YouTube URL Transformation Logic
           if (item.type === 'embed') {
             if (finalUrl.includes('youtube.com/shorts/')) {
               finalUrl = finalUrl.replace('youtube.com/shorts/', 'youtube.com/embed/');
@@ -59,48 +61,49 @@ export default function CommunityPost() {
             } else if (finalUrl.includes('youtu.be/')) {
               finalUrl = finalUrl.replace('youtu.be/', 'youtube.com/embed/');
             }
-            // Cleaning up extra query params
             finalUrl = finalUrl.split('?')[0];
           }
 
           return (
-            <SwiperSlide key={idx} className="flex items-center justify-center bg-gray-50 overflow-hidden">
-              {item.type === 'video' ? (
-                <div className="w-full bg-black flex items-center justify-center">
+            <SwiperSlide key={idx} className="bg-gray-50">
+              {/* 🎯 Flex box: Full width aur vertical centering ke liye */}
+              <div className="w-full h-full flex items-center justify-center bg-black overflow-hidden">
+                
+                {item.type === 'video' ? (
                   <video 
                     src={item.url} 
-                    className="w-full h-auto max-h-[600px] object-contain" 
+                    className="w-full h-auto max-h-full object-cover" 
                     controls 
                     playsInline
                   />
-                </div>
-              ) : item.type === 'embed' ? (
-                /* Dynamic Aspect Ratio: 9:16 for Shorts, 16:9 for Normal YT */
-                <div className={`relative w-full bg-black ${isShorts ? 'pt-[177.77%]' : 'pt-[56.25%]'}`}>
-                   <iframe 
-                    className="absolute top-0 left-0 w-full h-full border-0"
-                    src={finalUrl}
-                    title={`media-${idx}`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              ) : (
-                <div className="w-full flex items-center justify-center bg-gray-50">
+                ) : item.type === 'embed' ? (
+                  /* YouTube Container */
+                  /* Agar Shorts hai to full height, varna standard 16:9 ratio width wise */
+                  <div className={`w-full ${isShorts ? 'h-full' : 'aspect-video'}`}>
+                    <iframe 
+                      className="w-full h-full border-0"
+                      src={finalUrl}
+                      title={`media-${idx}`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                ) : (
+                  /* 🖼️ Image Logic: Full Width aur Height wise Center */
                   <img 
                     src={item.url} 
                     alt="content"
-                    className="w-full h-auto max-h-[600px] object-contain block transition-transform duration-1000" 
+                    className="w-full h-auto max-h-full object-cover" 
                   />
-                </div>
-              )}
+                )}
+
+              </div>
             </SwiperSlide>
           );
         })}
       </Swiper>
     );
   };
-
   const handleVote = async (e, postId) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Bhai, pehle login kar lo! 😅");

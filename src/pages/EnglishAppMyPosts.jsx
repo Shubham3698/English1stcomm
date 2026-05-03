@@ -14,7 +14,7 @@ export default function EnglishAppMyPosts() {
   const [mediaItems, setMediaItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // 🎨 Editor States (Keeping your UI stable)
+  // 🎨 Editor States (HQ maintained)
   const [tempImage, setTempImage] = useState(null);
   const [activeEditIndex, setActiveEditIndex] = useState(null);
   const [brushColor, setBrushColor] = useState("#ff0000");
@@ -118,18 +118,28 @@ export default function EnglishAppMyPosts() {
     };
   };
 
-  // --- Original Logic Wrappers ---
+  // --- 🔥 Improved Logic: Selects file but doesn't open Modal ---
   const handleFileChange = (index, file) => {
     if (!file) return;
     updateMediaValue(index, file, "file");
-    const reader = new FileReader();
-    reader.onload = () => {
-      setTempImage(reader.result);
-      setActiveEditIndex(index);
-      setIsCropping(true);
-      setCanvasReady(false);
-    };
-    reader.readAsDataURL(file);
+  };
+
+  // --- 🔥 Trigger Editor Manually via Button ---
+  const handleOpenEditor = (index) => {
+    const item = mediaItems[index];
+    if (!item.value) return toast.error("Bhai, pehle image select karo!");
+
+    setActiveEditIndex(index);
+    setIsCropping(true);
+    setCanvasReady(false);
+
+    if (item.value instanceof File) {
+      const reader = new FileReader();
+      reader.onload = () => setTempImage(reader.result);
+      reader.readAsDataURL(item.value);
+    } else {
+      setTempImage(item.value);
+    }
   };
 
   const handleDelete = async (postId) => {
@@ -149,23 +159,15 @@ export default function EnglishAppMyPosts() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 🔥 Submission Logic with Hindi Validation
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if (!word.trim()) return toast.error("Bhai, Word toh likho! ✍️");
     
-    // 🛑 Hindi Validation (Deals with English characters check)
     const hindiRegex = /[\u0900-\u097F]/;
     const englishRegex = /[a-zA-Z]/;
-
     if (!meaning.trim()) return toast.error("Hindi Meaning anivarya hai! ❌");
-    
-    if (englishRegex.test(meaning)) {
-        return toast.error("Hindi Meaning mein English allow nahi hai! ✋");
-    }
-    if (!hindiRegex.test(meaning)) {
-        return toast.error("Hindi Meaning mein Hindi characters hone chahiye! ✋");
-    }
+    if (englishRegex.test(meaning)) return toast.error("Hindi Meaning mein English allow nahi hai! ✋");
+    if (!hindiRegex.test(meaning)) return toast.error("Hindi Meaning mein Hindi characters hone chahiye! ✋");
 
     if (mediaItems.length === 0) return toast.error("Add at least one item!");
     
@@ -201,7 +203,7 @@ export default function EnglishAppMyPosts() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-24 flex flex-col items-center">
       
-      {/* ✂️🖼️ HD EDITOR MODAL */}
+      {/* ✂️🖼️ EDITOR MODAL (Triggered only by button) */}
       {tempImage && (
         <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
@@ -225,16 +227,7 @@ export default function EnglishAppMyPosts() {
                     {setTimeout(() => setCanvasReady(true), 600) && null}
                   </div>
                 ) : (
-                  <CanvasDraw 
-                    ref={canvasRef} 
-                    brushColor={brushColor} 
-                    brushRadius={3} 
-                    backgroundColor="transparent" 
-                    canvasWidth={displayDims.w} 
-                    canvasHeight={displayDims.h} 
-                    lazyRadius={0} 
-                    className="relative z-10"
-                  />
+                  <CanvasDraw ref={canvasRef} brushColor={brushColor} brushRadius={3} backgroundColor="transparent" canvasWidth={displayDims.w} canvasHeight={displayDims.h} lazyRadius={0} className="relative z-10" />
                 )}
               </div>
             )}
@@ -265,12 +258,12 @@ export default function EnglishAppMyPosts() {
           <div className="space-y-2 py-2">
             {mediaItems.map((item, index) => (
               <div key={index} className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-2 px-1">
                   <span className="text-[9px] font-black uppercase text-gray-400 italic">#{index + 1} {item.type}</span>
                   <div className="flex gap-1">
                     <button type="button" onClick={() => updateMediaValue(index, "", "file")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'file' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>File</button>
                     <button type="button" onClick={() => updateMediaValue(index, "", "url")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'url' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Link</button>
-                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-300 font-bold px-1">×</button>
+                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-300 font-bold px-1 text-xs">×</button>
                   </div>
                 </div>
 
@@ -282,15 +275,10 @@ export default function EnglishAppMyPosts() {
                       </div>
                     )}
                     <input type="file" accept={item.type === 'video' ? 'video/*' : 'image/*' } onChange={(e) => handleFileChange(index, e.target.files[0])} className="text-[10px] w-full" />
+                    
+                    {/* 🔥 Separate Edit Button: Sirf image hone par hi dikhega */}
                     {item.value && item.type === 'image' && (
-                      <button type="button" onClick={() => {
-                        const val = item.value;
-                        if(val instanceof File) {
-                          const reader = new FileReader();
-                          reader.onload = () => { setTempImage(reader.result); setActiveEditIndex(index); setIsCropping(true); setCanvasReady(false); };
-                          reader.readAsDataURL(val);
-                        } else { setTempImage(val); setActiveEditIndex(index); setIsCropping(true); setCanvasReady(false); }
-                      }} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2 rounded-xl border border-blue-100 uppercase tracking-tighter w-full">⚡ Edit / Markup</button>
+                      <button type="button" onClick={() => handleOpenEditor(index)} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2.5 rounded-xl border border-blue-100 uppercase tracking-tighter w-full mt-2 active:scale-95 transition-all">⚡ Edit / Markup</button>
                     )}
                   </div>
                 ) : (
@@ -301,7 +289,7 @@ export default function EnglishAppMyPosts() {
           </div>
 
           <div className="flex gap-2 pb-2">
-            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase text-gray-600">+ Image</button>
+            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase text-gray-600 tracking-wider">+ Image</button>
             <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase text-gray-600">+ Video</button>
             <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase text-gray-600">+ YT</button>
           </div>

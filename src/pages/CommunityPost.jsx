@@ -218,14 +218,33 @@ export default function CommunityPost() {
                 </button>
               </div>
 
-              <div className="px-5 py-4">
-                <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {post.voteCount || 0} Likes</p>
-                <div className="flex flex-col gap-0">
-                  <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-[0.85] mb-2 italic">{post.word}</h2>
-                  <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-none">{post.meaning}</p>
-                </div>
-                <p onClick={() => setSelectedPostForComments(post)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer">View comments</p>
-              </div>
+             <div className="px-5 py-4">
+  <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {post.voteCount || 0} Likes</p>
+  
+<div className="flex flex-col gap-1"> {/* Gap-0 ko gap-1 kiya taaki English aur Hindi chipke na */}
+  
+  {/* 1. Word wali line: leading-none rakho ya thoda badhao */}
+  <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">
+    {post.word}
+  </h2>
+
+  {/* 2. Meaning wali line: Isme leading-normal rakho taaki matra na kate */}
+  <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-relaxed py-1">
+    {post.meaning}
+  </p>
+  
+</div>
+
+  {/* 💬 Dynamic Comment Count Section */}
+  <p 
+    onClick={() => setSelectedPostForComments(post)} 
+    className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black transition-colors"
+  >
+    {post.comments && post.comments.length > 0 
+      ? `View all ${post.comments.length} comments` 
+      : "Add a comment..."}
+  </p>
+</div>
 
               <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
                 <div className="bg-gray-50/50 rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">

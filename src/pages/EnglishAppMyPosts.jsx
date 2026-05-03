@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import CanvasDraw from "react-canvas-draw";
@@ -45,7 +45,6 @@ export default function EnglishAppMyPosts() {
 
   const addMediaSlot = (type) => setMediaItems([...mediaItems, { type, value: "", mode: "url" }]);
   const removeMediaSlot = (index) => setMediaItems(mediaItems.filter((_, i) => i !== index));
-  
   const updateMediaValue = (index, val, mode = "url") => {
     const updated = [...mediaItems];
     updated[index].value = val;
@@ -53,6 +52,7 @@ export default function EnglishAppMyPosts() {
     setMediaItems(updated);
   };
 
+  // 🔥 Default Selector Frame Setup
   function onImageLoad(e) {
     const { width, height } = e.currentTarget;
     const initialCrop = centerCrop(
@@ -63,6 +63,7 @@ export default function EnglishAppMyPosts() {
     setCrop(initialCrop);
   }
 
+  // ✂️ Logic to Cut Image based on Selector
   const getCroppedImg = async () => {
     const image = imgRef.current;
     const canvas = document.createElement('canvas');
@@ -84,12 +85,15 @@ export default function EnglishAppMyPosts() {
       canvas.height
     );
 
-    return canvas.toDataURL('image/jpeg');
+    return canvas.toDataURL('image/jpeg', 0.9);
   };
 
   const handleFileChange = (index, file) => {
     if (!file) return;
+    // Puraana logic as it is: direct state update
     updateMediaValue(index, file, "file");
+
+    if (file.type.startsWith("video/")) return;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -121,16 +125,12 @@ export default function EnglishAppMyPosts() {
     dataToSend.append("userEmail", localStorage.getItem("eng_userEmail"));
     
     mediaItems.forEach((item) => {
-      if (item.mode === "file" && item.value instanceof File) {
+      if (item.mode === "file" && item.value) {
         dataToSend.append("images", item.value);
       }
     });
     
-    dataToSend.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({
-      type: m.type, 
-      mode: m.mode, 
-      url: m.mode === 'url' ? m.value : null
-    }))));
+    dataToSend.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({type: m.type, mode: m.mode, url: m.mode === 'url' ? m.value : null}))));
 
     try {
       const url = editingId ? `${API_URL}/api/english-posts/update/${editingId}` : `${API_URL}/api/english-posts/create`;
@@ -145,7 +145,7 @@ export default function EnglishAppMyPosts() {
       
       {/* ✂️🖼️ MANUAL SELECTOR MODAL */}
       {tempImage && (
-        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-start p-4 overflow-y-auto">
           <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-4">
                <h3 className="text-[10px] font-black uppercase text-gray-400 italic">
@@ -155,12 +155,11 @@ export default function EnglishAppMyPosts() {
             </div>
 
             {isCropping ? (
-              <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border border-gray-100 max-h-[450px] overflow-y-auto">
+              <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border border-gray-100 max-h-[60vh] overflow-y-auto" style={{ touchAction: 'none' }}>
                 <ReactCrop
                   crop={crop}
                   onChange={(c) => setCrop(c)}
                   onComplete={(c) => setCompletedCrop(c)}
-                  style={{ touchAction: 'none' }}
                 >
                   <img 
                     ref={imgRef} 
@@ -182,9 +181,10 @@ export default function EnglishAppMyPosts() {
                   brushColor={brushColor} 
                   brushRadius={3} 
                   imgSrc={tempImage} 
-                  canvasWidth={300} 
+                  canvasWidth={window.innerWidth < 400 ? window.innerWidth - 80 : 320} 
                   canvasHeight={400} 
                   lazyRadius={0} 
+                  enablePanAndZoom={false}
                 />
               </div>
             )}
@@ -198,14 +198,14 @@ export default function EnglishAppMyPosts() {
                     setTempImage(cropped);
                     setIsCropping(false); 
                   }} 
-                  className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-xl"
+                  className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-xl active:scale-95 transition-all"
                 >
                   Confirm Selection
                 </button>
               ) : (
                 <button 
                   onClick={finalizeImage} 
-                  className="w-full bg-red-500 text-white py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-xl shadow-red-200"
+                  className="w-full bg-red-500 text-white py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest shadow-xl shadow-red-200 active:scale-95 transition-all"
                 >
                   Apply & Finalize
                 </button>
@@ -230,7 +230,7 @@ export default function EnglishAppMyPosts() {
                   <div className="flex gap-1">
                     <button type="button" onClick={() => updateMediaValue(index, "", "file")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode==='file'?'bg-red-500 text-white':'bg-gray-200'}`}>File</button>
                     <button type="button" onClick={() => updateMediaValue(index, "", "url")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode==='url'?'bg-red-500 text-white':'bg-gray-200'}`}>Link</button>
-                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-400 font-bold">×</button>
+                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-400 font-bold font-sans text-xs">×</button>
                   </div>
                 </div>
 
@@ -242,8 +242,8 @@ export default function EnglishAppMyPosts() {
                       onChange={(e) => handleFileChange(index, e.target.files[0])} 
                       className="text-[10px] w-full" 
                     />
-                    {/* 🔥 Manual Button: tabhi dikhega jab image select ho jayegi */}
-                    {item.value && item.value instanceof File && (
+                    {/* 🔥 Manual Button: tabhi dikhega jab file select ho jayegi */}
+                    {item.value && (item.value instanceof File || typeof item.value === 'string') && (
                       <button 
                         type="button"
                         onClick={() => {
@@ -253,11 +253,19 @@ export default function EnglishAppMyPosts() {
                             setActiveEditIndex(index);
                             setIsCropping(true);
                           };
-                          reader.readAsDataURL(item.value);
+                          // Agar editing mode mein string URL hai toh direct reader ki zarurat nahi, 
+                          // par handleFileChange file object deta hai.
+                          if(item.value instanceof File) {
+                             reader.readAsDataURL(item.value);
+                          } else {
+                             setTempImage(item.value);
+                             setActiveEditIndex(index);
+                             setIsCropping(true);
+                          }
                         }}
-                        className="bg-black/5 text-[9px] font-black py-2 rounded-xl border border-dashed border-black/20 uppercase tracking-tighter"
+                        className="bg-blue-50 text-blue-600 text-[10px] font-black py-2.5 rounded-xl border border-blue-100 uppercase"
                       >
-                        ⚡ Edit / Re-Crop Selection
+                        ⚡ Edit / Crop Image
                       </button>
                     )}
                   </div>
@@ -269,7 +277,9 @@ export default function EnglishAppMyPosts() {
           </div>
 
           <div className="flex gap-2">
-            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Add Image</button>
+            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600 active:scale-95 transition-all">+ Image</button>
+            <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600 active:scale-95 transition-all">+ Video</button>
+            <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600 active:scale-95 transition-all">+ YT</button>
           </div>
 
           <button disabled={uploading} className="w-full bg-red-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg disabled:bg-gray-300">

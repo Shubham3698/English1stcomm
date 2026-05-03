@@ -33,8 +33,6 @@ export default function CommunityPost() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- 🎥 Professional Multi-Media Renderer ---
-// --- 🎥 Full Width + Height Centered Renderer ---
   const renderMedia = (post) => {
     const mediaItems = post.media && post.media.length > 0 
       ? post.media 
@@ -44,14 +42,12 @@ export default function CommunityPost() {
       <Swiper
         modules={[Pagination]}
         pagination={{ clickable: true }}
-        // Container height fixed rakhi hai taaki layout stable rahe
         className="w-full h-[600px] bg-gray-50" 
       >
         {mediaItems.map((item, idx) => {
           let finalUrl = item.url;
           let isShorts = false;
 
-          // 🛠️ YouTube URL Transformation Logic
           if (item.type === 'embed') {
             if (finalUrl.includes('youtube.com/shorts/')) {
               finalUrl = finalUrl.replace('youtube.com/shorts/', 'youtube.com/embed/');
@@ -66,37 +62,16 @@ export default function CommunityPost() {
 
           return (
             <SwiperSlide key={idx} className="bg-gray-50">
-              {/* 🎯 Flex box: Full width aur vertical centering ke liye */}
               <div className="w-full h-full flex items-center justify-center bg-black overflow-hidden">
-                
                 {item.type === 'video' ? (
-                  <video 
-                    src={item.url} 
-                    className="w-full h-auto max-h-full object-cover" 
-                    controls 
-                    playsInline
-                  />
+                  <video src={item.url} className="w-full h-auto max-h-full object-cover" controls playsInline />
                 ) : item.type === 'embed' ? (
-                  /* YouTube Container */
-                  /* Agar Shorts hai to full height, varna standard 16:9 ratio width wise */
                   <div className={`w-full ${isShorts ? 'h-full' : 'aspect-video'}`}>
-                    <iframe 
-                      className="w-full h-full border-0"
-                      src={finalUrl}
-                      title={`media-${idx}`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    ></iframe>
+                    <iframe className="w-full h-full border-0" src={finalUrl} title={`media-${idx}`} allowFullScreen></iframe>
                   </div>
                 ) : (
-                  /* 🖼️ Image Logic: Full Width aur Height wise Center */
-                  <img 
-                    src={item.url} 
-                    alt="content"
-                    className="w-full h-auto max-h-full object-cover" 
-                  />
+                  <img src={item.url} alt="content" className="w-full h-auto max-h-full object-cover" />
                 )}
-
               </div>
             </SwiperSlide>
           );
@@ -104,10 +79,10 @@ export default function CommunityPost() {
       </Swiper>
     );
   };
+
   const handleVote = async (e, postId) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Bhai, pehle login kar lo! 😅");
-    
     try {
       const res = await fetch(`${API_URL}/api/english-posts/vote/${postId}`, {
         method: "POST",
@@ -121,15 +96,21 @@ export default function CommunityPost() {
     } catch (err) { toast.error("Error voting!"); }
   };
 
+  // 🧠 UPDATED: Community se vote karne par nextReview null jayegi
+  // Isse word Vault me hamesha rahega jab tak practice na karo
   const submitStatUpdate = async (postId, level) => {
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update-stat/${postId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level, email: userEmail })
+        body: JSON.stringify({ 
+          level, 
+          email: userEmail,
+          nextReview: null // 👈 Yeh ensure karta hai ki Profile me hamesha dikhe
+        })
       });
       if (res.ok) {
-        toast.success(`Marked as ${level} ✅`);
+        toast.success(`Marked as ${level.toUpperCase()} ✅`);
         fetchPosts();
       }
     } catch (err) { toast.error("Update Failed!"); }
@@ -174,8 +155,6 @@ export default function CommunityPost() {
 
           return (
             <div key={post._id} className="mb-12 border-b border-gray-100 pb-6">
-              
-              {/* User Strip */}
               <div className="flex items-center px-4 py-3 gap-3">
                 <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] font-black text-white">
                   {post.userEmail?.charAt(0).toUpperCase()}
@@ -186,12 +165,10 @@ export default function CommunityPost() {
                 </span>
               </div>
 
-              {/* Media Section */}
               <div className="relative w-full bg-gray-50 overflow-hidden" onDoubleClick={(e) => handleVote(e, post._id)}>
                 {renderMedia(post)}
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-5 px-5 pt-5 text-black">
                 <button onClick={(e) => handleVote(e, post._id)} className="transition-transform active:scale-150 duration-300">
                   <svg xmlns="http://www.w3.org/2000/svg" fill={isVoted ? "#ef4444" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isVoted ? "#ef4444" : "currentColor"} className="w-7 h-7">
@@ -206,7 +183,6 @@ export default function CommunityPost() {
                 </button>
               </div>
 
-              {/* Caption */}
               <div className="px-5 py-4">
                 <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {post.voteCount || 0} Likes</p>
                 <div className="flex flex-col gap-0">
@@ -216,7 +192,6 @@ export default function CommunityPost() {
                 <p onClick={() => setSelectedPostForComments(post)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer">View comments</p>
               </div>
 
-              {/* Command Stats */}
               <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
                 <div className="bg-gray-50/50 rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
                   <button onClick={(e) => handleStatUpdate(e, post._id, 'easy')} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === 'easy' ? 'border-green-500 bg-white' : 'border-transparent bg-white/50'}`}>

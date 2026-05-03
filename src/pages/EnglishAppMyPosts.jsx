@@ -66,7 +66,6 @@ export default function EnglishAppMyPosts() {
     setEditingId(post._id);
     setWord(post.word);
     setMeaning(post.meaning);
-    // Convert existing media to our local state
     const existingMedia = post.media?.map(m => ({
       type: m.type,
       value: m.url,
@@ -76,9 +75,18 @@ export default function EnglishAppMyPosts() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // 🚀 Updated Submit Logic with Hindi Meaning Validation
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (mediaItems.length === 0) return toast.error("Please add at least one media item");
+
+    // 🛑 Validation: Bhai, word aur Hindi meaning compulsory hain
+    if (!word.trim()) return toast.error("Bhai, Word toh likho! ✍️");
+    
+    if (!meaning.trim()) {
+      return toast.error("Hindi Meaning anivarya hai! Iske bina upload nahi hoga. ❌");
+    }
+
+    if (mediaItems.length === 0) return toast.error("Kam se kam ek image ya video toh dalo! 🎞️");
     
     setUploading(true);
     const userEmail = localStorage.getItem("eng_userEmail");
@@ -91,7 +99,7 @@ export default function EnglishAppMyPosts() {
     const mediaMetadata = [];
     mediaItems.forEach((item) => {
       if (item.mode === "file" && item.value) {
-        dataToSend.append("images", item.value); // Field name matches backend upload.array("images")
+        dataToSend.append("images", item.value); 
         mediaMetadata.push({ type: item.type, mode: "file" });
       } else {
         mediaMetadata.push({ type: item.type, mode: "url", url: item.value });
@@ -135,7 +143,7 @@ export default function EnglishAppMyPosts() {
 
         <form onSubmit={handleFinalSubmit} className="space-y-3">
           <input type="text" placeholder="Word" value={word} required className="w-full p-3 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setWord(e.target.value)} />
-          <input type="text" placeholder="Meaning" value={meaning} required className="w-full p-3 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setMeaning(e.target.value)} />
+          <input type="text" placeholder="Hindi Meaning" value={meaning} required className="w-full p-3 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setMeaning(e.target.value)} />
 
           {/* 🎞️ Dynamic Media Slots Area */}
           <div className="space-y-2 py-2">
@@ -172,20 +180,18 @@ export default function EnglishAppMyPosts() {
         </form>
       </div>
 
-      {/* 🖼️ List Section (My History) */}
-      <div className="w-full max-w-sm">
+      {/* 🖼️ List Section */}
+      <div className="w-full max-sm">
         <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">My Archive</h3>
         {loading ? <p className="text-center font-bold text-gray-300 animate-pulse">Syncing...</p> : 
           myPosts.map((post) => (
             <div key={post._id} className="bg-white mb-8 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 relative">
               
-              {/* Management Buttons */}
               <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-xs border border-gray-100">✍️</button>
                 <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs">🗑️</button>
               </div>
 
-              {/* Preview Image (First item in sequence) */}
               <img src={post.media?.[0]?.url || post.image} className="w-full h-64 object-cover" alt={post.word} />
               
               <div className="flex justify-between items-center px-6 py-5">

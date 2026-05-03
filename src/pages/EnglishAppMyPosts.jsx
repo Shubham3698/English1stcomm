@@ -11,7 +11,8 @@ export default function EnglishAppMyPosts() {
   const [meaning, setMeaning] = useState("");
   
   // 🔥 Multi-Media State
-  const [mediaItems, setMediaItems] = useState([]); // [{type: 'image', value: File/URL, mode: 'file/url'}]
+  const [mediaItems, setMediaItems] = useState([]); // [{type, value, mode}]
+  const [editingId, setEditingId] = useState(null);
 
   const navigate = useNavigate();
   const API_URL = window.location.hostname === "localhost" 
@@ -30,18 +31,17 @@ export default function EnglishAppMyPosts() {
 
   useEffect(() => { fetchMyPosts(); }, []);
 
-  // ➕ Add New Media Slot
+  // ➕ Add Media Slot
   const addMediaSlot = (type) => {
     setMediaItems([...mediaItems, { type, value: "", mode: "url" }]);
   };
 
   // ❌ Remove Media Slot
   const removeMediaSlot = (index) => {
-    const updated = mediaItems.filter((_, i) => i !== index);
-    setMediaItems(updated);
+    setMediaItems(mediaItems.filter((_, i) => i !== index));
   };
 
-  // ✍️ Update Slot Value
+  // ✍️ Update Media Value
   const updateMediaValue = (index, val, mode = "url") => {
     const updated = [...mediaItems];
     updated[index].value = val;
@@ -49,9 +49,36 @@ export default function EnglishAppMyPosts() {
     setMediaItems(updated);
   };
 
+  // 🗑️ Delete Logic
+  const handleDelete = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/delete/${postId}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Post Removed");
+        fetchMyPosts();
+      }
+    } catch (err) { toast.error("Delete Failed"); }
+  };
+
+  // 📝 Edit Logic
+  const startEdit = (post) => {
+    setEditingId(post._id);
+    setWord(post.word);
+    setMeaning(post.meaning);
+    // Convert existing media to our local state
+    const existingMedia = post.media?.map(m => ({
+      type: m.type,
+      value: m.url,
+      mode: "url"
+    })) || [];
+    setMediaItems(existingMedia);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (mediaItems.length === 0) return toast.error("ADD AT LEAST ONE MEDIA");
+    if (mediaItems.length === 0) return toast.error("Please add at least one media item");
     
     setUploading(true);
     const userEmail = localStorage.getItem("eng_userEmail");
@@ -61,12 +88,10 @@ export default function EnglishAppMyPosts() {
     dataToSend.append("meaning", meaning);
     dataToSend.append("userEmail", userEmail);
 
-    // Structure media data for backend
     const mediaMetadata = [];
-
-    mediaItems.forEach((item, index) => {
+    mediaItems.forEach((item) => {
       if (item.mode === "file" && item.value) {
-        dataToSend.append("images", item.value); // Multi-file upload
+        dataToSend.append("images", item.value); // Field name matches backend upload.array("images")
         mediaMetadata.push({ type: item.type, mode: "file" });
       } else {
         mediaMetadata.push({ type: item.type, mode: "url", url: item.value });
@@ -76,69 +101,106 @@ export default function EnglishAppMyPosts() {
     dataToSend.append("mediaMetadata", JSON.stringify(mediaMetadata));
 
     try {
-      const res = await fetch(`${API_URL}/api/english-posts/create`, {
-        method: "POST",
+      const url = editingId 
+        ? `${API_URL}/api/english-posts/update/${editingId}` 
+        : `${API_URL}/api/english-posts/create`;
+      
+      const res = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
         body: dataToSend,
       });
 
       if (res.ok) {
-        toast.success("STORY PUBLISHED 🚀");
-        setWord(""); setMeaning(""); setMediaItems([]);
+        toast.success(editingId ? "Entry Updated" : "Sequence Published");
+        setWord(""); setMeaning(""); setMediaItems([]); setEditingId(null);
         fetchMyPosts();
       }
-    } catch (err) { toast.error("UPLOAD FAILED"); }
+    } catch (err) { toast.error("Submission failed"); }
     finally { setUploading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-white p-4 flex flex-col items-center font-sans pb-24">
+    <div className="min-h-screen bg-gray-50 p-4 flex flex-col items-center font-sans pb-24">
       
-      {/* 📤 MULTI-UPLOAD PANEL */}
-      <div className="w-full max-w-md bg-zinc-900 text-white p-8 rounded-[3rem] shadow-2xl transition-all">
-        <h2 className="text-2xl font-black italic uppercase tracking-tighter mb-6">Create Sequence</h2>
-        
-        <form onSubmit={handleFinalSubmit} className="space-y-4">
-          <input type="text" placeholder="WORD" value={word} required className="w-full p-4 bg-black rounded-2xl outline-none border border-zinc-800 focus:border-white text-sm font-bold uppercase" onChange={e => setWord(e.target.value)} />
-          <input type="text" placeholder="MEANING" value={meaning} required className="w-full p-4 bg-black rounded-2xl outline-none border border-zinc-800 focus:border-white text-sm font-bold uppercase" onChange={e => setMeaning(e.target.value)} />
+      {/* 📤 Multi-Media Upload Card */}
+      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
+        <div className="flex justify-between items-center mb-4 px-1">
+           <h2 className="text-xl font-black text-gray-800 italic uppercase">
+             {editingId ? "Edit Sequence" : "New Sequence"}
+           </h2>
+           {editingId && (
+             <button onClick={() => {setEditingId(null); setMediaItems([]); setWord(""); setMeaning("");}} className="text-[10px] font-bold text-red-500 uppercase">Cancel</button>
+           )}
+        </div>
 
-          {/* 🔥 Media Slots Area */}
-          <div className="space-y-3 mt-6">
-            <p className="text-[10px] font-black text-zinc-500 tracking-[0.3em] uppercase mb-2">Sequence Content</p>
+        <form onSubmit={handleFinalSubmit} className="space-y-3">
+          <input type="text" placeholder="Word" value={word} required className="w-full p-3 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setWord(e.target.value)} />
+          <input type="text" placeholder="Meaning" value={meaning} required className="w-full p-3 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setMeaning(e.target.value)} />
+
+          {/* 🎞️ Dynamic Media Slots Area */}
+          <div className="space-y-2 py-2">
             {mediaItems.map((item, index) => (
-              <div key={index} className="bg-black p-4 rounded-3xl border border-zinc-800 flex flex-col gap-3 relative">
-                <button type="button" onClick={() => removeMediaSlot(index)} className="absolute -top-2 -right-2 bg-red-500 w-6 h-6 rounded-full text-[10px] font-bold">X</button>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase text-zinc-400 italic">#{index + 1} {item.type}</span>
-                  <div className="flex bg-zinc-800 rounded-lg p-1 text-[8px] font-bold">
-                    <button type="button" onClick={() => updateMediaValue(index, "", "file")} className={`px-2 py-1 rounded-md ${item.mode === 'file' ? 'bg-zinc-600' : ''}`}>FILE</button>
-                    <button type="button" onClick={() => updateMediaValue(index, "", "url")} className={`px-2 py-1 rounded-md ${item.mode === 'url' ? 'bg-zinc-600' : ''}`}>URL</button>
+              <div key={index} className="p-3 bg-gray-50 rounded-2xl border border-gray-100 relative">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[9px] font-black uppercase text-gray-400 italic">#{index + 1} {item.type}</span>
+                  <div className="flex gap-1">
+                    <button type="button" onClick={() => updateMediaValue(index, "", "file")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'file' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>File</button>
+                    <button type="button" onClick={() => updateMediaValue(index, "", "url")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'url' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Link</button>
+                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-2 text-gray-300 font-bold px-1">×</button>
                   </div>
                 </div>
 
                 {item.mode === "file" ? (
-                  <input type="file" accept={item.type === 'video' ? 'video/*' : 'image/*'} onChange={(e) => updateMediaValue(index, e.target.files[0], "file")} className="text-[10px] text-zinc-500" />
+                  <input type="file" accept={item.type === 'video' ? 'video/*' : 'image/*'} onChange={(e) => updateMediaValue(index, e.target.files[0], "file")} className="text-[10px] w-full" />
                 ) : (
-                  <input type="text" placeholder={`PASTE ${item.type.toUpperCase()} URL`} value={item.value} className="w-full bg-transparent border-b border-zinc-800 py-2 outline-none text-xs" onChange={(e) => updateMediaValue(index, e.target.value, "url")} />
+                  <input type="text" placeholder={`Paste ${item.type} URL`} value={item.value} className="w-full bg-transparent border-b border-gray-200 text-xs py-1 outline-none font-bold" onChange={(e) => updateMediaValue(index, e.target.value, "url")} />
                 )}
               </div>
             ))}
           </div>
 
-          {/* ➕ Add Buttons */}
-          <div className="grid grid-cols-3 gap-2 mt-4">
-            <button type="button" onClick={() => addMediaSlot('image')} className="bg-zinc-800 p-3 rounded-2xl text-[9px] font-black uppercase border border-zinc-700 hover:bg-white hover:text-black transition-all">+ IMAGE</button>
-            <button type="button" onClick={() => addMediaSlot('video')} className="bg-zinc-800 p-3 rounded-2xl text-[9px] font-black uppercase border border-zinc-700 hover:bg-white hover:text-black transition-all">+ VIDEO</button>
-            <button type="button" onClick={() => addMediaSlot('embed')} className="bg-zinc-800 p-3 rounded-2xl text-[9px] font-black uppercase border border-zinc-700 hover:bg-white hover:text-black transition-all">+ YT LINK</button>
+          {/* Add Buttons */}
+          <div className="flex gap-2 pb-2">
+            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Image</button>
+            <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Video</button>
+            <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ YT Link</button>
           </div>
 
-          <button disabled={uploading} className="w-full bg-white text-black p-5 rounded-[2rem] font-black uppercase tracking-widest text-xs mt-6 active:scale-95 transition-all disabled:bg-zinc-700">
-            {uploading ? "SYNCING TO HUB..." : "PUBLISH TO COMMUNITY"}
+          <button disabled={uploading} className="w-full bg-red-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-red-100 active:scale-95 transition-all disabled:bg-gray-300">
+            {uploading ? "Publishing..." : (editingId ? "Update Entry" : "Post Sequence")}
           </button>
         </form>
       </div>
 
-      {/* --- Rest of the History List (Same as before) --- */}
+      {/* 🖼️ List Section (My History) */}
+      <div className="w-full max-w-sm">
+        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">My Archive</h3>
+        {loading ? <p className="text-center font-bold text-gray-300 animate-pulse">Syncing...</p> : 
+          myPosts.map((post) => (
+            <div key={post._id} className="bg-white mb-8 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 relative">
+              
+              {/* Management Buttons */}
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-xs border border-gray-100">✍️</button>
+                <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs">🗑️</button>
+              </div>
+
+              {/* Preview Image (First item in sequence) */}
+              <img src={post.media?.[0]?.url || post.image} className="w-full h-64 object-cover" alt={post.word} />
+              
+              <div className="flex justify-between items-center px-6 py-5">
+                <div className="flex flex-col">
+                  <h3 className="font-black text-xl text-gray-800 uppercase leading-none tracking-tighter italic">{post.word}</h3>
+                  <span className="text-[8px] font-black text-gray-300 uppercase mt-1 tracking-widest">
+                    Sequence: {post.media?.length || 1} Items
+                  </span>
+                </div>
+                <span className="text-red-500 font-bold text-sm bg-red-50 px-4 py-1.5 rounded-xl italic">{post.meaning}</span>
+              </div>
+            </div>
+          ))
+        }
+      </div>
     </div>
   );
 }

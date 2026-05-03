@@ -45,6 +45,7 @@ export default function EnglishAppMyPosts() {
 
   const addMediaSlot = (type) => setMediaItems([...mediaItems, { type, value: "", mode: "url" }]);
   const removeMediaSlot = (index) => setMediaItems(mediaItems.filter((_, i) => i !== index));
+  
   const updateMediaValue = (index, val, mode = "url") => {
     const updated = [...mediaItems];
     updated[index].value = val;
@@ -52,7 +53,6 @@ export default function EnglishAppMyPosts() {
     setMediaItems(updated);
   };
 
-  // 🔥 Default Selector Frame Setup
   function onImageLoad(e) {
     const { width, height } = e.currentTarget;
     const initialCrop = centerCrop(
@@ -63,7 +63,6 @@ export default function EnglishAppMyPosts() {
     setCrop(initialCrop);
   }
 
-  // ✂️ Logic to Cut Image based on Selector
   const getCroppedImg = async () => {
     const image = imgRef.current;
     const canvas = document.createElement('canvas');
@@ -90,7 +89,8 @@ export default function EnglishAppMyPosts() {
 
   const handleFileChange = (index, file) => {
     if (!file) return;
-    if (file.type.startsWith("video/")) return updateMediaValue(index, file, "file");
+    updateMediaValue(index, file, "file");
+
     const reader = new FileReader();
     reader.onload = () => {
       setTempImage(reader.result);
@@ -121,12 +121,16 @@ export default function EnglishAppMyPosts() {
     dataToSend.append("userEmail", localStorage.getItem("eng_userEmail"));
     
     mediaItems.forEach((item) => {
-      if (item.mode === "file" && item.value) {
+      if (item.mode === "file" && item.value instanceof File) {
         dataToSend.append("images", item.value);
       }
     });
     
-    dataToSend.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({type: m.type, mode: m.mode, url: m.mode === 'url' ? m.value : null}))));
+    dataToSend.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({
+      type: m.type, 
+      mode: m.mode, 
+      url: m.mode === 'url' ? m.value : null
+    }))));
 
     try {
       const url = editingId ? `${API_URL}/api/english-posts/update/${editingId}` : `${API_URL}/api/english-posts/create`;
@@ -141,22 +145,22 @@ export default function EnglishAppMyPosts() {
       
       {/* ✂️🖼️ MANUAL SELECTOR MODAL */}
       {tempImage && (
-        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4">
-          <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl">
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-4">
                <h3 className="text-[10px] font-black uppercase text-gray-400 italic">
                  {isCropping ? "Resize Selection Frame" : "Add Your Markup"}
                </h3>
-               <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase">Cancel</button>
+               <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase p-2">Cancel</button>
             </div>
 
             {isCropping ? (
               <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border border-gray-100 max-h-[450px] overflow-y-auto">
-                {/* 🔥 Corner-based selector */}
                 <ReactCrop
                   crop={crop}
                   onChange={(c) => setCrop(c)}
                   onComplete={(c) => setCompletedCrop(c)}
+                  style={{ touchAction: 'none' }}
                 >
                   <img 
                     ref={imgRef} 
@@ -178,7 +182,7 @@ export default function EnglishAppMyPosts() {
                   brushColor={brushColor} 
                   brushRadius={3} 
                   imgSrc={tempImage} 
-                  canvasWidth={320} 
+                  canvasWidth={300} 
                   canvasHeight={400} 
                   lazyRadius={0} 
                 />
@@ -229,8 +233,34 @@ export default function EnglishAppMyPosts() {
                     <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-400 font-bold">×</button>
                   </div>
                 </div>
+
                 {item.mode === "file" ? (
-                  <input type="file" onChange={(e) => handleFileChange(index, e.target.files[0])} className="text-[10px]" />
+                  <div className="flex flex-col gap-2">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => handleFileChange(index, e.target.files[0])} 
+                      className="text-[10px] w-full" 
+                    />
+                    {/* 🔥 Manual Button: tabhi dikhega jab image select ho jayegi */}
+                    {item.value && item.value instanceof File && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setTempImage(reader.result);
+                            setActiveEditIndex(index);
+                            setIsCropping(true);
+                          };
+                          reader.readAsDataURL(item.value);
+                        }}
+                        className="bg-black/5 text-[9px] font-black py-2 rounded-xl border border-dashed border-black/20 uppercase tracking-tighter"
+                      >
+                        ⚡ Edit / Re-Crop Selection
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <input type="text" placeholder="URL" value={item.value} className="w-full bg-transparent border-b border-gray-200 text-xs py-1 outline-none font-bold" onChange={(e) => updateMediaValue(index, e.target.value, "url")} />
                 )}
@@ -239,9 +269,7 @@ export default function EnglishAppMyPosts() {
           </div>
 
           <div className="flex gap-2">
-            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Image</button>
-            <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Video</button>
-            <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ YT</button>
+            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase tracking-wider text-gray-600">+ Add Image</button>
           </div>
 
           <button disabled={uploading} className="w-full bg-red-500 text-white p-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg disabled:bg-gray-300">

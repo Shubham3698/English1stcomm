@@ -12,6 +12,7 @@ export default function EnglishAppMyPosts() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [translating, setTranslating] = useState(false); // 🔥 New State
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
@@ -33,6 +34,28 @@ export default function EnglishAppMyPosts() {
   const navigate = useNavigate();
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+
+  // 🔥 1. AUTO TRANSLATE LOGIC (MyMemory API - Free)
+  const handleAutoTranslate = async (englishWord) => {
+    if (!englishWord || englishWord.trim().length < 2 || editingId) return;
+    setTranslating(true);
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${englishWord}&langpair=en|hi`);
+      const data = await res.json();
+      if (data.responseData.translatedText) {
+        let translation = data.responseData.translatedText;
+        const englishRegex = /[a-zA-Z]/;
+        // Check if it's actually Hindi and not just returning the English word
+        if (!englishRegex.test(translation)) {
+          setMeaning(translation);
+          toast.success("AI Meaning added! 🤖", { 
+            style: { borderRadius: '15px', background: '#333', color: '#fff', fontSize: '10px' } 
+          });
+        }
+      }
+    } catch (err) { console.error(err); } 
+    finally { setTranslating(false); }
+  };
 
   const fetchMyPosts = async () => {
     const email = localStorage.getItem("eng_userEmail");
@@ -122,7 +145,6 @@ export default function EnglishAppMyPosts() {
     fabricCanvasRef.current.renderAll();
   };
 
-  // 🔥 FIXED: Chaining issue solved by splitting functions
   const deleteSelected = () => {
     if (!fabricCanvasRef.current) return;
     const canvas = fabricCanvasRef.current;
@@ -134,7 +156,6 @@ export default function EnglishAppMyPosts() {
     }
   };
 
-  // --- ✂️ Crop & Merge Logic ---
   const getCroppedImg = async () => {
     const image = imgRef.current;
     if (!completedCrop || !image) return;
@@ -176,7 +197,6 @@ export default function EnglishAppMyPosts() {
     };
   };
 
-  // --- 🛠️ Core Handlers ---
   const addMediaSlot = (type) => setMediaItems([...mediaItems, { type, value: "", mode: "url" }]);
   const removeMediaSlot = (index) => setMediaItems(mediaItems.filter((_, i) => i !== index));
   const updateMediaValue = (index, val, mode = "url") => {
@@ -307,8 +327,28 @@ export default function EnglishAppMyPosts() {
       <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8 font-sans">
         <h2 className="text-xl font-black italic uppercase mb-4 px-1">{editingId ? "Edit Sequence" : "New Sequence"}</h2>
         <form onSubmit={handleFinalSubmit} className="space-y-3">
-          <input type="text" placeholder="Word" value={word} className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setWord(e.target.value)} />
-          <input type="text" placeholder="Hindi Meaning" value={meaning} className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setMeaning(e.target.value)} />
+          
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Word" 
+              value={word} 
+              className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" 
+              onChange={e => setWord(e.target.value)} 
+              onBlur={() => handleAutoTranslate(word)} // 🔥 Trigger on Blur
+            />
+            {translating && (
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase">Translating...</span>
+            )}
+          </div>
+
+          <input 
+            type="text" 
+            placeholder={translating ? "AI Thinking..." : "Hindi Meaning"} 
+            value={meaning} 
+            className={`w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold ${translating ? 'opacity-50' : ''}`} 
+            onChange={e => setMeaning(e.target.value)} 
+          />
 
           <div className="space-y-3 py-2">
             {mediaItems.map((item, index) => (
@@ -347,7 +387,7 @@ export default function EnglishAppMyPosts() {
             <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all">+ YT</button>
           </div>
 
-          <button disabled={uploading} className="w-full bg-red-500 text-white p-5 rounded-[2rem] font-black uppercase text-xs shadow-xl active:scale-95 transition-all disabled:bg-gray-200">
+          <button disabled={uploading || translating} className="w-full bg-red-500 text-white p-5 rounded-[2rem] font-black uppercase text-xs shadow-xl active:scale-95 transition-all disabled:bg-gray-200">
             {uploading ? "Publishing HQ..." : (editingId ? "Update Entry" : "Post Sequence")}
           </button>
         </form>

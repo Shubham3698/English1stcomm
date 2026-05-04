@@ -18,20 +18,30 @@ export default function CommunityPost() {
   const [currentSlideIdx, setCurrentSlideIdx] = useState({}); 
   
   const userEmail = localStorage.getItem("eng_userEmail");
+  // 🔥 PREMIUM CHECK: LocalStorage se status nikalna
+  const isPremiumUser = localStorage.getItem("eng_isPremium") === "true";
+
   const location = useLocation();
   const swiperRefs = useRef({}); 
 
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔊 Audio Pronunciation Function
+  // 🔊 Updated Audio Pronunciation Function with Premium Lock
   const speakWord = (word) => {
+    // 1. Check if user is Premium
+    if (!isPremiumUser) {
+      return toast.error("Bhai, ye Premium feature hai! ₹1 ka Trial lo aur aawaj suno. 🎧", {
+        duration: 4000,
+        style: { borderRadius: '15px', background: '#333', color: '#fff' }
+      });
+    }
+
     if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US'; 
-      utterance.rate = 0.8; // Thoda slow pronunciation taaki user samajh sake
+      utterance.rate = 0.8; 
       window.speechSynthesis.speak(utterance);
     } else {
       toast.error("Bhai, browser audio support nahi kar raha!");
@@ -162,6 +172,7 @@ export default function CommunityPost() {
               } else if (finalUrl.includes('youtube.com/watch?v=')) {
                 videoId = finalUrl.split('v=')[1]?.split('&')[0];
                 finalUrl = finalUrl.replace('watch?v=', 'embed/');
+                isShorts = false;
               } else if (finalUrl.includes('youtu.be/')) {
                 videoId = finalUrl.split('youtu.be/')[1]?.split('?')[0];
                 finalUrl = finalUrl.replace('youtu.be/', 'youtube.com/embed/');
@@ -311,12 +322,12 @@ export default function CommunityPost() {
                     <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">
                       {post.word}
                     </h2>
-                    {/* 🔊 Speaker Icon for Pronunciation */}
+                    {/* 🔊 Pronunciation Button with Logic */}
                     <button 
                       onClick={() => speakWord(post.word)}
-                      className="p-2 bg-gray-50 rounded-full active:scale-90 transition-all hover:bg-gray-100 shadow-sm"
+                      className={`p-2 rounded-full active:scale-90 transition-all shadow-sm ${isPremiumUser ? 'bg-gray-50 hover:bg-gray-100' : 'bg-gray-200'}`}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-red-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-7 h-7 ${isPremiumUser ? 'text-red-500' : 'text-gray-400'}`}>
                         <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
                       </svg>
                     </button>
@@ -339,7 +350,7 @@ export default function CommunityPost() {
                     <span className="text-[11px] font-black text-red-600">{post.commandStats?.hard || 0}</span>
                   </button>
                   <button onClick={(e) => handleStatUpdate(e, post._id, 'heard')} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === 'heard' ? 'border-orange-400 bg-white' : 'border-transparent bg-white/50'}`}>
-                    <div className="flex items-center gap-2"><span>👂</span><span className="text-[10px] font-black uppercase text-gray-500">सुना है</span></div>
+                    <div className="flex items-center gap-2"><span>👂</span><span className="text-[10px] font-black uppercase text-gray-500">सुna hai</span></div>
                     <span className="text-[11px] font-black text-orange-500">{post.commandStats?.heard || 0}</span>
                   </button>
                   <button onClick={(e) => handleStatUpdate(e, post._id, 'dailyUse')} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === 'dailyUse' ? 'border-blue-500 bg-white' : 'border-transparent bg-white/50'}`}>

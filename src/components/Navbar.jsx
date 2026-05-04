@@ -105,7 +105,6 @@ export default function Navbar() {
             📱 Community Post
           </button>
 
-          {/* 🔥 NEW: Saved Vault Link Added Here */}
           <button
             onClick={() => {
               handleSavedClick();
@@ -114,6 +113,17 @@ export default function Navbar() {
             className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
           >
             📥 My Saved Vault
+          </button>
+
+          {/* ⭐ Upgrade Link */}
+          <button
+            onClick={() => {
+              navigate("/upgrade");
+              setOpen(false);
+            }}
+            className="w-full text-left px-6 py-4 hover:bg-orange-50 transition font-black text-orange-500 flex items-center gap-3 border-t border-gray-50 uppercase text-[12px] tracking-widest"
+          >
+            ⭐ Upgrade Plan
           </button>
 
           <button
@@ -127,7 +137,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Logout Option */}
+        {/* 🚀 Quick Logout Button with Reflect/Flash Animation */}
         {localStorage.getItem("eng_userEmail") && (
             <div className="absolute bottom-10 w-full px-6">
                 <button 
@@ -137,12 +147,28 @@ export default function Navbar() {
                         setOpen(false);
                         navigate("/");
                     }}
-                    className="w-full py-3 bg-gray-100 text-gray-500 rounded-2xl font-bold text-sm uppercase"
+                    className="group relative w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] overflow-hidden transition-all active:scale-95 shadow-2xl"
                 >
-                    Quick Logout
+                    {/* 💡 The Flash/Light Reflect Layer */}
+                    <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine transition-all duration-500" 
+                         style={{ animation: 'shine 2s infinite' }} 
+                    />
+                    
+                    <span className="relative z-10 flex items-center justify-center gap-2">
+                       Logout Session
+                    </span>
                 </button>
             </div>
         )}
+
+        {/* 🎨 Inline CSS for the Shine Animation */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
+          }
+        `}} />
       </div>
 
       {/* 🔐 Login/Signup Modal */}

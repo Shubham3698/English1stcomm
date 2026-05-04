@@ -8,6 +8,7 @@ import CommunityPost from "./pages/CommunityPost";
 import User from "./pages/User"; 
 import EnglishAppMyPosts from "./pages/EnglishAppMyPosts";
 import SavedPosts from "./pages/SavedPosts";
+import Upgrade from "./pages/Upgrade";
 
 export default function App() {
   useEffect(() => {
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/community" element={<CommunityPost />} />
           <Route path="/saved-posts" element={<SavedPosts />} />
           <Route path="/user" element={<User />} /> 
+          <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
         </Routes>
       </div>

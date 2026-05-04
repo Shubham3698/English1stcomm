@@ -30,7 +30,7 @@ export default function Navbar() {
     onClick={() => navigate("/")}
   >
     <h1 className="font-black text-xl italic tracking-tighter leading-none">
-      LEARNIG-LISH
+      LEARN-IGLISH
     </h1>
     <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-70 leading-relaxed italic">
       Serial Learners

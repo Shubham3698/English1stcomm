@@ -24,6 +24,20 @@ export default function CommunityPost() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
+  // 🔊 Audio Pronunciation Function
+  const speakWord = (word) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US'; 
+      utterance.rate = 0.8; // Thoda slow pronunciation taaki user samajh sake
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast.error("Bhai, browser audio support nahi kar raha!");
+    }
+  };
+
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${API_URL}/api/english-posts/all`);
@@ -56,7 +70,6 @@ export default function CommunityPost() {
     }
   }, [loading, dbPosts, location]);
 
-  // 🔥 NEW: Handle Save/Bookmark logic
   const handleSavePost = async (e, postId) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Bhai, login bina save nahi hoga! 💾");
@@ -71,7 +84,7 @@ export default function CommunityPost() {
       if (res.ok) {
         const data = await res.json();
         toast.success(data.isSaved ? "Post Saved! 📥" : "Removed from Vault! 📤");
-        fetchPosts(); // Refresh to update bookmark icon state
+        fetchPosts(); 
       }
     } catch (err) {
       toast.error("Network check karo bhai!");
@@ -249,7 +262,7 @@ export default function CommunityPost() {
       <div className="w-full max-w-[450px]">
         {dbPosts.map((post) => {
           const isVoted = post.votedBy?.includes(userEmail);
-          const isSaved = post.savedBy?.includes(userEmail); // 🔥 Logic check for save
+          const isSaved = post.savedBy?.includes(userEmail); 
           const isOpen = activeIndex === post._id;
           const userLevel = post.userStats?.find(v => v.email === userEmail)?.level;
 
@@ -280,19 +293,9 @@ export default function CommunityPost() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-10.628a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5m0 10.628a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5" /></svg>
                 </button>
 
-                {/* 📥 NEW SAVE BUTTON SECTION */}
                 <div className="ml-auto flex items-center gap-4">
                   <button onClick={(e) => handleSavePost(e, post._id)} className="transition-transform active:scale-125">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill={isSaved ? "black" : "none"} 
-                      viewBox="0 0 24 24" 
-                      strokeWidth={1.5} 
-                      stroke="currentColor" 
-                      className="w-7 h-7"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill={isSaved ? "black" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
                   </button>
 
                   <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="transition-colors">
@@ -304,7 +307,20 @@ export default function CommunityPost() {
               <div className="px-5 py-4">
                 <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {post.voteCount || 0} Likes</p>
                 <div className="flex flex-col gap-1">
-                  <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">{post.word}</h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">
+                      {post.word}
+                    </h2>
+                    {/* 🔊 Speaker Icon for Pronunciation */}
+                    <button 
+                      onClick={() => speakWord(post.word)}
+                      className="p-2 bg-gray-50 rounded-full active:scale-90 transition-all hover:bg-gray-100 shadow-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-red-500">
+                        <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
+                      </svg>
+                    </button>
+                  </div>
                   <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-relaxed py-1">{post.meaning}</p>
                 </div>
                 <p onClick={() => setSelectedPostForComments(post)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black">

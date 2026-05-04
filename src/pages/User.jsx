@@ -20,6 +20,19 @@ export default function EnglishAppUser() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
+  // 🔊 Voice Pronunciation Function
+  const speakWord = (word) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Pehle wali speech stop karo
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.8;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      toast.error("Browser audio support nahi karta!");
+    }
+  };
+
   useEffect(() => {
     const email = localStorage.getItem("eng_userEmail");
     const name = localStorage.getItem("eng_userName");
@@ -32,7 +45,6 @@ export default function EnglishAppUser() {
     }
   }, [navigate]);
 
-  // 🔄 AUTO-REFRESH LOGIC: Har 5 second mein UI check karega ki time up hua ya nahi
   useEffect(() => {
     const timer = setInterval(() => {
       setTick(prev => prev + 1);
@@ -129,20 +141,35 @@ export default function EnglishAppUser() {
             {filter.toUpperCase()} Practice — {currentIndex + 1} / {filteredWords.length}
           </span>
           
-          <div 
-            onClick={() => setShowMeaning(!showMeaning)}
-            className="w-full aspect-square bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-100 flex flex-col items-center justify-center p-8 cursor-pointer active:scale-95 transition-all shadow-sm"
-          >
-            <h2 className="text-4xl font-black text-gray-900 uppercase tracking-tighter italic text-center leading-none">
-              {current.word}
-            </h2>
-            {showMeaning ? (
-              <p className="mt-6 text-2xl font-black text-red-500 uppercase italic animate-in fade-in zoom-in duration-300">
-                {current.meaning}
-              </p>
-            ) : (
-              <p className="mt-4 text-[9px] font-black text-gray-300 uppercase tracking-widest">Tap to reveal meaning</p>
-            )}
+          <div className="w-full relative">
+            <div 
+                onClick={() => setShowMeaning(!showMeaning)}
+                className="w-full aspect-square bg-gray-50 rounded-[3rem] border-4 border-dashed border-gray-100 flex flex-col items-center justify-center p-8 cursor-pointer active:scale-95 transition-all shadow-sm"
+            >
+                <h2 className="text-4xl font-black text-gray-900 uppercase tracking-tighter italic text-center leading-none">
+                {current.word}
+                </h2>
+                {showMeaning ? (
+                <p className="mt-6 text-2xl font-black text-red-500 uppercase italic animate-in fade-in zoom-in duration-300">
+                    {current.meaning}
+                </p>
+                ) : (
+                <p className="mt-4 text-[9px] font-black text-gray-300 uppercase tracking-widest text-center">Tap to reveal meaning</p>
+                )}
+            </div>
+
+            {/* 🔊 PRONOUNCE BUTTON - Added on practice card */}
+            <button 
+                onClick={(e) => {
+                    e.stopPropagation(); // Card flip trigger na ho
+                    speakWord(current.word);
+                }}
+                className="absolute top-6 right-6 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center active:scale-90 transition-all text-red-500"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
+                </svg>
+            </button>
           </div>
 
           {showMeaning ? (
@@ -204,7 +231,6 @@ export default function EnglishAppUser() {
           <div className="grid grid-cols-1 gap-3">
             {filteredWords.map((post) => (
               <div key={post._id} 
-                // 🔥 Updated: Navigate to specific postId in community
                 onClick={() => navigate(`/community?postId=${post._id}`)}
                 className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-95 transition-all cursor-pointer"
               >

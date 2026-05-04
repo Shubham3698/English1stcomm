@@ -60,8 +60,7 @@ export default function EnglishAppUser() {
     toast.success("Logged out successfully");
   };
 
-  // 🧠 SRS Filtering Logic: 
-  // Milliseconds comparison (Global Time) use kiya hai taaki timezone issue na ho
+  // 🧠 SRS Filtering Logic
   const filteredWords = Array.isArray(savedWords) ? savedWords.filter(post => 
     post.userStats?.some(stat => {
       if (stat.email !== user.email || stat.level !== filter) return false;
@@ -205,7 +204,8 @@ export default function EnglishAppUser() {
           <div className="grid grid-cols-1 gap-3">
             {filteredWords.map((post) => (
               <div key={post._id} 
-                onClick={() => navigate("/community")}
+                // 🔥 Updated: Navigate to specific postId in community
+                onClick={() => navigate(`/community?postId=${post._id}`)}
                 className="bg-white p-5 rounded-[2rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-95 transition-all cursor-pointer"
               >
                 <div className="flex flex-col">

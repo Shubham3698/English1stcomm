@@ -15,11 +15,11 @@ export default function CommunityPost() {
   const [selectedPostForComments, setSelectedPostForComments] = useState(null);
   const [loading, setLoading] = useState(true);
   const [playingIndex, setPlayingIndex] = useState({}); 
-  const [currentSlideIdx, setCurrentSlideIdx] = useState({}); // 🔥 Track current slide per post
+  const [currentSlideIdx, setCurrentSlideIdx] = useState({}); 
   
   const userEmail = localStorage.getItem("eng_userEmail");
   const location = useLocation();
-  const swiperRefs = useRef({}); // 🔥 Direct control for buttons
+  const swiperRefs = useRef({}); 
 
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
@@ -56,6 +56,28 @@ export default function CommunityPost() {
     }
   }, [loading, dbPosts, location]);
 
+  // 🔥 NEW: Handle Save/Bookmark logic
+  const handleSavePost = async (e, postId) => {
+    if (e) e.stopPropagation();
+    if (!userEmail) return toast.error("Bhai, login bina save nahi hoga! 💾");
+
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/save/${postId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(data.isSaved ? "Post Saved! 📥" : "Removed from Vault! 📤");
+        fetchPosts(); // Refresh to update bookmark icon state
+      }
+    } catch (err) {
+      toast.error("Network check karo bhai!");
+    }
+  };
+
   const handleShare = async (post) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?postId=${post._id}`;
     const shareData = {
@@ -81,14 +103,10 @@ export default function CommunityPost() {
     const currentIdx = currentSlideIdx[post._id] || 0;
     const currentItem = mediaItems[currentIdx];
     const isVideoPlaying = playingIndex[post._id] === currentIdx;
-
-    // 🔥 Trick: Only show buttons if it's a VIDEO and it's PLAYING
     const showNavButtons = hasMultipleItems && currentItem.type === 'embed' && isVideoPlaying;
 
     return (
       <div className="relative group w-full h-[600px]"> 
-        
-        {/* 🚀 CUSTOM SMART NAVIGATION */}
         {showNavButtons && (
           <>
             <button 
@@ -113,9 +131,7 @@ export default function CommunityPost() {
           className="w-full h-full bg-black community-swiper"
           touchStartPreventDefault={false}
           onSlideChange={(swiper) => {
-            // Update current slide index to check if next one is image or video
             setCurrentSlideIdx({ ...currentSlideIdx, [post._id]: swiper.activeIndex });
-            // Reset playing state so buttons hide until play is clicked again
             const newPlaying = { ...playingIndex };
             delete newPlaying[post._id];
             setPlayingIndex(newPlaying);
@@ -125,7 +141,6 @@ export default function CommunityPost() {
             let finalUrl = item.url;
             let isShorts = false;
             let videoId = "";
-
             if (item.type === 'embed') {
               if (finalUrl.includes('youtube.com/shorts/')) {
                 videoId = finalUrl.split('shorts/')[1]?.split('?')[0];
@@ -140,7 +155,6 @@ export default function CommunityPost() {
               }
               finalUrl = finalUrl.split('?')[0];
             }
-
             const isPlaying = playingIndex[post._id] === idx;
 
             return (
@@ -150,20 +164,13 @@ export default function CommunityPost() {
                   .community-swiper .swiper-pagination-bullet-active { background: #ef4444 !important; opacity: 1; }
                   .community-swiper .swiper-pagination { z-index: 10000 !important; bottom: 20px !important; }
                 `}</style>
-
                 <div className="w-full h-full flex items-center justify-center overflow-hidden relative">
                   {item.type === 'video' ? (
                     <video src={item.url} className="w-full h-auto max-h-full object-cover" controls playsInline />
                   ) : item.type === 'embed' ? (
                     <div className={`w-full ${isShorts ? 'h-full' : 'aspect-video'} relative bg-black`}>
                       {isPlaying ? (
-                        <iframe 
-                          className="w-full h-full border-0" 
-                          src={`${finalUrl}?autoplay=1&rel=0&modestbranding=1`} 
-                          title={`media-${idx}`} 
-                          allow="autoplay; encrypted-media" 
-                          allowFullScreen
-                        ></iframe>
+                        <iframe className="w-full h-full border-0" src={`${finalUrl}?autoplay=1&rel=0&modestbranding=1`} title={`media-${idx}`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center cursor-pointer group/play" onClick={() => setPlayingIndex({...playingIndex, [post._id]: idx})}>
                           <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} alt="thumbnail" className="w-full h-full object-cover opacity-60" />
@@ -242,6 +249,7 @@ export default function CommunityPost() {
       <div className="w-full max-w-[450px]">
         {dbPosts.map((post) => {
           const isVoted = post.votedBy?.includes(userEmail);
+          const isSaved = post.savedBy?.includes(userEmail); // 🔥 Logic check for save
           const isOpen = activeIndex === post._id;
           const userLevel = post.userStats?.find(v => v.email === userEmail)?.level;
 
@@ -271,9 +279,26 @@ export default function CommunityPost() {
                 <button onClick={() => handleShare(post)} className="transition-transform active:scale-125">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-10.628a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5m0 10.628a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5" /></svg>
                 </button>
-                <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="ml-auto transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h.187c.306 0 .599.124.815.347l1.17 1.201 2.203-2.58a.513.513 0 01.384-.184h.345c.302 0 .594.12.809.33l2.127 2.083 3.578-7.352a.511.511 0 01.462-.286h.348c.302 0 .593.12.808.33l3.564 3.476c.247.242.387.577.387.926v3.97c0 .622-.504 1.125-1.125 1.125h-17.25c-.621 0-1.125-.503-1.125-1.125v-3.97z" /></svg>
-                </button>
+
+                {/* 📥 NEW SAVE BUTTON SECTION */}
+                <div className="ml-auto flex items-center gap-4">
+                  <button onClick={(e) => handleSavePost(e, post._id)} className="transition-transform active:scale-125">
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill={isSaved ? "black" : "none"} 
+                      viewBox="0 0 24 24" 
+                      strokeWidth={1.5} 
+                      stroke="currentColor" 
+                      className="w-7 h-7"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                    </svg>
+                  </button>
+
+                  <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h.187c.306 0 .599.124.815.347l1.17 1.201 2.203-2.58a.513.513 0 01.384-.184h.345c.302 0 .594.12.809.33l2.127 2.083 3.578-7.352a.511.511 0 01.462-.286h.348c.302 0 .593.12.808.33l3.564 3.476c.247.242.387.577.387.926v3.97c0 .622-.504 1.125-1.125 1.125h-17.25c-.621 0-1.125-.503-1.125-1.125v-3.97z" /></svg>
+                  </button>
+                </div>
               </div>
 
               <div className="px-5 py-4">

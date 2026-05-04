@@ -7,44 +7,52 @@ export default function Navbar() {
   const [showAuth, setShowAuth] = useState(false);
   const navigate = useNavigate();
 
-  // 👤 User click logic - English Community Specific
+  // 👤 User click logic - Profile ya Login Modal
   const handleUserClick = () => {
-    // ✅ FIX: Dameeto ki key ki jagah English app ki key check kar rahe hain
     const engEmail = localStorage.getItem("eng_userEmail");
-
     if (engEmail) {
-      navigate("/user"); // ✅ Agar logged in hai toh profile page
+      navigate("/user"); 
     } else {
-      setShowAuth(true); // ❌ Nahi toh login modal
+      setShowAuth(true); 
+    }
+  };
+
+  // 📥 Saved Vault logic - Check login before navigating
+  const handleSavedClick = () => {
+    const engEmail = localStorage.getItem("eng_userEmail");
+    if (engEmail) {
+      navigate("/saved-posts");
+    } else {
+      setShowAuth(true); // Login nahi hai toh modal dikhao
     }
   };
 
   return (
     <>
       {/* 🔴 Top Navbar */}
- <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
-  
-  {/* 🔴 Updated Logo Section */}
-  <div 
-    className="flex flex-col cursor-pointer active:scale-95 transition-transform"
-    onClick={() => navigate("/")}
-  >
-    <h1 className="font-black text-xl italic tracking-tighter leading-none">
-      LEARN-IGLISH
-    </h1>
-    <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-70 leading-relaxed italic">
-      Serial Learners
-    </span>
-  </div>
+      <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
+        
+        {/* 🔴 Updated Logo Section */}
+        <div 
+          className="flex flex-col cursor-pointer active:scale-95 transition-transform"
+          onClick={() => navigate("/")}
+        >
+          <h1 className="font-black text-xl italic tracking-tighter leading-none">
+            LEARN-IGLISH
+          </h1>
+          <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-70 leading-relaxed italic">
+            Serial Learners
+          </span>
+        </div>
 
-  {/* ☰ Hamburger */}
-  <button
-    onClick={() => setOpen(true)}
-    className="text-2xl hover:scale-110 transition-transform"
-  >
-    ☰
-  </button>
-</nav>
+        {/* ☰ Hamburger */}
+        <button
+          onClick={() => setOpen(true)}
+          className="text-2xl hover:scale-110 transition-transform"
+        >
+          ☰
+        </button>
+      </nav>
 
       {/* 🔲 Overlay */}
       <div
@@ -97,6 +105,17 @@ export default function Navbar() {
             📱 Community Post
           </button>
 
+          {/* 🔥 NEW: Saved Vault Link Added Here */}
+          <button
+            onClick={() => {
+              handleSavedClick();
+              setOpen(false);
+            }}
+            className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
+          >
+            📥 My Saved Vault
+          </button>
+
           <button
             onClick={() => {
               handleUserClick();
@@ -108,7 +127,7 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Logout Option (Optional: Sirf tab dikhega jab login ho) */}
+        {/* Logout Option */}
         {localStorage.getItem("eng_userEmail") && (
             <div className="absolute bottom-10 w-full px-6">
                 <button 

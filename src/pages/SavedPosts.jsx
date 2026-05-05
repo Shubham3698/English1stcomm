@@ -1,118 +1,100 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from 'react-hot-toast';
-import PostCard from "../components/PostCard"; // ✅ PostCard reuse kar rahe hain
+import PostCard from "../components/PostCard";
 
-export default function FindVocab() {
-  const [query, setQuery] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(null); 
-  const [isPremiumUser] = useState(localStorage.getItem("eng_isPremium") === "true");
-
+export default function SavedPosts() {
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState(null);
+  
   const userEmail = localStorage.getItem("eng_userEmail");
+  const isPremiumUser = localStorage.getItem("eng_isPremium") === "true";
+
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 Search Handler
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return toast.error("Word toh dalo bhai! ✍️");
-    setLoading(true);
-    setResult(null);
+  // ✅ 1. Saved Posts Fetch Karne ka Logic
+  const fetchSavedPosts = async () => {
+    if (!userEmail) {
+      setLoading(false);
+      return toast.error("Pehle login karo bhai! 🔑");
+    }
 
     try {
-      // Backend se word ka meaning + matching community posts mangwa rahe hain
-      const res = await fetch(`${API_URL}/api/words/search-live?q=${query.trim()}`);
+      // Backend route jo humne banaya tha: /api/english-posts/saved-posts
+      const res = await fetch(`${API_URL}/api/english-posts/saved-posts?email=${userEmail}`);
       const data = await res.json();
       
-      if (data.success) {
-        setResult(data);
+      if (res.ok) {
+        setPosts(data);
       } else {
-        toast.error("Word not found!");
+        toast.error("Posts load nahi ho payi! 🧊");
       }
     } catch (err) {
-      toast.error("Network Error!");
+      toast.error("Network issue! 🌐");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchSavedPosts();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 font-sans max-w-[450px] mx-auto pb-20">
-      {/* Header */}
-      <div className="mt-6 mb-8 text-center">
+    <div className="min-h-screen bg-gray-50/50 p-4 font-sans max-w-[1200px] mx-auto pb-20">
+      {/* --- Header Section --- */}
+      <div className="mt-6 mb-10 lg:px-4 text-center lg:text-left">
         <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter text-gray-900 leading-none">
-          VOCAB <span className="text-red-600">FINDER</span>
+          MY SAVED <span className="text-red-600">VAULT</span>
         </h1>
-        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] mt-2 italic">Search & Discover</p>
+        <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.4em] mt-2 italic">
+          Your personal vocabulary collection
+        </p>
       </div>
-      
-      {/* Search Input */}
-      <form onSubmit={handleSearch} className="relative mb-8 group">
-        <input 
-          type="text" 
-          value={query} 
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search any word..." 
-          className="w-full bg-white border-2 border-gray-100 rounded-3xl py-4 pl-6 pr-16 text-sm font-bold focus:border-black outline-none transition-all shadow-sm"
-        />
-        <button 
-          type="submit" 
-          disabled={loading} 
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 bg-black text-white rounded-[1.2rem] flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-50"
-        >
-          {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "GO"}
-        </button>
-      </form>
 
-      {result && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
-          {/* --- DICTIONARY RESULT CARD --- */}
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 relative mb-10">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="bg-black text-white text-[9px] font-black uppercase px-2.5 py-1 rounded-lg tracking-widest">{result.grammar || "Word"}</span>
-                <div className="h-[1px] flex-1 bg-gray-100"></div>
-              </div>
-              <h2 className="text-5xl font-[1000] text-gray-900 uppercase italic tracking-tighter leading-none mb-3">{result.word}</h2>
-              <p className="text-2xl font-black bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic">{result.meaning}</p>
-          </div>
-
-          {/* --- 🔥 COMMUNITY POSTS MAPPING (Like Saved Vault) --- */}
-          <div className="px-2">
-            <div className="flex items-center justify-between mb-6 px-4">
-              <h3 className="text-xl font-[1000] italic uppercase tracking-tighter text-gray-900">
-                Related Posts 📱
-              </h3>
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                {result.relatedPosts?.length || 0} Found
-              </span>
+      {/* --- Loading State --- */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-10 h-10 border-4 border-red-600/20 border-t-red-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Opening Vault...</p>
+        </div>
+      ) : (
+        <div className="max-w-[500px] lg:mx-4">
+          {posts.length > 0 ? (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {posts.map((post) => (
+                <PostCard 
+                  key={post._id}
+                  post={post}
+                  userEmail={userEmail}
+                  isPremiumUser={isPremiumUser}
+                  activeIndex={activeIndex}
+                  setActiveIndex={setActiveIndex}
+                  // 🔥 Save/Unsave karne par list se hatane ke liye fetchSavedPosts call hoga
+                  onRefresh={fetchSavedPosts} 
+                  API_URL={API_URL}
+                />
+              ))}
             </div>
-
-            {result.relatedPosts && result.relatedPosts.length > 0 ? (
-              <div className="space-y-4">
-                {result.relatedPosts.map((post) => (
-                  <PostCard 
-                    key={post._id}
-                    post={post}
-                    userEmail={userEmail}
-                    isPremiumUser={isPremiumUser}
-                    activeIndex={activeIndex}
-                    setActiveIndex={setActiveIndex}
-                    // ✅ CommentModal iske andar pehle se set hai as we discussed
-                    onRefresh={handleSearch} 
-                    API_URL={API_URL}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="p-10 text-center border-2 border-dashed border-gray-200 rounded-[2.5rem]">
-                 <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest italic">
-                   Bhai is word se related koi post nahi mili! 🧊
-                 </p>
-              </div>
-            )}
-          </div>
+          ) : (
+            /* --- Empty State --- */
+            <div className="text-center py-24 bg-white rounded-[3rem] border-2 border-dashed border-gray-100 shadow-sm px-10">
+              <div className="text-5xl mb-6">📥</div>
+              <h3 className="text-xl font-[1000] uppercase italic tracking-tighter text-gray-900 mb-2">
+                Vault Khali Hai!
+              </h3>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide leading-relaxed">
+                Jo words pasand aayein unhe save karo, <br /> wo yahan dikhenge.
+              </p>
+              <button 
+                onClick={() => window.location.href = "/community"}
+                className="mt-8 bg-black text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all shadow-lg"
+              >
+                Explore Community
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

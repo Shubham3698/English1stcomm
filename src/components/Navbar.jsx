@@ -32,7 +32,7 @@ export default function Navbar() {
       {/* 🔴 Top Navbar */}
       <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
         
-        {/* 🔴 Updated Logo Section */}
+        {/* 🔴 Logo Section */}
         <div 
           className="flex flex-col cursor-pointer active:scale-95 transition-transform"
           onClick={() => navigate("/")}
@@ -84,7 +84,7 @@ export default function Navbar() {
         </div>
 
         {/* 📌 Navigation Links */}
-        <div className="mt-4">
+        <div className="mt-4 overflow-y-auto h-[calc(100%-180px)]">
           <button
             onClick={() => {
               navigate("/");
@@ -93,6 +93,17 @@ export default function Navbar() {
             className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
           >
             🏠 Home
+          </button>
+
+          {/* 🔥 NEW: Find Vocab Button */}
+          <button
+            onClick={() => {
+              navigate("/find-vocab");
+              setOpen(false);
+            }}
+            className="w-full text-left px-6 py-4 hover:bg-blue-50 transition font-black text-blue-600 flex items-center gap-3 border-y border-gray-50 uppercase text-[12px] tracking-widest"
+          >
+            🔍 Find Vocab
           </button>
 
           <button
@@ -137,23 +148,22 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* 🚀 Quick Logout Button with Reflect/Flash Animation */}
+        {/* 🚀 Quick Logout Button */}
         {localStorage.getItem("eng_userEmail") && (
             <div className="absolute bottom-10 w-full px-6">
                 <button 
                     onClick={() => {
                         localStorage.removeItem("eng_userEmail");
                         localStorage.removeItem("eng_userName");
+                        localStorage.removeItem("eng_isPremium");
                         setOpen(false);
                         navigate("/");
                     }}
                     className="group relative w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] overflow-hidden transition-all active:scale-95 shadow-2xl"
                 >
-                    {/* 💡 The Flash/Light Reflect Layer */}
                     <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine transition-all duration-500" 
                          style={{ animation: 'shine 2s infinite' }} 
                     />
-                    
                     <span className="relative z-10 flex items-center justify-center gap-2">
                        Logout Session
                     </span>
@@ -161,7 +171,7 @@ export default function Navbar() {
             </div>
         )}
 
-        {/* 🎨 Inline CSS for the Shine Animation */}
+        {/* 🎨 Animations */}
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes shine {
             0% { left: -100%; }

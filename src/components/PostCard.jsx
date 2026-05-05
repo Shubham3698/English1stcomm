@@ -4,6 +4,8 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
 import 'swiper/css';
 import 'swiper/css/pagination';
+// 🔥 Import CommentModal here
+import CommentModal from "./CommentModal"; 
 
 export default function PostCard({ 
   post, 
@@ -11,13 +13,13 @@ export default function PostCard({
   isPremiumUser, 
   activeIndex, 
   setActiveIndex, 
-  setSelectedPostForComments, 
   onRefresh, 
   API_URL 
 }) {
+  // 🔥 Local state for comments within the card
+  const [showComments, setShowComments] = useState(false);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [playingIndex, setPlayingIndex] = useState({}); 
-  const [pronunciation, setPronunciation] = useState(""); 
   const swiperRef = useRef(null);
 
   const isVoted = post.votedBy?.includes(userEmail);
@@ -26,26 +28,7 @@ export default function PostCard({
   const userLevel = post.userStats?.find((v) => v.email === userEmail)?.level;
 
   // ==========================================
-  // 🤖 AI PRONUNCIATION LOGIC (Backend Powered)
-  // ==========================================
-//   useEffect(() => {
-//     const fetchPronunciation = async () => {
-//       if (!post.word) return;
-//       try {
-//         const res = await fetch(`${API_URL}/api/english-posts/get-pronunciation?text=${post.word}`);
-//         const data = await res.json();
-//         if (data.success) {
-//           setPronunciation(data.pronunciation);
-//         }
-//       } catch (err) { 
-//         console.error("Pronunciation fetch failed"); 
-//       }
-//     };
-//     fetchPronunciation();
-//   }, [post.word, API_URL]);
-
-  // ==========================================
-  // 🛠️ INTERNAL HANDLERS (Vote, Save, Stat, Share, Voice)
+  // 🛠️ INTERNAL HANDLERS
   // ==========================================
 
   const handleVote = async (e) => {
@@ -115,8 +98,7 @@ export default function PostCard({
     }
   };
 
-  // 🔥 YouTube & Shorts Navigation Logic (With Arrow Buttons)
-const renderMediaInternal = () => {
+  const renderMediaInternal = () => {
     const mediaItems = post.media && post.media.length > 0 ? post.media : [{ type: 'image', url: post.image }];
     const hasMultipleItems = mediaItems.length > 1;
     const currentItem = mediaItems[currentSlideIdx];
@@ -153,7 +135,6 @@ const renderMediaInternal = () => {
             let videoId = "";
             let isShorts = false;
 
-            // 🔥 BULLETPROOF YOUTUBE URL PARSER
             if (item.type === 'embed') {
               if (finalUrl.includes('youtube.com/shorts/')) {
                 videoId = finalUrl.split('shorts/')[1]?.split('?')[0]?.split('&')[0];
@@ -165,8 +146,6 @@ const renderMediaInternal = () => {
               } else if (finalUrl.includes('youtube.com/embed/')) {
                 videoId = finalUrl.split('embed/')[1]?.split('?')[0]?.split('&')[0];
               }
-              
-              // Hamesha Embed format use karo warna "Refused to connect" aayega
               finalUrl = `https://www.youtube.com/embed/${videoId}`;
             }
 
@@ -238,11 +217,14 @@ const renderMediaInternal = () => {
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
         </button>
-        <button onClick={() => setSelectedPostForComments(post)} className="transition-transform active:scale-125">
+
+        {/* 🔥 Show Comments via Local State */}
+        <button onClick={() => setShowComments(true)} className="transition-transform active:scale-125">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0 0 0 .19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 0 1 1.008.204 9.07 9.07 0 0 0 2.972.524z" />
           </svg>
         </button>
+
         <button onClick={handleShare} className="transition-transform active:scale-125">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-10.628a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5m0 10.628a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5" />
@@ -262,7 +244,7 @@ const renderMediaInternal = () => {
         </div>
       </div>
 
-      {/* 📖 Word, AI Sound Hint & Meaning Area */}
+      {/* 📖 Word Area */}
       <div className="px-5 py-4">
         <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {post.voteCount || 0} Likes</p>
         <div className="flex flex-col gap-1">
@@ -274,18 +256,11 @@ const renderMediaInternal = () => {
               </svg>
             </button>
           </div>
-          
-          {/* 🔥 AI Pronunciation Hint */}
-          {/* <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Sound:</span>
-            <span className="text-[14px] font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-100/50 uppercase tracking-tighter italic">
-              {pronunciation || "🔊 AI Thinking..."}
-            </span>
-          </div> */}
-
           <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-relaxed py-1">{post.meaning}</p>
         </div>
-        <p onClick={() => setSelectedPostForComments(post)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black">
+        
+        {/* 🔥 View Comments Hook */}
+        <p onClick={() => setShowComments(true)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black">
           {post.comments && post.comments.length > 0 ? `View all ${post.comments.length} comments` : "Add a comment..."}
         </p>
       </div>
@@ -311,6 +286,17 @@ const renderMediaInternal = () => {
           </button>
         </div>
       </div>
+
+      {/* 🔥 Render Modal INSIDE the Card */}
+      {showComments && (
+        <CommentModal 
+          post={post} 
+          userEmail={userEmail} 
+          API_URL={API_URL} 
+          onClose={() => setShowComments(false)} 
+          onRefresh={onRefresh} 
+        />
+      )}
     </div>
   );
 }

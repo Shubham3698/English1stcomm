@@ -12,7 +12,7 @@ export default function EnglishAppMyPosts() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [translating, setTranslating] = useState(false); // 🔥 New State
+  const [translating, setTranslating] = useState(false); 
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
   const [mediaItems, setMediaItems] = useState([]);
@@ -35,25 +35,27 @@ export default function EnglishAppMyPosts() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 1. AUTO TRANSLATE LOGIC (MyMemory API - Free)
+  // 🔥 1. UPDATED: AUTO TRANSLATE LOGIC (Using your NEW Backend API)
   const handleAutoTranslate = async (englishWord) => {
+    // Agar editing chal rahi hai ya word chhota hai toh translate mat karo
     if (!englishWord || englishWord.trim().length < 2 || editingId) return;
+    
     setTranslating(true);
     try {
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${englishWord}&langpair=en|hi`);
+      // ✅ Now calling your own backend which uses google-translate-api-next
+      const res = await fetch(`${API_URL}/api/english-posts/auto-translate?text=${englishWord}`);
       const data = await res.json();
-      if (data.responseData.translatedText) {
-        let translation = data.responseData.translatedText;
-        const englishRegex = /[a-zA-Z]/;
-        // Check if it's actually Hindi and not just returning the English word
-        if (!englishRegex.test(translation)) {
-          setMeaning(translation);
-          toast.success("AI Meaning added! 🤖", { 
-            style: { borderRadius: '15px', background: '#333', color: '#fff', fontSize: '10px' } 
-          });
-        }
+      
+      if (data.success && data.translated) {
+        setMeaning(data.translated);
+        toast.success("Google AI Meaning Added! ✨", { 
+          style: { borderRadius: '15px', background: '#333', color: '#fff', fontSize: '10px' } 
+        });
       }
-    } catch (err) { console.error(err); } 
+    } catch (err) { 
+      console.error("Translation Error:", err); 
+      // toast.error("Auto-translate failed"); // Optional
+    } 
     finally { setTranslating(false); }
   };
 
@@ -281,8 +283,8 @@ export default function EnglishAppMyPosts() {
         <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-4 px-1">
-               <h3 className="text-[10px] font-black uppercase text-gray-400 italic">{isCropping ? "1. Crop" : "2. Design Studio"}</h3>
-               <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase p-2">Cancel</button>
+                <h3 className="text-[10px] font-black uppercase text-gray-400 italic">{isCropping ? "1. Crop" : "2. Design Studio"}</h3>
+                <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase p-2">Cancel</button>
             </div>
 
             {isCropping ? (
@@ -331,20 +333,20 @@ export default function EnglishAppMyPosts() {
           <div className="relative">
             <input 
               type="text" 
-              placeholder="Word" 
+              placeholder="Enter English Word" 
               value={word} 
               className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" 
               onChange={e => setWord(e.target.value)} 
-              onBlur={() => handleAutoTranslate(word)} // 🔥 Trigger on Blur
+              onBlur={() => handleAutoTranslate(word)} // 🔥 Updated: Calling your backend logic
             />
             {translating && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase">Translating...</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Fetching Meaning...</span>
             )}
           </div>
 
           <input 
             type="text" 
-            placeholder={translating ? "AI Thinking..." : "Hindi Meaning"} 
+            placeholder={translating ? "Searching..." : "Hindi Meaning"} 
             value={meaning} 
             className={`w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold ${translating ? 'opacity-50' : ''}`} 
             onChange={e => setMeaning(e.target.value)} 

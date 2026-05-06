@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import * as fabricModule from "fabric"; 
+// 🔥 UPDATED: Vite/Production friendly named import
+import * as fabric from "fabric"; 
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-
-// Aggressive fabric extraction for Vite/React 19 compatibility
-const fabric = fabricModule.fabric || fabricModule;
 
 export default function EnglishAppMyPosts() {
   const [myPosts, setMyPosts] = useState([]);
@@ -35,17 +33,13 @@ export default function EnglishAppMyPosts() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 1. UPDATED: AUTO TRANSLATE LOGIC (Using your NEW Backend API)
+  // 🔥 1. AUTO TRANSLATE LOGIC
   const handleAutoTranslate = async (englishWord) => {
-    // Agar editing chal rahi hai ya word chhota hai toh translate mat karo
     if (!englishWord || englishWord.trim().length < 2 || editingId) return;
-    
     setTranslating(true);
     try {
-      // ✅ Now calling your own backend which uses google-translate-api-next
       const res = await fetch(`${API_URL}/api/english-posts/auto-translate?text=${englishWord}`);
       const data = await res.json();
-      
       if (data.success && data.translated) {
         setMeaning(data.translated);
         toast.success("Google AI Meaning Added! ✨", { 
@@ -54,7 +48,6 @@ export default function EnglishAppMyPosts() {
       }
     } catch (err) { 
       console.error("Translation Error:", err); 
-      // toast.error("Auto-translate failed"); // Optional
     } 
     finally { setTranslating(false); }
   };
@@ -72,10 +65,11 @@ export default function EnglishAppMyPosts() {
 
   useEffect(() => { fetchMyPosts(); }, []);
 
-  // --- 🔥 Fabric Canvas Initialization ---
+  // --- 🔥 Fabric Canvas Initialization (Vite Optimized) ---
   useEffect(() => {
     if (!isCropping && tempImage) {
       const timeout = setTimeout(() => {
+        // Direct access to fabric from the star import
         if (fabric && fabric.Canvas) {
           const canvas = new fabric.Canvas("fabric-canvas", {
             width: displayDims.w,
@@ -183,10 +177,8 @@ export default function EnglishAppMyPosts() {
       finalCanvas.height = bgImg.naturalHeight;
       const ctx = finalCanvas.getContext("2d");
       ctx.drawImage(bgImg, 0, 0);
-
       const multiplier = bgImg.naturalWidth / displayDims.w;
       const fabricDataURL = fabricCanvasRef.current.toDataURL({ format: 'png', multiplier });
-      
       const overlayImg = new Image();
       overlayImg.src = fabricDataURL;
       overlayImg.onload = async () => {
@@ -249,20 +241,17 @@ export default function EnglishAppMyPosts() {
     if (!meaning.trim() || englishRegex.test(meaning) || !hindiRegex.test(meaning)) {
       return toast.error("Hindi Meaning error! ✋");
     }
-    
     setUploading(true);
     const dataToSend = new FormData();
     dataToSend.append("word", word);
     dataToSend.append("meaning", meaning);
     dataToSend.append("userEmail", localStorage.getItem("eng_userEmail"));
-
     mediaItems.forEach((item) => {
       if (item.mode === "file" && item.value) {
         dataToSend.append("images", item.value); 
       }
     });
     dataToSend.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({ type: m.type, mode: m.mode, url: m.mode === 'url' ? m.value : null }))));
-
     try {
       const url = editingId ? `${API_URL}/api/english-posts/update/${editingId}` : `${API_URL}/api/english-posts/create`;
       const res = await fetch(url, { method: editingId ? "PUT" : "POST", body: dataToSend });
@@ -276,7 +265,7 @@ export default function EnglishAppMyPosts() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 pb-24 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-50 p-4 pb-24 flex flex-col items-center font-sans">
       
       {/* ✂️🖼️ EDITOR MODAL */}
       {tempImage && (
@@ -300,7 +289,7 @@ export default function EnglishAppMyPosts() {
                   <button onClick={addRect} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Rect</button>
                   <button onClick={addCircle} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Circle</button>
                   <button onClick={addArrow} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Arrow</button>
-                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase font-sans">Del</button>
+                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase">Del</button>
                 </div>
                 <div className="rounded-3xl overflow-hidden border bg-gray-50 relative mx-auto shadow-inner" style={{ width: displayDims.w, height: displayDims.h }}>
                   <img src={tempImage} className="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="" />
@@ -326,10 +315,9 @@ export default function EnglishAppMyPosts() {
       )}
 
       {/* 📤 FORM AREA */}
-      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8 font-sans">
+      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
         <h2 className="text-xl font-black italic uppercase mb-4 px-1">{editingId ? "Edit Sequence" : "New Sequence"}</h2>
         <form onSubmit={handleFinalSubmit} className="space-y-3">
-          
           <div className="relative">
             <input 
               type="text" 
@@ -337,21 +325,19 @@ export default function EnglishAppMyPosts() {
               value={word} 
               className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" 
               onChange={e => setWord(e.target.value)} 
-              onBlur={() => handleAutoTranslate(word)} // 🔥 Updated: Calling your backend logic
+              onBlur={() => handleAutoTranslate(word)} 
             />
             {translating && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Fetching Meaning...</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Translating...</span>
             )}
           </div>
-
           <input 
             type="text" 
-            placeholder={translating ? "Searching..." : "Hindi Meaning"} 
+            placeholder="Hindi Meaning" 
             value={meaning} 
-            className={`w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold ${translating ? 'opacity-50' : ''}`} 
+            className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" 
             onChange={e => setMeaning(e.target.value)} 
           />
-
           <div className="space-y-3 py-2">
             {mediaItems.map((item, index) => (
               <div key={index} className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
@@ -360,10 +346,9 @@ export default function EnglishAppMyPosts() {
                   <div className="flex gap-1">
                     <button type="button" onClick={() => updateMediaValue(index, "", "file")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'file' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>File</button>
                     <button type="button" onClick={() => updateMediaValue(index, "", "url")} className={`px-2 py-1 rounded-lg text-[8px] font-bold ${item.mode === 'url' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Link</button>
-                    <button type="button" onClick={() => removeMediaSlot(index)} className="ml-1 text-gray-300 font-bold px-1 text-xs">×</button>
+                    <button type="button" onClick={() => removeMediaSlot(index)} className="text-gray-300 font-bold px-1 text-xs">×</button>
                   </div>
                 </div>
-
                 {item.mode === "file" ? (
                   <div className="space-y-2">
                     {item.value && (
@@ -371,9 +356,9 @@ export default function EnglishAppMyPosts() {
                          <img src={item.value instanceof File ? URL.createObjectURL(item.value) : item.value} className="w-full h-full object-contain" alt="" />
                       </div>
                     )}
-                    <input type="file" accept={item.type === 'video' ? 'video/*' : 'image/*' } onChange={(e) => handleFileChange(index, e.target.files[0])} className="text-[10px] w-full" />
+                    <input type="file" onChange={(e) => handleFileChange(index, e.target.files[0])} className="text-[10px] w-full" />
                     {item.value && item.type === 'image' && (
-                      <button type="button" onClick={() => handleOpenEditor(index)} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2.5 rounded-xl border border-blue-100 uppercase tracking-tighter w-full mt-3 active:scale-95 transition-all">⚡ Edit / Design</button>
+                      <button type="button" onClick={() => handleOpenEditor(index)} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2.5 rounded-xl border border-blue-100 uppercase w-full mt-3">⚡ Edit / Design</button>
                     )}
                   </div>
                 ) : (
@@ -382,32 +367,30 @@ export default function EnglishAppMyPosts() {
               </div>
             ))}
           </div>
-
           <div className="flex gap-2 pb-2">
-            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all">+ Image</button>
-            <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all">+ Video</button>
-            <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all">+ YT</button>
+            <button type="button" onClick={() => addMediaSlot('image')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase">+ Image</button>
+            <button type="button" onClick={() => addMediaSlot('video')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase">+ Video</button>
+            <button type="button" onClick={() => addMediaSlot('embed')} className="flex-1 bg-gray-100 py-4 rounded-2xl text-[9px] font-black uppercase">+ YT</button>
           </div>
-
-          <button disabled={uploading || translating} className="w-full bg-red-500 text-white p-5 rounded-[2rem] font-black uppercase text-xs shadow-xl active:scale-95 transition-all disabled:bg-gray-200">
-            {uploading ? "Publishing HQ..." : (editingId ? "Update Entry" : "Post Sequence")}
+          <button disabled={uploading || translating} className="w-full bg-red-500 text-white p-5 rounded-[2rem] font-black uppercase text-xs shadow-xl active:scale-95 transition-all disabled:bg-gray-300">
+            {uploading ? "Publishing..." : (editingId ? "Update Entry" : "Post Sequence")}
           </button>
         </form>
       </div>
 
-      {/* 🖼️ My Archive Section */}
-      <div className="w-full max-w-sm font-sans">
+      {/* 🖼️ Archive */}
+      <div className="w-full max-w-sm">
         {myPosts.map((post) => (
           <div key={post._id} className="bg-white mb-8 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 relative">
             <div className="absolute top-4 right-4 flex gap-2 z-10">
-              <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full shadow-md flex items-center justify-center text-xs border border-gray-100">✍️</button>
-              <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs font-bold font-sans">×</button>
+              <button onClick={() => startEdit(post)} className="w-9 h-9 bg-white/90 rounded-full shadow-md flex items-center justify-center text-xs">✍️</button>
+              <button onClick={() => handleDelete(post._id)} className="w-9 h-9 bg-red-500 rounded-full shadow-lg flex items-center justify-center text-white text-xs font-bold">×</button>
             </div>
             <img src={post.media?.[0]?.url || post.image} className="w-full h-64 object-cover" alt="" />
             <div className="flex justify-between items-center px-6 py-5">
-              <div className="flex flex-col">
-                <h3 className="font-black text-xl text-gray-800 uppercase leading-none italic tracking-tighter">{post.word}</h3>
-                <span className="text-[8px] font-black text-gray-300 uppercase mt-1 tracking-widest">Items: {post.media?.length || 1}</span>
+              <div>
+                <h3 className="font-black text-xl text-gray-800 uppercase italic tracking-tighter">{post.word}</h3>
+                <span className="text-[8px] font-black text-gray-300 uppercase">Items: {post.media?.length || 1}</span>
               </div>
               <span className="text-red-500 font-bold text-sm bg-red-50 px-4 py-1.5 rounded-xl italic">{post.meaning}</span>
             </div>

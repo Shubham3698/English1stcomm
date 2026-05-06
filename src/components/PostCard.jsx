@@ -4,8 +4,9 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
 import 'swiper/css';
 import 'swiper/css/pagination';
-// 🔥 Import CommentModal here
 import CommentModal from "./CommentModal"; 
+// 🔥 Import the new sound feature component
+import PremiumSoundFeature from "./PremiumSoundFeature"; 
 
 export default function PostCard({ 
   post, 
@@ -16,7 +17,6 @@ export default function PostCard({
   onRefresh, 
   API_URL 
 }) {
-  // 🔥 Local state for comments within the card
   const [showComments, setShowComments] = useState(false);
   const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
   const [playingIndex, setPlayingIndex] = useState({}); 
@@ -87,8 +87,8 @@ export default function PostCard({
     }
   };
 
+  // 🗣️ Speak logic (Premium check is now handled by the Wrapper)
   const speakWord = (word) => {
-    if (!isPremiumUser) return toast.error("Bhai, ye Premium feature hai! ₹1 ka Trial lo aur aawaj suno. 🎧");
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
@@ -218,7 +218,6 @@ export default function PostCard({
           </svg>
         </button>
 
-        {/* 🔥 Show Comments via Local State */}
         <button onClick={() => setShowComments(true)} className="transition-transform active:scale-125">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0 0 0 .19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 0 1 1.008.204 9.07 9.07 0 0 0 2.972.524z" />
@@ -250,16 +249,22 @@ export default function PostCard({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-4">
             <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">{post.word}</h2>
-            <button onClick={() => speakWord(post.word)} className={`p-2 rounded-full active:scale-90 transition-all shadow-sm ${isPremiumUser ? 'bg-gray-50 hover:bg-gray-100' : 'bg-gray-200'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-7 h-7 ${isPremiumUser ? 'text-red-500' : 'text-gray-400'}`}>
-                <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
-              </svg>
-            </button>
+            
+            {/* 🔥 Wrapped with PremiumSoundFeature */}
+            <PremiumSoundFeature isPremiumUser={isPremiumUser}>
+              <button 
+                onClick={() => speakWord(post.word)} 
+                className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 active:scale-90 transition-all shadow-sm"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-red-600">
+                  <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
+                </svg>
+              </button>
+            </PremiumSoundFeature>
           </div>
           <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-relaxed py-1">{post.meaning}</p>
         </div>
         
-        {/* 🔥 View Comments Hook */}
         <p onClick={() => setShowComments(true)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black">
           {post.comments && post.comments.length > 0 ? `View all ${post.comments.length} comments` : "Add a comment..."}
         </p>
@@ -287,7 +292,6 @@ export default function PostCard({
         </div>
       </div>
 
-      {/* 🔥 Render Modal INSIDE the Card */}
       {showComments && (
         <CommentModal 
           post={post} 

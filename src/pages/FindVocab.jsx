@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import toast from 'react-hot-toast';
 import PostCard from "../components/PostCard";
+// 🔥 Naya Premium Sound Feature import kiya
+import PremiumSoundFeature from "../components/PremiumSoundFeature"; 
 
 export default function FindVocab() {
   const [query, setQuery] = useState("");
@@ -9,13 +11,14 @@ export default function FindVocab() {
   const [activeTab, setActiveTab] = useState("dictionary"); 
 
   const [activeIndex, setActiveIndex] = useState(null);
+  // Premium status local storage se uthaya
   const [isPremiumUser] = useState(localStorage.getItem("eng_isPremium") === "true");
 
   const userEmail = localStorage.getItem("eng_userEmail");
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔊 Function: AI English Pronunciation
+  // 🔊 Function: AI English Pronunciation (Ab logic clean hai)
   const speakWord = (word) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -29,13 +32,12 @@ export default function FindVocab() {
     }
   };
 
-  // ✅ 1. Main Search (Naye search ke liye)
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
     if (!query.trim()) return toast.error("Word toh dalo bhai! ✍️");
     
     setLoading(true);
-    setResult(null); // Naya search fresh dikhane ke liye
+    setResult(null);
 
     try {
       const res = await fetch(`${API_URL}/api/english-posts/search-live?q=${query.trim()}`);
@@ -54,14 +56,12 @@ export default function FindVocab() {
     }
   };
 
-  // ✅ 2. Silent Refresh (Post Card actions ke liye - No Reload)
   const refreshPostsOnly = async () => {
     if (!query.trim()) return;
     try {
       const res = await fetch(`${API_URL}/api/english-posts/search-live?q=${query.trim()}`);
       const data = await res.json();
       if (data.success) {
-        // Sirf result update hoga, loading ya null nahi hoga
         setResult(data);
       }
     } catch (err) {
@@ -142,15 +142,19 @@ export default function FindVocab() {
                     <div className="h-[1px] flex-1 bg-gray-100"></div>
                   </div>
                   
-                  {/* 🔊 SOUND BUTTON */}
-                  <button 
-                    onClick={() => speakWord(result.word)}
-                    className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors shadow-sm active:scale-90"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                      <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
-                    </svg>
-                  </button>
+                  {/* 🔥 SOUND BUTTON WRAPPED IN PREMIUM FEATURE */}
+                  <div className="ml-4">
+                    <PremiumSoundFeature isPremiumUser={isPremiumUser}>
+                      <button 
+                        onClick={() => speakWord(result.word)}
+                        className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center text-red-500 hover:bg-red-100 transition-colors shadow-sm active:scale-90"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                          <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06zM18.563 6.625a.75.75 0 011.06 0 9 9 0 010 12.75.75.75 0 11-1.06-1.06 7.5 7.5 0 000-10.63.75.75 0 010-1.06zm-3.182 3.182a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.242.75.75 0 010-1.062z" />
+                        </svg>
+                      </button>
+                    </PremiumSoundFeature>
+                  </div>
                 </div>
 
                 {/* Word & Meaning */}
@@ -161,11 +165,11 @@ export default function FindVocab() {
                   {result.meaning.replace(/"/g, '')}
                 </p>
                 
-                {/* Grammar & Explanation Block */}
+                {/* Detailed Explanation */}
                 <div className="p-5 bg-gray-50 rounded-2xl border-l-4 border-black mb-6">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Detailed Explanation</p>
                     <p className="text-[14px] font-bold text-gray-700 italic leading-snug">
-                      {result.definition || "Community member has shared a post for this word. Check 'Posts' tab for full context."}
+                      {result.definition || "Check 'Posts' tab for full context and community usage."}
                     </p>
                 </div>
 
@@ -192,9 +196,6 @@ export default function FindVocab() {
                 <h3 className="text-xl font-[1000] italic uppercase tracking-tighter text-gray-900">
                   Related Posts 📱
                 </h3>
-                <span className="text-[10px] font-black bg-gray-100 text-gray-500 px-3 py-1 rounded-full uppercase tracking-widest">
-                  {result.relatedPosts?.length || 0} Results
-                </span>
               </div>
 
               {result.relatedPosts && result.relatedPosts.length > 0 ? (
@@ -207,7 +208,6 @@ export default function FindVocab() {
                       isPremiumUser={isPremiumUser}
                       activeIndex={activeIndex}
                       setActiveIndex={setActiveIndex}
-                      // 🔥 FIX: refreshPostsOnly pass kiya taaki reload na ho
                       onRefresh={refreshPostsOnly} 
                       API_URL={API_URL}
                     />
@@ -215,7 +215,7 @@ export default function FindVocab() {
                 </div>
               ) : (
                 <div className="text-center py-20 bg-white/50 border-2 border-dashed border-gray-100 rounded-[2.5rem]">
-                  <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest italic leading-relaxed px-10">
+                  <p className="text-[11px] font-black text-gray-300 uppercase tracking-widest italic px-10">
                     Bhai is word se related koi post nahi hai! 🧊
                   </p>
                 </div>

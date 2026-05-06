@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-// 🔥 Fabric import updated for Vite build stability
-import { fabric } from "fabric"; 
+import * as fabricModule from "fabric"; 
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+
+// Aggressive fabric extraction for Vite/React 19 compatibility
+const fabric = fabricModule.fabric || fabricModule;
 
 export default function EnglishAppMyPosts() {
   const [myPosts, setMyPosts] = useState([]);
@@ -33,12 +35,14 @@ export default function EnglishAppMyPosts() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 1. AUTO TRANSLATE LOGIC
+  // 🔥 1. UPDATED: AUTO TRANSLATE LOGIC (Using your NEW Backend API)
   const handleAutoTranslate = async (englishWord) => {
+    // Agar editing chal rahi hai ya word chhota hai toh translate mat karo
     if (!englishWord || englishWord.trim().length < 2 || editingId) return;
     
     setTranslating(true);
     try {
+      // ✅ Now calling your own backend which uses google-translate-api-next
       const res = await fetch(`${API_URL}/api/english-posts/auto-translate?text=${englishWord}`);
       const data = await res.json();
       
@@ -50,6 +54,7 @@ export default function EnglishAppMyPosts() {
       }
     } catch (err) { 
       console.error("Translation Error:", err); 
+      // toast.error("Auto-translate failed"); // Optional
     } 
     finally { setTranslating(false); }
   };
@@ -71,7 +76,6 @@ export default function EnglishAppMyPosts() {
   useEffect(() => {
     if (!isCropping && tempImage) {
       const timeout = setTimeout(() => {
-        // Updated check for Vite
         if (fabric && fabric.Canvas) {
           const canvas = new fabric.Canvas("fabric-canvas", {
             width: displayDims.w,
@@ -333,7 +337,7 @@ export default function EnglishAppMyPosts() {
               value={word} 
               className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" 
               onChange={e => setWord(e.target.value)} 
-              onBlur={() => handleAutoTranslate(word)} 
+              onBlur={() => handleAutoTranslate(word)} // 🔥 Updated: Calling your backend logic
             />
             {translating && (
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Fetching Meaning...</span>

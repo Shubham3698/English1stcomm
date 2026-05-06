@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import PaymentModal from "../components/PaymentModal";
 
+// 🔥 Updated URL logic for consistency
 const BASE_URL = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
-  : "https://englishcom1st.onrender.com";
+  : "https://serdeptry1st.onrender.com";
 
 const plans = [
   {
@@ -53,14 +54,17 @@ export default function Upgrade() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // 🔄 1. AUTO-SYNC: Fetches current membership from your Render DB
   useEffect(() => {
     const syncStatus = async () => {
       if (!userEmail) { setLoading(false); return; }
       try {
         const res = await axios.get(`${BASE_URL}/api/english-community/users/status?email=${userEmail}`);
         const { isPremium: dbPremium, planType: dbPlan, premiumExpiry } = res.data;
+        
         setIsPremium(dbPremium);
         setPlanType(dbPlan);
+        
         localStorage.setItem("eng_isPremium", dbPremium);
         localStorage.setItem("eng_planType", dbPlan);
         localStorage.setItem("eng_planExpiry", premiumExpiry);
@@ -73,12 +77,14 @@ export default function Upgrade() {
     syncStatus();
   }, [userEmail]);
 
+  // ⏳ 2. LIVE TIMER: Real-time countdown to expiry
   useEffect(() => {
     const timer = setInterval(() => {
       const expiry = localStorage.getItem("eng_planExpiry");
       if (expiry && isPremium) {
         const now = new Date().getTime();
         const distance = new Date(expiry).getTime() - now;
+        
         if (distance < 0) {
           setIsPremium(false);
           localStorage.setItem("eng_isPremium", "false");
@@ -120,20 +126,26 @@ export default function Upgrade() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white py-20 px-4 overflow-hidden selection:bg-red-500/30">
       
-      {/* Background Orbs */}
+      {/* Dynamic Background */}
       <div className="fixed top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-900/20 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 rounded-full blur-[120px]"></div>
       </div>
 
-      {/* Header Status */}
+      {/* Header Status Dashboard */}
       <div className="max-w-4xl mx-auto mb-24">
         <div className={`p-[1px] rounded-[2.5rem] bg-gradient-to-r ${isPremium ? 'from-red-600 to-blue-600' : 'from-zinc-800 to-zinc-800'}`}>
           <div className="bg-zinc-950 rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="text-center md:text-left">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Current Standing</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Membership System</span>
               <h2 className="text-4xl md:text-5xl font-[1000] italic uppercase tracking-tighter mt-2">
-                {isPremium ? <span className="bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent">{planType} Mode</span> : "Standard Access"}
+                {isPremium ? (
+                  <span className="bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text text-transparent">
+                    {planType} Mode Active
+                  </span>
+                ) : (
+                  "Standard Access"
+                )}
               </h2>
             </div>
             
@@ -148,32 +160,38 @@ export default function Upgrade() {
               </div>
             ) : (
               <div className="px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-full text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                Upgrade for Full Access
+                LOCKED CONTENT
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="text-center mb-20">
-        <h1 className="text-6xl md:text-8xl font-[1000] italic uppercase tracking-tighter mb-4 opacity-10 absolute left-1/2 -translate-x-1/2 -top-10 w-full pointer-events-none">PREMIUM</h1>
-        <h2 className="text-5xl md:text-6xl font-[1000] italic uppercase tracking-tighter">Choose Your <span className="text-red-600">Power</span></h2>
-        <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px] mt-4">No commitment, cancel anytime</p>
+      <div className="text-center mb-20 relative">
+        <h1 className="text-6xl md:text-9xl font-[1000] italic uppercase tracking-tighter mb-4 opacity-5 absolute left-1/2 -translate-x-1/2 -top-16 w-full pointer-events-none">
+          PREMIUM
+        </h1>
+        <h2 className="text-5xl md:text-6xl font-[1000] italic uppercase tracking-tighter relative z-10">
+          Tier <span className="text-red-600">Selection</span>
+        </h2>
+        <p className="text-zinc-500 font-bold uppercase tracking-[0.3em] text-[10px] mt-4 relative z-10">
+          Professional English Development Resources
+        </p>
       </div>
 
-      {/* Plans Grid */}
+      {/* Grid Layout */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => {
           const isActive = isPremium && planType === plan.id;
           return (
             <div 
               key={plan.id}
-              className={`relative p-[1px] rounded-[3.5rem] transition-all duration-500 ${plan.popular ? 'scale-105 md:-translate-y-4' : 'scale-100'} ${isActive ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
+              className={`relative p-[1px] rounded-[3.5rem] transition-all duration-500 ${plan.popular ? 'scale-105 md:-translate-y-4 shadow-[0_0_50px_rgba(220,38,38,0.15)]' : 'scale-100'} ${isActive ? 'opacity-100' : 'opacity-90 hover:opacity-100'}`}
             >
               <div className={`h-full bg-zinc-950 border ${plan.border} rounded-[3.5rem] p-10 flex flex-col`}>
                 {plan.popular && (
                   <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[9px] font-black px-6 py-2 rounded-full uppercase tracking-widest shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                    Most Chosen
+                    Most Popular
                   </span>
                 )}
 
@@ -203,7 +221,7 @@ export default function Upgrade() {
                     : `bg-gradient-to-br ${plan.theme} text-white shadow-xl hover:shadow-2xl active:scale-95`
                   }`}
                 >
-                  <span className="relative z-10">{isActive ? "Plan Active" : plan.buttonText}</span>
+                  <span className="relative z-10">{isActive ? "Owned" : plan.buttonText}</span>
                   {!isActive && <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300"></div>}
                 </button>
               </div>
@@ -219,7 +237,7 @@ export default function Upgrade() {
           plan={selectedPlan} 
           userEmail={userEmail} 
           onSuccess={() => {
-            toast.success("Welcome to the Elite, Bhai! 💎");
+            toast.success("Welcome to the Master Circle! 🚀");
             window.location.reload(); 
           }}
         />

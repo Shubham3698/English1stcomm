@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import PaymentModal from "../components/PaymentModal";
 
-// 🔥 DYNAMIC URL: Localhost port 3000 aur Render dono ke liye path set hai
+// 🔥 DYNAMIC URL: Localhost port 3000 aur Render dono ke liye path setsadadsdsdasdasda hai
 const BASE_URL = window.location.hostname === "localhost" 
   ? "http://localhost:3000" 
   : "https://englishcom1st.onrender.com";

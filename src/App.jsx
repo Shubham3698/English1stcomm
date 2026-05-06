@@ -62,7 +62,7 @@ export default function App() {
           <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
           <Route path="/find-vocab" element={<FindVocab />} />
           <Route path="/ebook-store" element={<EbookStore />} />
-          <Route path="/UpgradeAgain" element={<UpgradeAgain />} />
+          <Route path="/upgrade-again" element={<UpgradeAgain />} />
         </Routes>
       </div>
     </BrowserRouter>

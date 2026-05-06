@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-// 🔥 UPDATED: Vite/Production friendly named import
 import * as fabric from "fabric"; 
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -16,7 +15,6 @@ export default function EnglishAppMyPosts() {
   const [mediaItems, setMediaItems] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // 🎨 Editor States (Fabric + Crop)
   const [tempImage, setTempImage] = useState(null);
   const [activeEditIndex, setActiveEditIndex] = useState(null);
   const [brushColor, setBrushColor] = useState("#ff0000");
@@ -33,7 +31,6 @@ export default function EnglishAppMyPosts() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 1. AUTO TRANSLATE LOGIC
   const handleAutoTranslate = async (englishWord) => {
     if (!englishWord || englishWord.trim().length < 2 || editingId) return;
     setTranslating(true);
@@ -46,9 +43,7 @@ export default function EnglishAppMyPosts() {
           style: { borderRadius: '15px', background: '#333', color: '#fff', fontSize: '10px' } 
         });
       }
-    } catch (err) { 
-      console.error("Translation Error:", err); 
-    } 
+    } catch (err) { console.error("Translation Error:", err); } 
     finally { setTranslating(false); }
   };
 
@@ -65,11 +60,9 @@ export default function EnglishAppMyPosts() {
 
   useEffect(() => { fetchMyPosts(); }, []);
 
-  // --- 🔥 Fabric Canvas Initialization (Vite Optimized) ---
   useEffect(() => {
     if (!isCropping && tempImage) {
       const timeout = setTimeout(() => {
-        // Direct access to fabric from the star import
         if (fabric && fabric.Canvas) {
           const canvas = new fabric.Canvas("fabric-canvas", {
             width: displayDims.w,
@@ -89,7 +82,6 @@ export default function EnglishAppMyPosts() {
     }
   }, [isCropping, tempImage, displayDims]);
 
-  // --- 🖌️ Tool Logic ---
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (canvas) {
@@ -105,16 +97,16 @@ export default function EnglishAppMyPosts() {
     }
   }, [drawMode, brushColor]);
 
+  // --- 🎨 DESIGN TOOLS ---
   const addRect = () => {
     if (!fabricCanvasRef.current) return;
     setDrawMode("select");
     const rect = new fabric.Rect({
       left: 50, top: 50, fill: 'transparent', stroke: brushColor,
-      strokeWidth: 4, width: 80, height: 80, cornerColor: 'blue', transparentCorners: false
+      strokeWidth: 4, width: 80, height: 80, cornerColor: 'blue'
     });
     fabricCanvasRef.current.add(rect);
     fabricCanvasRef.current.setActiveObject(rect);
-    fabricCanvasRef.current.renderAll();
   };
 
   const addCircle = () => {
@@ -122,11 +114,10 @@ export default function EnglishAppMyPosts() {
     setDrawMode("select");
     const circle = new fabric.Circle({
       left: 70, top: 70, fill: 'transparent', stroke: brushColor,
-      strokeWidth: 4, radius: 45, cornerColor: 'blue', transparentCorners: false
+      strokeWidth: 4, radius: 45, cornerColor: 'blue'
     });
     fabricCanvasRef.current.add(circle);
     fabricCanvasRef.current.setActiveObject(circle);
-    fabricCanvasRef.current.renderAll();
   };
 
   const addArrow = () => {
@@ -138,7 +129,30 @@ export default function EnglishAppMyPosts() {
     });
     fabricCanvasRef.current.add(arrow);
     fabricCanvasRef.current.setActiveObject(arrow);
+  };
+
+  // 🔥 NEW: TEXT TOOL
+  const addText = () => {
+    if (!fabricCanvasRef.current) return;
+    setDrawMode("select");
+    const text = new fabric.IText("Double Tap to Edit", {
+      left: 50, top: 150, fontFamily: 'Arial', fontWeight: '900',
+      fontSize: 28, fill: brushColor, fontStyle: 'italic', cornerColor: 'red'
+    });
+    fabricCanvasRef.current.add(text);
+    fabricCanvasRef.current.setActiveObject(text);
     fabricCanvasRef.current.renderAll();
+  };
+
+  // 🔥 NEW: UNDO LOGIC
+  const undo = () => {
+    if (!fabricCanvasRef.current) return;
+    const canvas = fabricCanvasRef.current;
+    const objects = canvas.getObjects();
+    if (objects.length > 0) {
+      canvas.remove(objects[objects.length - 1]);
+      canvas.renderAll();
+    }
   };
 
   const deleteSelected = () => {
@@ -284,12 +298,14 @@ export default function EnglishAppMyPosts() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-5 gap-1.5 bg-gray-100 p-1.5 rounded-2xl">
+                <div className="grid grid-cols-4 gap-1.5 bg-gray-100 p-1.5 rounded-2xl">
                   <button onClick={() => setDrawMode("free")} className={`p-2 rounded-xl text-[8px] font-black uppercase ${drawMode === 'free' ? 'bg-black text-white' : 'bg-white text-gray-400'}`}>Brush</button>
                   <button onClick={addRect} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Rect</button>
                   <button onClick={addCircle} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Circle</button>
                   <button onClick={addArrow} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Arrow</button>
-                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase">Del</button>
+                  <button onClick={addText} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase text-blue-600">Text</button>
+                  <button onClick={undo} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Undo</button>
+                  <button onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase col-span-2">Delete</button>
                 </div>
                 <div className="rounded-3xl overflow-hidden border bg-gray-50 relative mx-auto shadow-inner" style={{ width: displayDims.w, height: displayDims.h }}>
                   <img src={tempImage} className="absolute inset-0 w-full h-full object-cover pointer-events-none" alt="" />
@@ -319,25 +335,10 @@ export default function EnglishAppMyPosts() {
         <h2 className="text-xl font-black italic uppercase mb-4 px-1">{editingId ? "Edit Sequence" : "New Sequence"}</h2>
         <form onSubmit={handleFinalSubmit} className="space-y-3">
           <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Enter English Word" 
-              value={word} 
-              className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" 
-              onChange={e => setWord(e.target.value)} 
-              onBlur={() => handleAutoTranslate(word)} 
-            />
-            {translating && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Translating...</span>
-            )}
+            <input type="text" placeholder="Enter English Word" value={word} className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold uppercase" onChange={e => setWord(e.target.value)} onBlur={() => handleAutoTranslate(word)} />
+            {translating && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[8px] font-black text-blue-500 animate-pulse uppercase italic">Translating...</span>}
           </div>
-          <input 
-            type="text" 
-            placeholder="Hindi Meaning" 
-            value={meaning} 
-            className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" 
-            onChange={e => setMeaning(e.target.value)} 
-          />
+          <input type="text" placeholder="Hindi Meaning" value={meaning} className="w-full p-4 bg-gray-50 rounded-2xl outline-none border focus:border-red-500 text-sm font-bold" onChange={e => setMeaning(e.target.value)} />
           <div className="space-y-3 py-2">
             {mediaItems.map((item, index) => (
               <div key={index} className="p-3 bg-gray-50 rounded-2xl border border-gray-100">
@@ -357,13 +358,9 @@ export default function EnglishAppMyPosts() {
                       </div>
                     )}
                     <input type="file" onChange={(e) => handleFileChange(index, e.target.files[0])} className="text-[10px] w-full" />
-                    {item.value && item.type === 'image' && (
-                      <button type="button" onClick={() => handleOpenEditor(index)} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2.5 rounded-xl border border-blue-100 uppercase w-full mt-3">⚡ Edit / Design</button>
-                    )}
+                    {item.value && item.type === 'image' && <button type="button" onClick={() => handleOpenEditor(index)} className="bg-blue-50 text-blue-600 text-[9px] font-black py-2.5 rounded-xl border border-blue-100 uppercase w-full mt-3">⚡ Edit / Design</button>}
                   </div>
-                ) : (
-                  <input type="text" placeholder={`Paste ${item.type} URL`} value={item.value} className="w-full bg-transparent border-b border-gray-200 text-xs py-1 outline-none font-bold" onChange={(e) => updateMediaValue(index, e.target.value, "url")} />
-                )}
+                ) : <input type="text" placeholder={`Paste ${item.type} URL`} value={item.value} className="w-full bg-transparent border-b border-gray-200 text-xs py-1 outline-none font-bold" onChange={(e) => updateMediaValue(index, e.target.value, "url")} />}
               </div>
             ))}
           </div>
@@ -377,8 +374,6 @@ export default function EnglishAppMyPosts() {
           </button>
         </form>
       </div>
-
-      
 
       {/* 🖼️ Archive */}
       <div className="w-full max-w-sm">

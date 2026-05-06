@@ -27,13 +27,27 @@ export default function EbookStore() {
 
   const handleBuy = (book) => {
     toast.success(`Redirecting to payment for ${book.title}... 🚀`);
-    // Yahan tera Razorpay logic aayega
   };
 
   return (
     <div className="min-h-screen bg-gray-50/50 p-4 font-sans max-w-[1200px] mx-auto pb-20">
+      
+      {/* 🔴 NAYA TEST SECTION (SYCHRONIZATION CHECK) 🔴 */}
+      <div className="mt-4 bg-yellow-400 p-3 rounded-2xl flex items-center justify-between px-6 shadow-lg animate-pulse">
+        <div className="flex items-center gap-3">
+          <span className="bg-black text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Live Test</span>
+          <p className="text-[11px] font-black uppercase tracking-tight text-black">
+            Naya UI Update: <span className="italic text-red-700">Ver. 2.0.1 (Active)</span>
+          </p>
+        </div>
+        <div className="hidden md:block text-[10px] font-bold text-black/60 uppercase italic">
+          Timestamp: {new Date().toLocaleTimeString()}
+        </div>
+      </div>
+      {/* 🔴 TEST SECTION END 🔴 */}
+
       {/* Header */}
-      <div className="mt-6 mb-12 lg:px-4 text-center lg:text-left">
+      <div className="mt-10 mb-12 lg:px-4 text-center lg:text-left">
         <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter text-gray-900 leading-none">
           DIGITAL <span className="text-red-600">LIBRARY</span>
         </h1>
@@ -44,7 +58,6 @@ export default function EbookStore() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:mx-4">
         {books.map((book) => (
           <div key={book.id} className="bg-white rounded-[3rem] overflow-hidden shadow-xl border border-gray-100 flex flex-col h-full group">
-            {/* Upper Section */}
             <div className={`bg-gradient-to-br ${book.color} p-10 text-white relative`}>
                <span className="absolute top-6 right-8 bg-white/20 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">{book.tag}</span>
                <div className="text-6xl mb-4">{book.image}</div>
@@ -52,21 +65,11 @@ export default function EbookStore() {
                <p className="text-[11px] font-bold opacity-80 uppercase tracking-widest mt-2 leading-relaxed">{book.subtitle}</p>
             </div>
 
-            {/* Lower Section */}
             <div className="p-8 flex-1 flex flex-col justify-between">
               <div className="space-y-3 mb-8">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-500 text-sm">✔</span>
-                  <p className="text-[12px] font-bold text-gray-600">Lifetime Access to Content</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-green-500 text-sm">✔</span>
-                  <p className="text-[12px] font-bold text-gray-600">AI Voice Support Included</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-green-500 text-sm">✔</span>
-                  <p className="text-[12px] font-bold text-gray-600">Printable PDF Format</p>
-                </div>
+                <div className="flex items-center gap-2 text-green-500">✔ <p className="text-[12px] font-bold text-gray-600 italic">Lifetime Access to Content</p></div>
+                <div className="flex items-center gap-2 text-green-500">✔ <p className="text-[12px] font-bold text-gray-600 italic">AI Voice Support Included</p></div>
+                <div className="flex items-center gap-2 text-green-500">✔ <p className="text-[12px] font-bold text-gray-600 italic">Printable PDF Format</p></div>
               </div>
 
               <div className="flex items-center justify-between gap-4">

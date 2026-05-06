@@ -95,7 +95,6 @@ export default function Navbar() {
             🏠 Home
           </button>
 
-          {/* 🔥 NEW: Find Vocab Button */}
           <button
             onClick={() => {
               navigate("/find-vocab");
@@ -124,6 +123,17 @@ export default function Navbar() {
             className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
           >
             📥 My Saved Vault
+          </button>
+
+          {/* 🔥 NEW: Digital Store (E-books) Button for Razorpay Approval */}
+          <button
+            onClick={() => {
+              navigate("/ebook-store");
+              setOpen(false);
+            }}
+            className="w-full text-left px-6 py-4 bg-red-50 hover:bg-red-100 transition font-black text-red-600 flex items-center gap-3 border-y border-red-100 uppercase text-[12px] tracking-widest"
+          >
+            📚 E-Book Store
           </button>
 
           {/* ⭐ Upgrade Link */}
@@ -165,7 +175,7 @@ export default function Navbar() {
                          style={{ animation: 'shine 2s infinite' }} 
                     />
                     <span className="relative z-10 flex items-center justify-center gap-2">
-                       Logout Session
+                        Logout Session
                     </span>
                 </button>
             </div>

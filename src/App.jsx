@@ -10,6 +10,7 @@ import EnglishAppMyPosts from "./pages/EnglishAppMyPosts";
 import SavedPosts from "./pages/SavedPosts";
 import Upgrade from "./pages/Upgrade";
 import FindVocab from "./pages/FindVocab";
+import EbookStore from "./pages/EbookStore";
 
 export default function App() {
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/upgrade" element={<Upgrade />} />
           <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
           <Route path="/find-vocab" element={<FindVocab />} />
+          <Route path="/ebook-store" element={<EbookStore />} />
         </Routes>
       </div>
     </BrowserRouter>

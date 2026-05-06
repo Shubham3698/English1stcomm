@@ -378,9 +378,6 @@ export default function EnglishAppMyPosts() {
         </form>
       </div>
 
-
-
-
       
 
       {/* 🖼️ Archive */}

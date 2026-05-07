@@ -7,7 +7,6 @@ export default function Navbar() {
   const [showAuth, setShowAuth] = useState(false);
   const navigate = useNavigate();
 
-  // 👤 User click logic - Profile ya Login Modal
   const handleUserClick = () => {
     const engEmail = localStorage.getItem("eng_userEmail");
     if (engEmail) {
@@ -17,150 +16,101 @@ export default function Navbar() {
     }
   };
 
-  // 📥 Saved Vault logic - Check login before navigating
   const handleSavedClick = () => {
     const engEmail = localStorage.getItem("eng_userEmail");
     if (engEmail) {
       navigate("/saved-posts");
     } else {
-      setShowAuth(true); // Login nahi hai toh modal dikhao
+      setShowAuth(true);
     }
   };
 
   return (
     <>
-      {/* 🔴 Top Navbar */}
-      <nav className="bg-red-500 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md font-sans">
+      {/* 🔴 Top Navbar - Sharp & Sleek */}
+      <nav className="bg-[#0f0f15] text-white px-5 py-4 flex justify-between items-center sticky top-0 z-50 border-b border-white/5 font-sans">
         
         {/* 🔴 Logo Section */}
         <div 
           className="flex flex-col cursor-pointer active:scale-95 transition-transform"
           onClick={() => navigate("/")}
         >
-          <h1 className="font-black text-xl italic tracking-tighter leading-none">
+          <h1 className="font-black text-xl italic tracking-tighter leading-none text-white">
             LEARN-IGLISH
           </h1>
-          <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-70 leading-relaxed italic">
+          <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-gray-500 leading-relaxed italic">
             Serial Learners
           </span>
         </div>
 
-        {/* ☰ Hamburger */}
+        {/* ☰ Hamburger - Rectangular Sharp Icon */}
         <button
           onClick={() => setOpen(true)}
-          className="text-2xl hover:scale-110 transition-transform"
+          className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all active:scale-90"
         >
-          ☰
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="16" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
         </button>
       </nav>
 
       {/* 🔲 Overlay */}
       <div
         onClick={() => setOpen(false)}
-        className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity duration-300 ${
           open ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       />
 
-      {/* 📱 Sidebar */}
+      {/* 📱 Sidebar - Sharp Rectangle Style */}
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-72 bg-[#14141b] border-l border-white/10 shadow-2xl z-50 transform transition-transform duration-400 ease-in-out flex flex-col ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        {/* ❌ Close Button */}
-        <div className="flex justify-end p-5">
-          <button 
+        {/* ❌ Close Section */}
+        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-white/[0.02]">
+           <h2 className="font-bold text-gray-500 text-[10px] uppercase tracking-[0.2em]">Navigation</h2>
+           <button 
             onClick={() => setOpen(false)} 
-            className="text-gray-400 hover:text-black transition-colors"
+            className="text-gray-400 hover:text-white transition-colors text-lg"
           >
-            <span className="text-xl font-bold">✕</span>
+            ✕
           </button>
         </div>
 
-        {/* 👤 Sidebar Header */}
-        <div className="px-6 py-4 border-b">
-          <h2 className="font-black text-gray-800 text-lg uppercase tracking-widest">Menu</h2>
+        {/* 📌 Navigation Links - Sharp Corners (rounded-lg) */}
+        <div className="mt-4 px-4 space-y-2 overflow-y-auto flex-1">
+          {[
+            { label: "🏠 Home", path: "/" },
+            { label: "🔍 Find Vocab", path: "/find-vocab", color: "border-blue-500/30 bg-blue-500/5 text-blue-400" },
+            { label: "📱 Community Post", path: "/community" },
+            { label: "📥 My Saved Vault", onClick: handleSavedClick },
+            { label: "📚 E-Book Store", path: "/ebook-store", color: "border-red-500/30 bg-red-500/5 text-red-400" },
+            { label: "⭐ Upgrade Plan", path: "/upgrade", color: "border-orange-500/30 bg-orange-500/5 text-orange-400" },
+            { label: "👤 My Profile", onClick: handleUserClick, color: "mt-6 border-white/10 bg-white/5" }
+          ].map((item, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                if (item.onClick) item.onClick();
+                else navigate(item.path);
+                setOpen(false);
+              }}
+              className={`w-full text-left px-4 py-4 rounded-lg transition-all duration-200 font-bold flex items-center gap-3 border border-transparent
+                ${item.color ? item.color : 'text-gray-400 hover:bg-white/5 hover:border-white/10 hover:text-white'}
+                uppercase text-[11px] tracking-widest`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        {/* 📌 Navigation Links */}
-        <div className="mt-4 overflow-y-auto h-[calc(100%-180px)]">
-          <button
-            onClick={() => {
-              navigate("/");
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
-          >
-            🏠 Home
-          </button>
-
-          <button
-            onClick={() => {
-              navigate("/find-vocab");
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-blue-50 transition font-black text-blue-600 flex items-center gap-3 border-y border-gray-50 uppercase text-[12px] tracking-widest"
-          >
-            🔍 Find Vocab
-          </button>
-
-          <button
-            onClick={() => {
-              navigate("/community");
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
-          >
-            📱 Community Post
-          </button>
-
-          <button
-            onClick={() => {
-              handleSavedClick();
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-gray-50 transition font-bold text-gray-600 flex items-center gap-3"
-          >
-            📥 My Saved Vault
-          </button>
-
-          {/* 🔥 NEW: Digital Store (E-books) Button for Razorpay Approval */}
-          <button
-            onClick={() => {
-              navigate("/ebook-store");
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 bg-red-50 hover:bg-red-100 transition font-black text-red-600 flex items-center gap-3 border-y border-red-100 uppercase text-[12px] tracking-widest"
-          >
-            📚 E-Book Store
-          </button>
-
-          {/* ⭐ Upgrade Link */}
-          <button
-            onClick={() => {
-              navigate("/upgrade");
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-orange-50 transition font-black text-orange-500 flex items-center gap-3 border-t border-gray-50 uppercase text-[12px] tracking-widest"
-          >
-            ⭐ Upgrade Plan
-          </button>
-
-          <button
-            onClick={() => {
-              handleUserClick();
-              setOpen(false);
-            }}
-            className="w-full text-left px-6 py-4 hover:bg-red-50 transition font-black text-red-500 flex items-center gap-3 border-t border-gray-50"
-          >
-            👤 My Profile
-          </button>
-        </div>
-
-        {/* 🚀 Quick Logout Button */}
+        {/* 🚀 Logout Button - Square Edges but Slightly Softened */}
         {localStorage.getItem("eng_userEmail") && (
-            <div className="absolute bottom-10 w-full px-6">
+            <div className="p-4 mb-6">
                 <button 
                     onClick={() => {
                         localStorage.removeItem("eng_userEmail");
@@ -169,9 +119,9 @@ export default function Navbar() {
                         setOpen(false);
                         navigate("/");
                     }}
-                    className="group relative w-full py-4 bg-gray-900 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] overflow-hidden transition-all active:scale-95 shadow-2xl"
+                    className="group relative w-full py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-[0.2em] overflow-hidden transition-all active:scale-95 shadow-lg"
                 >
-                    <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent group-hover:animate-shine transition-all duration-500" 
+                    <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-black/10 to-transparent group-hover:animate-shine transition-all duration-500" 
                          style={{ animation: 'shine 2s infinite' }} 
                     />
                     <span className="relative z-10 flex items-center justify-center gap-2">
@@ -181,7 +131,6 @@ export default function Navbar() {
             </div>
         )}
 
-        {/* 🎨 Animations */}
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes shine {
             0% { left: -100%; }
@@ -191,7 +140,6 @@ export default function Navbar() {
         `}} />
       </div>
 
-      {/* 🔐 Login/Signup Modal */}
       {showAuth && (
         <SignInModal onClose={() => setShowAuth(false)} />
       )}

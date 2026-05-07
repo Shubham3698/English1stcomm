@@ -9,11 +9,11 @@ export default function EnglishAppMyPosts() {
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [translating, setTranslating] = useState(null); // Track specific index
+  const [translating, setTranslating] = useState(null);
 
-  // 🔥 Smart Deck States (Original word/meaning upgraded to Array)
+  // 🔥 Smart Deck States
   const [vocabItems, setVocabItems] = useState([{ word: "", meaning: "" }]);
-  const [mediaItems, setMediaItems] = useState([]); // { type, value, mode, vocabIndex }
+  const [mediaItems, setMediaItems] = useState([]); 
   const [editingId, setEditingId] = useState(null);
 
   // 🎨 Editor States (Fabric + Crop)
@@ -33,7 +33,18 @@ export default function EnglishAppMyPosts() {
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔥 1. AUTO TRANSLATE (Original Logic Ke Saath)
+  // --- 🔥 1. RESET & CANCEL LOGIC ---
+  const resetForm = () => {
+    if (window.confirm("Bhai, pura form clear karu? Unsaved changes udd jayenge!")) {
+      setVocabItems([{ word: "", meaning: "" }]);
+      setMediaItems([]);
+      setEditingId(null);
+      setTempImage(null);
+      toast.success("Form Cleared! ✨");
+    }
+  };
+
+  // --- 🔥 2. AUTO TRANSLATE Logic ---
   const handleAutoTranslate = async (englishWord, index) => {
     if (!englishWord || englishWord.trim().length < 2 || editingId) return;
     setTranslating(index);
@@ -63,7 +74,7 @@ export default function EnglishAppMyPosts() {
 
   useEffect(() => { fetchMyPosts(); }, []);
 
-  // --- 🔥 Fabric Canvas Initialization ---
+  // --- 🔥 3. FABRIC CANVAS & TOOLS ---
   useEffect(() => {
     if (!isCropping && tempImage) {
       const timeout = setTimeout(() => {
@@ -86,7 +97,6 @@ export default function EnglishAppMyPosts() {
     }
   }, [isCropping, tempImage, displayDims]);
 
-  // --- 🖌️ Tool Logic (SELECT, DRAW, SHAPES, TEXT) ---
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (canvas) {
@@ -105,10 +115,7 @@ export default function EnglishAppMyPosts() {
   const addRect = () => {
     if (!fabricCanvasRef.current) return;
     setDrawMode("select");
-    const rect = new fabric.Rect({
-      left: 50, top: 50, fill: 'transparent', stroke: brushColor,
-      strokeWidth: 4, width: 80, height: 80, cornerColor: 'blue', transparentCorners: false
-    });
+    const rect = new fabric.Rect({ left: 50, top: 50, fill: 'transparent', stroke: brushColor, strokeWidth: 4, width: 80, height: 80 });
     fabricCanvasRef.current.add(rect);
     fabricCanvasRef.current.setActiveObject(rect);
   };
@@ -116,43 +123,40 @@ export default function EnglishAppMyPosts() {
   const addCircle = () => {
     if (!fabricCanvasRef.current) return;
     setDrawMode("select");
-    const circle = new fabric.Circle({
-      left: 70, top: 70, fill: 'transparent', stroke: brushColor,
-      strokeWidth: 4, radius: 45, cornerColor: 'blue', transparentCorners: false
-    });
+    const circle = new fabric.Circle({ left: 70, top: 70, fill: 'transparent', stroke: brushColor, strokeWidth: 4, radius: 45 });
     fabricCanvasRef.current.add(circle);
     fabricCanvasRef.current.setActiveObject(circle);
   };
 
-  const addText = () => {
+  const addArrow = () => {
     if (!fabricCanvasRef.current) return;
     setDrawMode("select");
-    const text = new fabric.IText("Double Tap", {
-      left: 50, top: 150, fontFamily: 'Arial', fontWeight: '900',
-      fontSize: 28, fill: brushColor, fontStyle: 'italic', cornerColor: 'red'
-    });
+    const points = [ { x: 0, y: 5 }, { x: 40, y: 5 }, { x: 40, y: 0 }, { x: 55, y: 10 }, { x: 40, y: 20 }, { x: 40, y: 15 }, { x: 0, y: 15 } ];
+    const arrow = new fabric.Polygon(points, { left: 100, top: 100, fill: brushColor, scaleX: 1.5, scaleY: 1.5 });
+    fabricCanvasRef.current.add(arrow);
+    fabricCanvasRef.current.setActiveObject(arrow);
+  };
+
+  const addText = () => {
+    if (!fabricCanvasRef.current) return;
+    const text = new fabric.IText("Double Tap", { left: 50, top: 150, fontFamily: 'Arial', fontWeight: '900', fontSize: 28, fill: brushColor });
     fabricCanvasRef.current.add(text);
     fabricCanvasRef.current.setActiveObject(text);
   };
 
   const undo = () => {
-    if (!fabricCanvasRef.current) return;
     const canvas = fabricCanvasRef.current;
-    const objects = canvas.getObjects();
-    if (objects.length > 0) {
-      canvas.remove(objects[objects.length - 1]);
+    if (canvas && canvas.getObjects().length > 0) {
+      canvas.remove(canvas.getObjects()[canvas.getObjects().length - 1]);
       canvas.renderAll();
     }
   };
 
   const deleteSelected = () => {
-    if (!fabricCanvasRef.current) return;
     const canvas = fabricCanvasRef.current;
-    const active = canvas.getActiveObjects();
-    if (active.length > 0) {
-      active.forEach(obj => canvas.remove(obj));
-      canvas.discardActiveObject();
-      canvas.renderAll();
+    if (canvas) {
+      canvas.getActiveObjects().forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject().renderAll();
     }
   };
 
@@ -165,7 +169,6 @@ export default function EnglishAppMyPosts() {
     canvas.width = completedCrop.width * scaleX;
     canvas.height = completedCrop.height * scaleY;
     const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(image, completedCrop.x * scaleX, completedCrop.y * scaleY, completedCrop.width * scaleX, completedCrop.height * scaleY, 0, 0, canvas.width, canvas.height);
     const screenW = Math.min(window.innerWidth - 60, 350);
     setDisplayDims({ w: screenW, h: screenW * (completedCrop.height / completedCrop.width) });
@@ -174,6 +177,7 @@ export default function EnglishAppMyPosts() {
 
   const finalizeImage = async () => {
     const bgImg = new Image();
+    bgImg.crossOrigin = "anonymous";
     bgImg.src = tempImage;
     bgImg.onload = async () => {
       const finalCanvas = document.createElement("canvas");
@@ -188,36 +192,28 @@ export default function EnglishAppMyPosts() {
       overlayImg.onload = async () => {
         ctx.drawImage(overlayImg, 0, 0);
         const blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
-        // Correctly update the media value with processed file
         updateMediaValue(activeMediaIndex, new File([blob], `final_${Date.now()}.png`, { type: "image/png" }), "file");
         setTempImage(null);
-        toast.success("Design Saved! 🚀");
+        toast.success("Markup Saved! 🎨");
       };
     };
   };
 
-  // --- 🔥 DECK LOGIC HELPERS ---
+  // --- 🔥 4. DECK LOGIC HELPERS ---
   const addVocabSlot = () => setVocabItems([...vocabItems, { word: "", meaning: "" }]);
-  
   const removeVocabSlot = (vIdx) => {
     setVocabItems(vocabItems.filter((_, i) => i !== vIdx));
     setMediaItems(mediaItems.filter(m => m.vocabIndex !== vIdx));
   };
-
   const updateVocabValue = (vIdx, field, val) => {
     const updated = [...vocabItems];
     updated[vIdx][field] = val;
     setVocabItems(updated);
   };
-
   const addMediaToVocab = (type, vIdx) => {
     setMediaItems([...mediaItems, { type, value: "", mode: "file", vocabIndex: vIdx }]);
   };
-
-  const removeMediaSlot = (mIdx) => {
-    setMediaItems(mediaItems.filter((_, i) => i !== mIdx));
-  };
-
+  const removeMediaSlot = (mIdx) => setMediaItems(mediaItems.filter((_, i) => i !== mIdx));
   const updateMediaValue = (mIdx, val, mode) => {
     const updated = [...mediaItems];
     updated[mIdx].value = val;
@@ -234,14 +230,28 @@ export default function EnglishAppMyPosts() {
       const reader = new FileReader();
       reader.onload = () => setTempImage(reader.result);
       reader.readAsDataURL(item.value);
-    } else { setTempImage(item.value); }
+    } else { 
+      setTempImage(item.value); 
+    }
   };
 
-  // --- 📤 FINAL SUBMISSION ---
+  const startEdit = (post) => {
+    setEditingId(post._id);
+    setVocabItems(post.vocabData || [{ word: post.word, meaning: post.meaning }]);
+    const reconstructedMedia = [];
+    post.vocabData?.forEach((v, vIdx) => {
+      v.media?.forEach(m => {
+        // Mode 'file' to ensure editor and preview work for existing URLs
+        reconstructedMedia.push({ type: m.type, value: m.url, mode: "file", vocabIndex: vIdx });
+      });
+    });
+    setMediaItems(reconstructedMedia);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (vocabItems.some(i => !i.word.trim())) return toast.error("Word missing in deck!");
-    
+    if (vocabItems.some(i => !i.word.trim())) return toast.error("Word missing!");
     setUploading(true);
     const dataToSend = new FormData();
     dataToSend.append("userEmail", localStorage.getItem("eng_userEmail"));
@@ -249,7 +259,7 @@ export default function EnglishAppMyPosts() {
 
     const metadata = [];
     mediaItems.forEach((item) => {
-      if (item.mode === "file" && item.value instanceof File) {
+      if (item.value instanceof File) {
         dataToSend.append("images", item.value);
         metadata.push({ type: item.type, mode: "file", vocabIndex: item.vocabIndex });
       } else {
@@ -271,57 +281,43 @@ export default function EnglishAppMyPosts() {
   };
 
   const handleDelete = async (postId) => {
-    if (!window.confirm("Bhai delete karu?")) return;
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/delete/${postId}`, { method: "DELETE" });
-      if (res.ok) { toast.success("Removed"); fetchMyPosts(); }
-    } catch (err) { toast.error("Failed"); }
-  };
-
-  const startEdit = (post) => {
-    setEditingId(post._id);
-    setVocabItems(post.vocabData || [{ word: post.word, meaning: post.meaning }]);
-    // Reconstruct media items with indices
-    const reconstructedMedia = [];
-    post.vocabData?.forEach((v, vIdx) => {
-      v.media?.forEach(m => {
-        reconstructedMedia.push({ type: m.type, value: m.url, mode: "url", vocabIndex: vIdx });
-      });
-    });
-    setMediaItems(reconstructedMedia);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (!window.confirm("Delete karu?")) return;
+    await fetch(`${API_URL}/api/english-posts/delete/${postId}`, { method: "DELETE" });
+    fetchMyPosts();
+    toast.success("Deleted!");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 pb-24 flex flex-col items-center font-sans text-black">
       
-      {/* ✂️🖼️ EDITOR MODAL (Original Fabric Logic Unchanged) */}
+      {/* ✂️🖼️ EDITOR MODAL */}
       {tempImage && (
-        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto">
+        <div className="fixed inset-0 z-[10000] bg-black/95 flex flex-col items-center justify-center p-4">
+          <div className="bg-white p-5 rounded-[2.5rem] w-full max-w-sm shadow-2xl my-auto overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-4 px-1">
                 <h3 className="text-[10px] font-black uppercase text-gray-400 italic">{isCropping ? "1. Crop" : "2. Design Studio"}</h3>
-                <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase p-2">Cancel</button>
+                <button onClick={() => setTempImage(null)} className="text-[10px] font-black text-red-500 uppercase p-2">✕ Close</button>
             </div>
 
             {isCropping ? (
               <div className="bg-gray-50 rounded-3xl overflow-hidden p-2 flex justify-center border border-gray-100 max-h-[400px] overflow-auto">
                 <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
-                  <img ref={imgRef} src={tempImage} onLoad={e => setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, undefined, e.currentTarget.width, e.currentTarget.height), e.currentTarget.width, e.currentTarget.height))} alt="" className="max-w-full h-auto" />
+                  <img crossOrigin="anonymous" ref={imgRef} src={tempImage} onLoad={e => setCrop(centerCrop(makeAspectCrop({ unit: '%', width: 90 }, undefined, e.currentTarget.width, e.currentTarget.height), e.currentTarget.width, e.currentTarget.height))} alt="" className="max-w-full h-auto" />
                 </ReactCrop>
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-4 gap-1.5 bg-gray-100 p-1.5 rounded-2xl">
-                  <button type="button" onClick={() => setDrawMode("free")} className={`p-2 rounded-xl text-[8px] font-black uppercase ${drawMode === 'free' ? 'bg-black text-white' : 'bg-white text-gray-400'}`}>Brush</button>
+                  <button type="button" onClick={() => setDrawMode("free")} className={`p-2 rounded-xl text-[8px] font-black uppercase ${drawMode === 'free' ? 'bg-black text-white' : 'bg-white'}`}>Brush</button>
                   <button type="button" onClick={addRect} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Rect</button>
                   <button type="button" onClick={addCircle} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Circle</button>
+                  <button type="button" onClick={addArrow} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Arrow 🏹</button>
                   <button type="button" onClick={addText} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Text</button>
                   <button type="button" onClick={undo} className="p-2 bg-white rounded-xl text-[8px] font-black uppercase">Undo</button>
                   <button type="button" onClick={deleteSelected} className="p-2 bg-red-50 text-red-500 rounded-xl text-[8px] font-black uppercase">Del</button>
                 </div>
                 <div className="rounded-3xl overflow-hidden border bg-gray-50 relative mx-auto shadow-inner" style={{ width: displayDims.w, height: displayDims.h }}>
-                  <img src={tempImage} className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-40" alt="" />
+                  <img crossOrigin="anonymous" src={tempImage} className="absolute inset-0 w-full h-full object-cover pointer-events-none opacity-40" alt="" />
                   <canvas id="fabric-canvas" className="relative z-10" />
                 </div>
               </div>
@@ -330,8 +326,8 @@ export default function EnglishAppMyPosts() {
             <div className="flex flex-col gap-3 mt-6">
               {!isCropping && (
                 <div className="flex justify-between items-center px-1">
-                  <input type="color" value={brushColor} onChange={e => setBrushColor(e.target.value)} className="w-10 h-10 rounded-full border-0 shadow-md cursor-pointer" />
-                  <button onClick={() => setDrawMode("select")} className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase ${drawMode === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-400'}`}>Move</button>
+                  <input type="color" value={brushColor} onChange={e => setBrushColor(e.target.value)} className="w-10 h-10 rounded-full border-0 cursor-pointer shadow-md" />
+                  <button onClick={() => setDrawMode("select")} className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase ${drawMode === 'select' ? 'bg-blue-500 text-white' : 'bg-gray-100'}`}>Move</button>
                 </div>
               )}
               <button onClick={isCropping ? async () => { const hq = await getCroppedImg(); setTempImage(hq); setIsCropping(false); } : finalizeImage} 
@@ -344,12 +340,15 @@ export default function EnglishAppMyPosts() {
       )}
 
       {/* 📤 MAIN DECK FORM */}
-      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
-        <h2 className="text-xl font-black italic uppercase mb-6 px-1">{editingId ? "Edit Deck" : "New Smart Deck"}</h2>
+      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8 relative">
+        <div className="flex justify-between items-center mb-6 px-1">
+          <h2 className="text-xl font-black italic uppercase">{editingId ? "Update Deck" : "New Smart Deck"}</h2>
+          <button onClick={resetForm} className="text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-tighter">✕ Cancel / Clear</button>
+        </div>
+        
         <form onSubmit={handleFinalSubmit} className="space-y-8">
-          
           {vocabItems.map((vItem, vIdx) => (
-            <div key={vIdx} className="space-y-4 p-5 bg-gray-50 rounded-[2.5rem] border border-gray-100 relative animate-in slide-in-from-bottom-4">
+            <div key={vIdx} className="space-y-4 p-5 bg-gray-50 rounded-[2.5rem] border border-gray-100 relative">
               {vocabItems.length > 1 && (
                 <button type="button" onClick={() => removeVocabSlot(vIdx)} className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full shadow-lg font-bold">×</button>
               )}
@@ -362,32 +361,39 @@ export default function EnglishAppMyPosts() {
                 {translating === vIdx && <span className="text-[7px] font-black text-blue-500 animate-pulse uppercase">AI...</span>}
               </div>
 
-              {/* Media List for THIS Word */}
               <div className="space-y-3">
-                {mediaItems.filter(m => m.vocabIndex === vIdx).map((mItem, mIdxGlobal) => {
+                {mediaItems.filter(m => m.vocabIndex === vIdx).map((mItem, _) => {
                    const actualIdx = mediaItems.findIndex(m => m === mItem);
+                   const previewUrl = mItem.value instanceof File ? URL.createObjectURL(mItem.value) : mItem.value;
+                   
                    return (
-                    <div key={mIdxGlobal} className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm relative">
-                      <button type="button" onClick={() => removeMediaSlot(actualIdx)} className="absolute top-1 right-2 text-gray-300 font-bold text-lg">×</button>
+                    <div key={actualIdx} className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm relative">
+                      <button type="button" onClick={() => removeMediaSlot(actualIdx)} className="absolute top-1 right-2 text-gray-300 font-bold text-lg">✕</button>
+                      
                       <div className="flex gap-2 mb-2">
-                        <button type="button" onClick={() => updateMediaValue(actualIdx, null, "file")} className={`px-2 py-1 rounded-md text-[7px] font-black ${mItem.mode === 'file' ? 'bg-black text-white' : 'bg-gray-100'}`}>FILE</button>
-                        <button type="button" onClick={() => updateMediaValue(actualIdx, "", "url")} className={`px-2 py-1 rounded-md text-[7px] font-black ${mItem.mode === 'url' ? 'bg-black text-white' : 'bg-gray-100'}`}>LINK</button>
+                        <button type="button" onClick={() => updateMediaValue(actualIdx, mItem.value, "file")} className={`px-2 py-1 rounded-md text-[7px] font-black ${mItem.mode === 'file' ? 'bg-black text-white' : 'bg-gray-100'}`}>FILE / PREVIEW</button>
+                        <button type="button" onClick={() => updateMediaValue(actualIdx, mItem.value, "url")} className={`px-2 py-1 rounded-md text-[7px] font-black ${mItem.mode === 'url' ? 'bg-black text-white' : 'bg-gray-100'}`}>LINK</button>
                       </div>
-                      {mItem.mode === "file" ? (
+
+                      {mItem.mode === "file" && !mItem.value ? (
+                        <input type="file" className="text-[8px] w-full p-2 border-2 border-dashed rounded-lg" onChange={(e) => updateMediaValue(actualIdx, e.target.files[0], "file")} />
+                      ) : (mItem.mode === "file" || (mItem.mode === "url" && mItem.value?.startsWith('http'))) && mItem.value ? (
                         <div className="space-y-2">
-                          <input type="file" className="text-[8px] w-full" onChange={(e) => updateMediaValue(actualIdx, e.target.files[0], "file")} />
-                          {mItem.value && (
-                            <div className="relative rounded-xl overflow-hidden border">
-                              {mItem.type === 'video' ? 
-                                <video src={mItem.value instanceof File ? URL.createObjectURL(mItem.value) : mItem.value} className="w-full h-24 object-contain bg-gray-50" controls/> :
-                                <img src={mItem.value instanceof File ? URL.createObjectURL(mItem.value) : mItem.value} className="w-full h-24 object-contain bg-gray-50" />
-                              }
-                              {mItem.type === 'image' && <button type="button" onClick={() => handleOpenEditor(actualIdx)} className="w-full py-2 bg-blue-50 text-blue-600 text-[8px] font-black uppercase">Edit Design</button>}
-                            </div>
-                          )}
+                          <div className="relative rounded-xl overflow-hidden border bg-gray-50">
+                            {mItem.type === 'video' ? 
+                              <video src={previewUrl} className="w-full h-24 object-contain" controls/> :
+                              <img crossOrigin="anonymous" src={previewUrl} className="w-full h-24 object-contain" alt="preview" />
+                            }
+                            {mItem.type === 'image' && (
+                              <button type="button" onClick={() => handleOpenEditor(actualIdx)} className="w-full py-2 bg-blue-50 text-blue-600 text-[8px] font-black uppercase">
+                                Edit & Markup Design
+                              </button>
+                            )}
+                          </div>
+                          {!editingId && <input type="file" className="text-[7px] opacity-50" onChange={(e) => updateMediaValue(actualIdx, e.target.files[0], "file")} />}
                         </div>
                       ) : (
-                        <input type="text" placeholder="URL" className="w-full text-xs font-bold border-b py-1 outline-none" value={mItem.value || ""} onChange={(e) => updateMediaValue(actualIdx, e.target.value, "url")} />
+                        <input type="text" placeholder="Paste URL Here" className="w-full text-xs font-bold border-b py-1 outline-none" value={mItem.value || ""} onChange={(e) => updateMediaValue(actualIdx, e.target.value, "url")} />
                       )}
                     </div>
                    );
@@ -395,27 +401,26 @@ export default function EnglishAppMyPosts() {
                 <div className="flex gap-2">
                   <button type="button" onClick={() => addMediaToVocab('image', vIdx)} className="flex-1 bg-white py-3 rounded-xl text-[8px] font-black uppercase border-2 border-dashed border-gray-100">+ Photo</button>
                   <button type="button" onClick={() => addMediaToVocab('video', vIdx)} className="flex-1 bg-white py-3 rounded-xl text-[8px] font-black uppercase border-2 border-dashed border-gray-100">+ Video</button>
-                  <button type="button" onClick={() => addMediaToVocab('embed', vIdx)} className="flex-1 bg-white py-3 rounded-xl text-[8px] font-black uppercase border-2 border-dashed border-gray-100">+ YT</button>
                 </div>
               </div>
             </div>
           ))}
 
           <div className="space-y-3">
-            <button type="button" onClick={addVocabSlot} className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[2rem] text-[10px] font-black text-gray-400 uppercase tracking-widest hover:border-black hover:text-black transition-all">+ Add New Word Card</button>
+            <button type="button" onClick={addVocabSlot} className="w-full py-4 border-2 border-dashed border-gray-200 rounded-[2rem] text-[10px] font-black text-gray-400 uppercase tracking-widest hover:border-black transition-all">+ Add Word Card</button>
             <button disabled={uploading} className="w-full bg-red-500 text-white p-6 rounded-[2.5rem] font-black uppercase text-xs shadow-xl active:scale-95 disabled:bg-gray-300">
-              {uploading ? "Publishing Deck..." : (editingId ? "Update Deck" : "Publish Deck")}
+              {uploading ? "Publishing..." : (editingId ? "Update Deck" : "Publish Deck")}
             </button>
           </div>
         </form>
       </div>
 
-      {/* 🖼️ Archive (Simple List) */}
+      {/* 🖼️ ARCHIVE LIST */}
       <div className="w-full max-w-sm space-y-4">
-        <p className="text-[10px] font-black text-gray-400 uppercase text-center tracking-[0.3em]">Your Smart Decks</p>
+        <p className="text-[10px] font-black text-gray-400 uppercase text-center tracking-[0.3em]">Your Decks</p>
         {myPosts.map((post) => (
           <div key={post._id} className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 flex items-center p-4 gap-4">
-            <img src={post.image || (post.vocabData?.[0]?.media?.[0]?.url)} className="w-16 h-16 rounded-2xl object-cover bg-gray-50" alt="" />
+            <img src={post.vocabData?.[0]?.media?.[0]?.url || post.image} className="w-16 h-16 rounded-2xl object-cover bg-gray-50" alt="" />
             <div className="flex-1">
               <h3 className="font-black text-sm uppercase italic leading-none">{post.vocabData?.[0]?.word || post.word}</h3>
               <span className="text-[8px] font-black text-blue-500 uppercase">{post.vocabData?.length || 1} Cards</span>

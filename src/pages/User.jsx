@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import PremiumSoundFeature from "../components/PremiumSoundFeature";
+import WordMatchGame from "../components/WordMatchGame"; // 👈 Naya Game Component
 
 export default function EnglishAppUser() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function EnglishAppUser() {
   const [isPremiumUser, setIsPremiumUser] = useState(localStorage.getItem("eng_isPremium") === "true");
 
   const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [practiceType, setPracticeType] = useState("cards"); // 🔥 'cards' ya 'matching'
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMeaning, setShowMeaning] = useState(false);
 
@@ -110,7 +112,7 @@ export default function EnglishAppUser() {
           setShowMeaning(false);
         } else {
           setIsPracticeMode(false);
-          toast.success("Review Done! 🏆");
+          toast.success("Practice Session Done! 🏆");
           fetchSavedWords(user.email);
           setCurrentIndex(0);
         }
@@ -123,56 +125,87 @@ export default function EnglishAppUser() {
       
       {isPracticeMode ? (
         <div className="w-full max-w-md flex flex-col items-center mt-10 animate-in fade-in zoom-in duration-500">
-           {/* Card Practice Logic (Wahi purana mast wala) */}
-           <div className="text-center mb-10">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Recall: {filter}</span>
-              <div className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-black">{currentIndex + 1} / {practiceDueList.length}</div>
-           </div>
            
-           <div className="w-full relative" onClick={() => setShowMeaning(!showMeaning)}>
-              <div className="w-full aspect-[4/5] bg-white rounded-[4rem] shadow-2xl flex flex-col items-center justify-center p-12 cursor-pointer border-2 border-gray-50 active:scale-95 transition-all">
-                  <h2 className="text-5xl font-black text-gray-900 uppercase italic text-center">{practiceDueList[currentIndex]?.word}</h2>
-                  {showMeaning ? <p className="mt-10 text-2xl font-black text-red-500 italic uppercase animate-in slide-in-from-top-4">{practiceDueList[currentIndex]?.meaning}</p> : <p className="mt-10 text-[9px] font-black text-gray-300 uppercase tracking-widest">Tap to reveal</p>}
-              </div>
-              <div className="absolute top-8 right-8">
-                <PremiumSoundFeature isPremiumUser={isPremiumUser}>
-                  <button onClick={(e) => { e.stopPropagation(); speakWord(practiceDueList[currentIndex]?.word); }} className="w-14 h-14 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg></button>
-                </PremiumSoundFeature>
-              </div>
-           </div>
+           {/* 🔥 PRACTICE MODE SELECTOR: Matching Game vs Flashcards */}
+          {practiceType === "matching" ? (
+  <WordMatchGame 
+     // 🔥 Fix: Yahan bhi allFilteredWords bhejo taaki saare words ka game bane
+     data={allFilteredWords.slice(0, 6)} // Ek baar mein 6 words match karne ko do
+     onComplete={() => { 
+       setIsPracticeMode(false); 
+       fetchSavedWords(user.email); 
+     }} 
+  />
+): (
+             <>
+               <div className="text-center mb-10">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">SRS ACTIVE RECALL</span>
+                  <div className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-black">{currentIndex + 1} / {practiceDueList.length}</div>
+               </div>
+               
+               <div className="w-full relative" onClick={() => setShowMeaning(!showMeaning)}>
+                  <div className="w-full aspect-[4/5] bg-white rounded-[4rem] shadow-2xl flex flex-col items-center justify-center p-12 cursor-pointer border-2 border-gray-50 active:scale-95 transition-all">
+                      <h2 className="text-5xl font-black text-gray-900 uppercase italic text-center leading-tight tracking-tighter">{practiceDueList[currentIndex]?.word}</h2>
+                      {showMeaning ? <p className="mt-10 text-2xl font-black text-red-500 italic uppercase animate-in slide-in-from-top-4">{practiceDueList[currentIndex]?.meaning}</p> : <p className="mt-10 text-[9px] font-black text-gray-300 uppercase tracking-widest animate-pulse">Tap to reveal</p>}
+                  </div>
+                  <div className="absolute top-8 right-8">
+                    <PremiumSoundFeature isPremiumUser={isPremiumUser}>
+                      <button onClick={(e) => { e.stopPropagation(); speakWord(practiceDueList[currentIndex]?.word); }} className="w-14 h-14 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg></button>
+                    </PremiumSoundFeature>
+                  </div>
+               </div>
 
-           <div className="grid grid-cols-2 gap-4 mt-12 w-full px-2">
-             {showMeaning ? ['again', 'hard', 'good', 'easy'].map(lvl => (
-               <button key={lvl} onClick={() => handleReview(lvl)} className={`p-5 rounded-3xl font-black uppercase text-[10px] text-white shadow-lg active:scale-95 transition-all ${lvl==='again'?'bg-black':lvl==='hard'?'bg-orange-500':lvl==='good'?'bg-blue-500':'bg-green-500'}`}>{lvl}</button>
-             )) : <button onClick={() => setIsPracticeMode(false)} className="col-span-2 text-gray-300 text-[10px] font-black uppercase tracking-widest underline underline-offset-8">End Session</button>}
-           </div>
+               <div className="grid grid-cols-2 gap-4 mt-12 w-full px-2">
+                 {showMeaning ? ['again', 'hard', 'good', 'easy'].map(lvl => (
+                   <button key={lvl} onClick={() => handleReview(lvl)} className={`p-5 rounded-3xl font-black uppercase text-[10px] text-white shadow-lg active:scale-95 transition-all ${lvl==='again'?'bg-black':lvl==='hard'?'bg-orange-500':lvl==='good'?'bg-blue-500':'bg-green-500'}`}>{lvl}</button>
+                 )) : <button onClick={() => setIsPracticeMode(false)} className="col-span-2 text-gray-300 text-[10px] font-black uppercase tracking-widest underline underline-offset-8">End Session</button>}
+               </div>
+             </>
+           )}
         </div>
       ) : (
         <>
-          {/* 👤 PROFILE CARD - Buttons are BACK! */}
           <div className="w-full max-w-md bg-white rounded-[3rem] shadow-sm p-10 border border-gray-100 text-center mt-4">
             <div className="relative w-24 h-24 mx-auto mb-6">
-               <div className="w-full h-full bg-gradient-to-tr from-red-600 to-orange-400 text-white rounded-full flex items-center justify-center text-4xl font-black shadow-xl shadow-red-200">
+               <div className="w-full h-full bg-gradient-to-tr from-red-600 to-orange-400 text-white rounded-full flex items-center justify-center text-4xl font-black shadow-xl">
                  {user.name.charAt(0).toUpperCase()}
                </div>
                {isPremiumUser && <span className="absolute -bottom-1 -right-1 bg-yellow-400 text-[8px] font-black px-2 py-1 rounded-full border-2 border-white shadow-sm">PRO</span>}
             </div>
             
-            <h1 className="text-3xl font-black text-gray-800 italic">Hey, {user.name.split(' ')[0]}!</h1>
+            <h1 className="text-3xl font-black text-gray-800 italic tracking-tighter">Hey, {user.name.split(' ')[0]}!</h1>
             <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 mb-8">{user.email}</p>
 
-            {/* 🔥 YE RAHE TERE BUTTONS! 🔥 */}
             <div className="flex gap-2 mb-6">
               <button onClick={() => navigate("/community")} className="flex-1 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 shadow-md">Explore Hub</button>
               <button onClick={() => navigate("/my-posts")} className="flex-1 py-4 border-2 border-black rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95">My Uploads</button>
             </div>
 
-            <button 
-              onClick={() => practiceDueList.length > 0 ? setIsPracticeMode(true) : toast.error("All caught up!")}
-              className="w-full p-5 bg-red-50 text-red-600 rounded-[2rem] font-black uppercase tracking-widest text-[10px] border border-red-100 active:scale-95"
-            >
-              🎓 START {filter.toUpperCase()} PRACTICE ({practiceDueList.length})
-            </button>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => {
+                   if (practiceDueList.length > 0) { setPracticeType("cards"); setIsPracticeMode(true); } 
+                   else toast.error("All caught up!");
+                }}
+                className="w-full p-5 bg-red-50 text-red-600 rounded-[2rem] font-black uppercase tracking-widest text-[10px] border border-red-100 active:scale-95"
+              >
+                🎓 START SRS PRACTICE ({practiceDueList.length})
+              </button>
+<button 
+  onClick={() => {
+     // 🔥 Fix: practiceDueList ki jagah allFilteredWords use karo
+     if (allFilteredWords.length >= 3) { 
+       setPracticeType("matching"); 
+       setIsPracticeMode(true); 
+     } else { 
+       toast.error("Vault mein kam se kam 3 words hone chahiye! 📚"); 
+     }
+  }}
+  className="w-full p-4 bg-gray-50 text-gray-500 rounded-[2rem] font-black uppercase tracking-widest text-[9px] border border-gray-100 active:scale-95"
+>
+  🧩 PLAY MATCHING GAME ({allFilteredWords.length})
+</button>
+            </div>
           </div>
 
           <div className="w-full max-w-md mt-12 px-2">
@@ -184,13 +217,13 @@ export default function EnglishAppUser() {
               ))}
             </div>
 
-            {loading ? <div className="py-20 text-center text-[10px] font-black text-gray-300 animate-pulse uppercase tracking-widest">Syncing Records...</div> : allFilteredWords.length > 0 ? (
+            {loading ? <div className="py-20 text-center text-[10px] font-black text-gray-300 animate-pulse uppercase tracking-widest">Syncing Vault...</div> : allFilteredWords.length > 0 ? (
               <div className="space-y-4">
                 {allFilteredWords.map((item, idx) => (
                   <div key={`${item.parentPostId}-${idx}`} onClick={() => navigate(`/community?postId=${item.parentPostId}`)} className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between group active:scale-95 transition-all cursor-pointer">
                     <div className="flex flex-col">
-                      <h4 className="text-2xl font-black text-gray-800 uppercase italic group-hover:text-red-500 transition-colors">{item.word}</h4>
-                      <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest italic mt-1">{item.isDeckItem ? 'DECK WORD' : 'HUB RECORD'}</span>
+                      <h4 className="text-2xl font-black text-gray-800 uppercase italic group-hover:text-red-500 transition-colors tracking-tighter leading-none mb-1">{item.word}</h4>
+                      <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest italic">{item.isDeckItem ? 'DECK WORD' : 'HUB RECORD'}</span>
                     </div>
                     <p className={`text-sm font-black italic uppercase ${filter === 'hard' ? 'text-red-500' : 'text-blue-500'}`}>{item.meaning}</p>
                   </div>

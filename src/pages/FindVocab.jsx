@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react"; // 🔥 useRef aur useEffect add kiya
 import toast from 'react-hot-toast';
 import PostCard from "../components/PostCard";
 // 🔥 Naya Premium Sound Feature import kiya
@@ -14,11 +14,22 @@ export default function FindVocab() {
   // Premium status local storage se uthaya
   const [isPremiumUser] = useState(localStorage.getItem("eng_isPremium") === "true");
 
+  const postsSectionRef = useRef(null); // 🔥 Posts area ko target karne ke liye ref
+
   const userEmail = localStorage.getItem("eng_userEmail");
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
-  // 🔊 Function: AI English Pronunciation (Ab logic clean hai)
+  // 🔥 AUTO-SCROLL LOGIC: Jab user Posts tab par jaye toh smooth scroll ho
+  useEffect(() => {
+    if (activeTab === "posts" && result?.relatedPosts?.length > 0) {
+      setTimeout(() => {
+        postsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300); // Thoda delay taaki tab content render ho jaye
+    }
+  }, [activeTab, result]);
+
+  // 🔊 Function: AI English Pronunciation
   const speakWord = (word) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -142,7 +153,6 @@ export default function FindVocab() {
                     <div className="h-[1px] flex-1 bg-gray-100"></div>
                   </div>
                   
-                  {/* 🔥 SOUND BUTTON WRAPPED IN PREMIUM FEATURE */}
                   <div className="ml-4">
                     <PremiumSoundFeature isPremiumUser={isPremiumUser}>
                       <button 
@@ -191,7 +201,10 @@ export default function FindVocab() {
 
           {/* --- TAB 2: Related Posts View --- */}
           {activeTab === "posts" && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-500 max-w-[450px] lg:mx-4">
+            <div 
+              ref={postsSectionRef} // 🔥 Yahan ref attach kiya
+              className="animate-in fade-in slide-in-from-right-4 duration-500 max-w-[450px] lg:mx-4"
+            >
               <div className="flex items-center justify-between mb-6 px-4">
                 <h3 className="text-xl font-[1000] italic uppercase tracking-tighter text-gray-900">
                   Related Posts 📱
@@ -210,6 +223,7 @@ export default function FindVocab() {
                       setActiveIndex={setActiveIndex}
                       onRefresh={refreshPostsOnly} 
                       API_URL={API_URL}
+                      highlightWord={result.word.replace(/"/g, '')} // 🔥 Word pass kiya taaki PostCard swipe kar sake
                     />
                   ))}
                 </div>

@@ -15,12 +15,14 @@ export default function PostCard({
   activeIndex, 
   setActiveIndex, 
   onRefresh, 
-  API_URL 
+  API_URL,
+  highlightWord // 🔥 Search se aaya hua word pakadne ke liye
 }) {
   const [showComments, setShowComments] = useState(false);
   const [currentVocabIdx, setCurrentVocabIdx] = useState(0); // 🔥 Deck tracking index
   const [playingIndex, setPlayingIndex] = useState({}); 
   const swiperRef = useRef(null);
+  const cardRef = useRef(null); // 🔥 Scroll target ke liye
 
   const isOpen = activeIndex === post._id;
 
@@ -38,6 +40,24 @@ export default function PostCard({
       slideToVocabMap.push(vIdx); 
     }
   });
+
+  // 🔥 3. AUTO-SWIPE & HIGHLIGHT LOGIC (NEW)
+  // Jab search se word aaye, toh automatic us slide par swipe karo
+  useEffect(() => {
+    if (highlightWord) {
+      const targetIdx = deck.findIndex(v => v.word.toLowerCase() === highlightWord.toLowerCase());
+      if (targetIdx !== -1) {
+        const firstSlideOfWord = slideToVocabMap.indexOf(targetIdx);
+        if (firstSlideOfWord !== -1) {
+          // Thoda delay taaki Swiper initialize ho jaye
+          setTimeout(() => {
+            swiperRef.current?.slideTo(firstSlideOfWord, 500);
+            setCurrentVocabIdx(targetIdx);
+          }, 600);
+        }
+      }
+    }
+  }, [highlightWord, deck]);
 
   const currentVocab = deck[currentVocabIdx] || deck[0];
   
@@ -110,9 +130,12 @@ export default function PostCard({
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/community?postId=${post._id}`;
-    const text = `Bhai, ye word dekh: "${currentVocab.word}" (${currentVocab.meaning}).🔥`;
-    if (navigator.share) await navigator.share({ title: currentVocab.word, text, url: shareUrl });
+    // Ab share link mein specific word bhi jayega
+    const wordName = currentVocab.word.replace(/"/g, '');
+    const shareUrl = `${window.location.origin}/community?postId=${post._id}&highlight=${encodeURIComponent(wordName)}`;
+    const text = `Bhai, ye word dekh: "${wordName}" (${currentVocab.meaning}).🔥`;
+    
+    if (navigator.share) await navigator.share({ title: wordName, text, url: shareUrl });
     else { 
       navigator.clipboard.writeText(`${text} ${shareUrl}`); 
       toast.success("Link Copied! 📋"); 
@@ -144,14 +167,7 @@ const renderMediaInternal = () => {
   const isVideoPlaying = activeIdx !== undefined;
   const currentItem = mediaItems[activeIdx] || mediaItems[currentVocabIdx];
 
-  // 🔍 Check karo ki kya current item "Shorts" hai
   const isShorts = currentItem?.type === 'embed' && currentItem?.url?.includes('shorts/');
-
-  // 🔥 TERA UPDATED LOGIC: 
-  // Buttons sirf tab dikhenge jab:
-  // 1. Multiple items hon.
-  // 2. Video "Shorts" ho (Long video ya Image nahi).
-  // 3. Video "Play" ho raha ho.
   const showNavButtons = hasMultipleItems && isShorts && isVideoPlaying;
 
   return (
@@ -162,7 +178,6 @@ const renderMediaInternal = () => {
         .community-swiper .swiper-pagination { z-index: 10000 !important; bottom: 20px !important; }
       `}</style>
 
-      {/* 🧭 NAVIGATION: Sirf Playing Shorts par dikhenge */}
       {showNavButtons && (
         <>
           <button 
@@ -188,7 +203,7 @@ const renderMediaInternal = () => {
         onSlideChange={(swiper) => {
           const item = mediaItems[swiper.activeIndex];
           if (item) setCurrentVocabIdx(item.vocabIndex);
-          setPlayingIndex({}); // Stop video & Hide buttons on swipe
+          setPlayingIndex({}); 
         }}
       >
         {mediaItems.map((item, idx) => {
@@ -216,7 +231,6 @@ const renderMediaInternal = () => {
                 {item.type === 'video' ? (
                   <video src={item.url} className="w-full h-auto max-h-full" controls playsInline />
                 ) : (item.type === 'embed' || videoId) ? (
-                  /* 🎬 Shorts = Full, Long = Center (Aspect Video) */
                   <div className={`w-full ${itemIsShorts ? 'h-full' : 'aspect-video'} relative bg-black`}>
                     {isPlaying ? (
                       <iframe 
@@ -254,7 +268,7 @@ const renderMediaInternal = () => {
 };
 
   return (
-    <div id={post._id} className="mb-12 border-b border-gray-100 pb-6 animate-in fade-in duration-500">
+    <div ref={cardRef} id={post._id} className="mb-12 border-b border-gray-100 pb-6 animate-in fade-in duration-500">
       {/* 👤 Header */}
       <div className="flex items-center px-4 py-3 gap-3">
         <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] font-black text-white">
@@ -361,10 +375,10 @@ const renderMediaInternal = () => {
         <div className="bg-gray-50/50 rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
           {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
             <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === lvl ? 'border-red-500 bg-white' : 'border-transparent bg-white/50'}`}>
-               <div className="flex items-center gap-2">
-                 <span className="text-[10px] font-black uppercase text-gray-500">{lvl}</span>
-               </div>
-               <span className="text-[11px] font-black text-gray-900">{currentVocab.commandStats?.[lvl] || 0}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase text-gray-500">{lvl}</span>
+                </div>
+                <span className="text-[11px] font-black text-gray-900">{currentVocab.commandStats?.[lvl] || 0}</span>
             </button>
           ))}
         </div>

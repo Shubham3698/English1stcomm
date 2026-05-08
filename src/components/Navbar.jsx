@@ -108,28 +108,6 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* 🚀 Logout Button - Vibrant Yellow/Gold */}
-        {localStorage.getItem("eng_userEmail") && (
-            <div className="p-5 mb-8">
-                <button 
-                    onClick={() => {
-                        localStorage.removeItem("eng_userEmail");
-                        localStorage.removeItem("eng_userName");
-                        localStorage.removeItem("eng_isPremium");
-                        setOpen(false);
-                        navigate("/");
-                    }}
-                    className="group relative w-full py-5 bg-yellow-400 text-black rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] overflow-hidden transition-all active:scale-95 shadow-[0_10px_30px_rgba(234,179,8,0.3)] hover:bg-yellow-300"
-                >
-                    <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-shine transition-all duration-500" 
-                         style={{ animation: 'shine 2s infinite' }} 
-                    />
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                        Logout Session
-                    </span>
-                </button>
-            </div>
-        )}
 
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes shine {

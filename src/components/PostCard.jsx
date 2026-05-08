@@ -317,7 +317,7 @@ const renderMediaInternal = () => {
 
       <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
         <div className="bg-gray-50/50 rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
-          {['बहुत आसान है', 'मुश्किल है', 'सुना हुआ', 'dailyUse'].map((lvl) => (
+          {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
             <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === lvl ? 'border-red-500 bg-white' : 'border-transparent bg-white/50'}`}><div className="flex items-center gap-2"><span className="text-[10px] font-black uppercase text-gray-500">{lvl}</span></div><span className="text-[11px] font-black text-gray-900">{currentVocab.commandStats?.[lvl] || 0}</span></button>
           ))}
         </div>

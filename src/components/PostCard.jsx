@@ -2,13 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
-import { useSearchParams } from "react-router-dom"; // 🔥 URL params ke liye wapas add kiya
+import { useSearchParams } from "react-router-dom";
 import 'swiper/css';
 import 'swiper/css/pagination';
 import CommentModal from "./CommentModal"; 
-// 🔥 Import the new sound feature component
 import PremiumSoundFeature from "./PremiumSoundFeature"; 
 
+/**
+ * PostCard Component
+ * UI Match: Screenshot 2026-05-09 040633.png
+ * Features: Multimedia Deck, Word Counter (e.g., 3/7), YT Shorts Nav, Word Chips, Stat Tracking
+ */
 export default function PostCard({ 
   post, 
   userEmail, 
@@ -17,39 +21,50 @@ export default function PostCard({
   setActiveIndex, 
   onRefresh, 
   API_URL,
-  highlightWord: propHighlight // 🔥 FindVocab se aane wala prop
+  highlightWord: propHighlight 
 }) {
+  // --- 1. CORE STATES ---
   const [showComments, setShowComments] = useState(false);
-  const [currentVocabIdx, setCurrentVocabIdx] = useState(0); // 🔥 Deck tracking index
+  const [currentVocabIdx, setCurrentVocabIdx] = useState(0); 
   const [playingIndex, setPlayingIndex] = useState({}); 
-  const [searchParams] = useSearchParams(); // 🔥 URL parameters read karne ke liye
+  const [searchParams] = useSearchParams(); 
   const swiperRef = useRef(null);
-  const cardRef = useRef(null); // 🔥 Scroll target ke liye
+  const cardRef = useRef(null); 
 
   const isOpen = activeIndex === post._id;
 
-  // 🔥 1. SMART DECK DATA: Har word ka apna media array
+  // --- 2. MULTIMEDIA & DECK MAPPING ---
   const deck = post.vocabData && post.vocabData.length > 0 
     ? post.vocabData 
-    : [{ _id: post._id, word: post.word, meaning: post.meaning, media: post.media || [{type:'image', url: post.image}], wordStats: post.userStats, votedBy: post.votedBy, voteCount: post.voteCount, commandStats: post.commandStats }];
+    : [{ 
+        _id: post._id, 
+        word: post.word, 
+        meaning: post.meaning, 
+        media: post.media || [{type:'image', url: post.image}], 
+        wordStats: post.userStats, 
+        votedBy: post.votedBy, 
+        voteCount: post.voteCount, 
+        commandStats: post.commandStats 
+      }];
 
-  // 🔥 2. SLIDE MAPPING: Kaunsi slide kis word ki hai?
   const slideToVocabMap = [];
+  const mediaItems = [];
   deck.forEach((vocab, vIdx) => {
     if (vocab.media && vocab.media.length > 0) {
-      vocab.media.forEach(() => slideToVocabMap.push(vIdx));
+      vocab.media.forEach((m) => {
+        mediaItems.push({ ...m, vocabIndex: vIdx });
+        slideToVocabMap.push(vIdx);
+      });
     } else {
+      mediaItems.push({ type: 'image', url: post.image, vocabIndex: vIdx });
       slideToVocabMap.push(vIdx); 
     }
   });
 
-  // 🔥 3. AUTO-SWIPE & SCROLL LOGIC (Merged for FindVocab & Share Links)
+  // --- 3. AUTO-SWIPE & SCROLL LOGIC ---
   useEffect(() => {
-    // Check karo ki prop se highlight aaya hai ya URL parameters se
     const urlPostId = searchParams.get("postId");
     const urlHighlight = searchParams.get("highlight");
-    
-    // Priority: 1. FindVocab Prop | 2. URL Highlight (if post matches)
     const targetWord = propHighlight || (urlPostId === post._id ? urlHighlight : null);
 
     if (targetWord) {
@@ -58,11 +73,8 @@ export default function PostCard({
         const firstSlideOfWord = slideToVocabMap.indexOf(targetIdx);
         if (firstSlideOfWord !== -1) {
           setTimeout(() => {
-            // Swiper Swipe Logic
             swiperRef.current?.slideTo(firstSlideOfWord, 500);
             setCurrentVocabIdx(targetIdx);
-
-            // Scroll Logic: Sirf tab scroll kare jab ye specific post highlight honi ho
             if (propHighlight || urlPostId === post._id) {
               cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
             }
@@ -73,16 +85,11 @@ export default function PostCard({
   }, [propHighlight, searchParams, post._id, deck, slideToVocabMap]);
 
   const currentVocab = deck[currentVocabIdx] || deck[0];
-  
-  // ✅ THE FIXES: Definitive check for variables
   const isSaved = post.savedBy?.includes(userEmail); 
   const isVoted = currentVocab.votedBy?.includes(userEmail); 
   const userLevel = currentVocab.wordStats?.find((v) => v.email === userEmail)?.level; 
 
-  // ==========================================
-  // 🛠️ INTERNAL HANDLERS (Word-Targeted)
-  // ==========================================
-
+  // --- 4. ACTION HANDLERS ---
   const handleWordSelect = (idx) => {
     const firstSlideOfWord = slideToVocabMap.indexOf(idx);
     if (firstSlideOfWord !== -1) {
@@ -93,11 +100,9 @@ export default function PostCard({
 
   const handleVote = async (e) => {
     if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Bhai login karo! 😅");
-    
-    const wordId = currentVocab._id;
+    if (!userEmail) return toast.error("Bhai login karo! 🔑");
     try {
-      const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${wordId}`, {
+      const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail })
@@ -109,219 +114,218 @@ export default function PostCard({
   const handleStatUpdate = async (e, level) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Login first! 🔑");
-
-    const wordId = currentVocab._id;
     try {
-      const res = await fetch(`${API_URL}/api/english-posts/update-word-stat/${post._id}/${wordId}`, {
+      const res = await fetch(`${API_URL}/api/english-posts/update-word-stat/${post._id}/${currentVocab._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level, email: userEmail, nextReview: null })
+        body: JSON.stringify({ level, email: userEmail })
       });
-      if (res.ok) {
-        toast.success(`Word marked as ${level.toUpperCase()} ✅`);
-        onRefresh();
-      }
+      if (res.ok) { onRefresh(); toast.success(`${level.toUpperCase()} updated!`); }
     } catch (err) { toast.error("Update Failed!"); }
   };
 
   const handleSavePost = async (e) => {
     if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Bhai, login bina save nahi hoga! 💾");
+    if (!userEmail) return toast.error("Login to save! 💾");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/save/${post._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail })
       });
-      if (res.ok) {
-        const data = await res.json();
-        toast.success(data.isSaved ? "Post Saved! 📥" : "Removed from Vault! 📤");
-        onRefresh();
-      }
-    } catch (err) { toast.error("Network check karo bhai!"); }
+      if (res.ok) { onRefresh(); toast.success("Vault updated! 📥"); }
+    } catch (err) { toast.error("Error saving post!"); }
   };
 
   const handleShare = async () => {
     const wordName = currentVocab.word.replace(/"/g, '');
-    // 🔥 URL mein postId aur highlight dono bhej rahe hain share link ke liye
     const shareUrl = `${window.location.origin}/community?postId=${post._id}&highlight=${encodeURIComponent(wordName)}`;
-    const text = `Bhai, ye word dekh: "${wordName}" (${currentVocab.meaning}).🔥`;
-    
-    if (navigator.share) await navigator.share({ title: wordName, text, url: shareUrl });
-    else { 
-      navigator.clipboard.writeText(`${text} ${shareUrl}`); 
-      toast.success("Link Copied! 📋"); 
-    }
+    if (navigator.share) await navigator.share({ title: wordName, url: shareUrl });
+    else { navigator.clipboard.writeText(shareUrl); toast.success("Link Copied! 📋"); }
   };
 
   const speakWord = (word) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US'; 
-      utterance.rate = 0.8; 
+      utterance.lang = 'en-US'; utterance.rate = 0.8;
       window.speechSynthesis.speak(utterance);
     }
   };
 
-const renderMediaInternal = () => {
-  const mediaItems = [];
-  deck.forEach((vocab, vIdx) => {
-    if (vocab.media && vocab.media.length > 0) {
-      vocab.media.forEach((m) => mediaItems.push({ ...m, vocabIndex: vIdx }));
-    } else {
-      mediaItems.push({ type: 'image', url: post.image, vocabIndex: vIdx });
-    }
-  });
+  // --- 5. RENDER MEDIA ---
+  const renderMediaInternal = () => {
+    const activeSlide = swiperRef.current?.activeIndex || 0;
+    const currentItem = mediaItems[activeSlide];
+    const isShortsPlaying = currentItem?.url?.includes('shorts/') && playingIndex[post._id] !== undefined;
 
-  const hasMultipleItems = mediaItems.length > 1;
-  // Check if ANY video is currently playing in this post
-  const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
-
-  return (
-    <div className="relative group w-full h-[600px] bg-black overflow-hidden">
-      <style>{`
-        .community-swiper .swiper-pagination-bullet { background: white !important; opacity: 0.6; }
-        .community-swiper .swiper-pagination-bullet-active { background: #ef4444 !important; opacity: 1; }
-        .community-swiper .swiper-pagination { z-index: 50 !important; bottom: 20px !important; }
-      `}</style>
-
-      {/* ↔️ Navigation Buttons: Only show when a video is PLAYING and there are multiple items */}
-      {hasMultipleItems && isAnyVideoPlaying && (
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-[100] pointer-events-none">
-          <button 
-            onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} 
-            className="pointer-events-auto w-12 h-12 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} 
-            className="pointer-events-auto w-12 h-12 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-          </button>
+    return (
+      <div className="relative group w-full aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner">
+        
+        {/* 🔥 NEW: Word Count Indicator (e.g., 3/7 Word) */}
+        <div className="absolute top-3 right-3 z-[70] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl transition-opacity duration-300">
+          <p className="text-[9px] font-black text-white/90 uppercase tracking-widest italic">
+            {currentVocabIdx + 1}/{deck.length} Word
+          </p>
         </div>
-      )}
 
-      <Swiper 
-        onSwiper={(swiper) => (swiperRef.current = swiper)}
-        modules={[Pagination]} 
-        pagination={hasMultipleItems ? { clickable: true, dynamicBullets: true } : false} 
-        className="w-full h-full community-swiper"
-        onSlideChange={(swiper) => {
-          const item = mediaItems[swiper.activeIndex];
-          if (item) setCurrentVocabIdx(item.vocabIndex);
-          // ⚠️ IMPORTANT: Reset playing state on slide change to hide buttons automatically
-          setPlayingIndex({}); 
-        }}
-      >
-        {mediaItems.map((item, idx) => {
-          let videoId = ""; 
-          let itemIsShorts = false; 
-          let finalUrl = item.url;
-          
-          if (item.type === 'embed' || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
-            if (item.url.includes('shorts/')) { 
-              videoId = item.url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]; 
-              itemIsShorts = true; 
+        {/* Manual Nav Buttons for Playing Shorts */}
+        {mediaItems.length > 1 && isShortsPlaying && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none">
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg></button>
+          </div>
+        )}
+
+        <Swiper 
+          onSwiper={(s) => (swiperRef.current = s)}
+          modules={[Pagination]} 
+          pagination={mediaItems.length > 1 ? { clickable: true } : false} 
+          onSlideChange={(s) => {
+            const item = mediaItems[s.activeIndex];
+            if (item) setCurrentVocabIdx(item.vocabIndex);
+            setPlayingIndex({});
+          }}
+          className="w-full h-full"
+        >
+          {mediaItems.map((item, idx) => {
+            let videoId = ""; let isShorts = false; let finalUrl = item.url;
+            if (item.type === 'embed' || item.url.includes('youtube')) {
+              if (item.url.includes('shorts/')) { videoId = item.url.split('shorts/')[1]?.split(/[?&]/)[0]; isShorts = true; }
+              else if (item.url.includes('v=')) { videoId = item.url.split('v=')[1]?.split('&')[0]; }
+              else if (item.url.includes('youtu.be/')) { videoId = item.url.split('youtu.be/')[1]?.split(/[?&]/)[0]; }
+              finalUrl = `https://www.youtube.com/embed/${videoId}`;
             }
-            else if (item.url.includes('v=')) { videoId = item.url.split('v=')[1]?.split('&')[0]; }
-            else if (item.url.includes('youtu.be/')) { videoId = item.url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0]; }
-            finalUrl = `https://www.youtube.com/embed/${videoId}`;
-          }
-
-          const isPlaying = playingIndex[post._id] === idx;
-
-          return (
-            <SwiperSlide key={idx} className="bg-black relative h-full">
-              <div className="w-full h-full flex items-center justify-center">
+            const isPlaying = playingIndex[post._id] === idx;
+            return (
+              <SwiperSlide key={idx} className="bg-black flex items-center justify-center">
                 {item.type === 'video' ? (
-                  // Video controls for manual swipe
-                  <video src={item.url} className="w-full h-auto max-h-full" controls playsInline onPlay={() => setPlayingIndex({[post._id]: idx})} />
-                ) : (item.type === 'embed' || videoId) ? (
-                  <div className={`w-full ${itemIsShorts ? 'h-full' : 'aspect-video'} relative bg-black`}>
+                  <video src={item.url} className="w-full h-full object-contain" controls playsInline onPlay={() => setPlayingIndex({[post._id]: idx})} />
+                ) : (videoId) ? (
+                  <div className="w-full h-full">
                     {isPlaying ? (
-                      <iframe 
-                        className="w-full h-full border-0" 
-                        src={`${finalUrl}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`} 
-                        allow="autoplay; encrypted-media; picture-in-picture" 
-                        allowFullScreen
-                      ></iframe>
+                      <iframe className={`w-full ${isShorts ? 'h-full' : 'aspect-video'} border-0`} src={`${finalUrl}?autoplay=1&rel=0`} allow="autoplay" allowFullScreen></iframe>
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => setPlayingIndex({[post._id]: idx})}>
-                        <img 
-                          src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} 
-                          onError={(e) => e.target.src = `https://img.youtube.com/vi/${videoId}/0.jpg`} 
-                          className="w-full h-full object-cover opacity-60" 
-                        />
-                        <div className="absolute w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl">
-                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-white ml-1">
-                            <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
-                          </svg>
-                        </div>
+                      <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => setPlayingIndex({[post._id]: idx})}>
+                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-contain opacity-50" alt="thumb" />
+                        <div className="absolute w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl"><svg viewBox="0 0 24 24" fill="white" className="w-6 h-6"><path d="M8 5v14l11-7z" /></svg></div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <img src={item.url} alt="content" className="w-full h-auto max-h-full object-cover" />
+                  <img src={item.url} className="w-full h-full object-contain" alt="content" />
                 )}
-              </div>
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
-    </div>
-  );
-};
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
+      </div>
+    );
+  };
 
+  // --- 6. FINAL UI RENDER ---
   return (
-    <div ref={cardRef} id={post._id} className="mb-12 border-b border-gray-100 pb-6 animate-in fade-in duration-500">
-      <div className="flex items-center px-4 py-3 gap-3">
-        <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-[10px] font-black text-white">{post.userEmail?.charAt(0).toUpperCase()}</div>
-        <span className="text-[11px] font-black text-gray-800 italic">{post.userEmail?.split("@")[0]}</span>
-        <span className="text-[9px] ml-auto bg-gray-50 px-3 py-1.5 rounded-full text-gray-400 font-black uppercase tracking-widest border border-gray-100">{post.badgeName || "Vocabulary"}</span>
+    <div ref={cardRef} id={post._id} className="mb-8 mx-auto max-w-[380px] overflow-hidden bg-[#0d0d0f] border border-[#1f1f22] rounded-2xl shadow-2xl transition-all duration-500 font-sans">
+      
+      {/* 1. HEADER (Exact UI Match) */}
+      <div className="flex items-center justify-between px-4 py-3 bg-[#121215] border-b border-[#1f1f22]">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-[#4f46e5] flex items-center justify-center text-[10px] font-black text-white uppercase shadow-lg">
+            {post.userEmail?.charAt(0)}
+          </div>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            {post.userEmail?.split("@")[0]}
+          </span>
+        </div>
+        <span className="text-[7px] bg-[#1a1a1d] border border-white/5 px-2 py-0.5 rounded text-gray-600 font-black uppercase">
+          {post.badgeName || "NORMAL"}
+        </span>
       </div>
 
-      <div className="relative w-full bg-gray-50 overflow-hidden" onDoubleClick={handleVote}>{renderMediaInternal()}</div>
+      {/* 2. MEDIA DECK */}
+      <div className="p-1.5 relative" onDoubleClick={handleVote}>
+        {renderMediaInternal()}
+      </div>
 
+      {/* 3. WORD CHIPS NAVIGATION (UX Enhanced) */}
       {deck.length > 1 && (
-        <div className="flex items-center gap-2 px-5 pt-4 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1.5 px-4 py-1.5 overflow-x-auto no-scrollbar">
           {deck.map((item, idx) => (
-            <button key={idx} onClick={() => handleWordSelect(idx)} className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 border ${currentVocabIdx === idx ? "bg-black text-white border-black scale-105 shadow-lg shadow-black/20" : "bg-white text-gray-400 border-gray-100"}`}>{item.word}</button>
+            <button 
+              key={idx} 
+              onClick={() => handleWordSelect(idx)} 
+              className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all border 
+                ${currentVocabIdx === idx 
+                  ? "bg-[#1a1a1d] border-[#3b82f6] text-[#3b82f6] shadow-[0_0_10px_rgba(59,130,246,0.1)]" 
+                  : "bg-transparent border-white/5 text-gray-600"}`}
+            >
+              {item.word}
+            </button>
           ))}
         </div>
       )}
 
-      <div className="flex items-center gap-5 px-5 pt-5 text-black">
-        <button onClick={handleVote} className="transition-transform active:scale-150 duration-300"><svg xmlns="http://www.w3.org/2000/svg" fill={isVoted ? "#ef4444" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isVoted ? "#ef4444" : "currentColor"} className="w-7 h-7"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg></button>
-        <button onClick={() => setShowComments(true)} className="transition-transform active:scale-125"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785 0 0 0 .19.08c.957.1 1.954.02 2.894-.21a1.2 1.2 0 0 1 1.008.204 9.07 9.07 0 0 0 2.972.524z" /></svg></button>
-        <button onClick={handleShare} className="transition-transform active:scale-125"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0-10.628a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5m0 10.628a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5" /></svg></button>
-        <div className="ml-auto flex items-center gap-4">
-          <button onClick={handleSavePost} className="transition-transform active:scale-125"><svg xmlns="http://www.w3.org/2000/svg" fill={isSaved ? "black" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg></button>
-          <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className="transition-colors"><svg xmlns="http://www.w3.org/2000/svg" fill={isOpen ? "#3b82f6" : "none"} viewBox="0 0 24 24" strokeWidth={1.5} stroke={isOpen ? "#3b82f6" : "currentColor"} className="w-7 h-7"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
-        </div>
-      </div>
-
-      <div className="px-5 py-4 min-h-[140px]">
-        <p className="text-[12px] font-black text-gray-400 mb-2 italic">🔥 {currentVocab.voteCount || 0} Likes — Word {currentVocabIdx + 1}/{deck.length}</p>
-        <div key={currentVocabIdx} className="flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <div className="flex items-center gap-4">
-            <h2 className="text-5xl font-black text-gray-900 uppercase tracking-tighter leading-tight mb-2 italic">{currentVocab.word}</h2>
-            <PremiumSoundFeature isPremiumUser={isPremiumUser}><button onClick={() => speakWord(currentVocab.word)} className="p-2.5 rounded-full bg-red-50 hover:bg-red-100 active:scale-90 transition-all shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-red-600"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg></button></PremiumSoundFeature>
+      {/* 4. WORD INFO & SOUND */}
+      <div className="px-5 pt-4 pb-2">
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col">
+            <h2 className="text-3xl font-black text-white uppercase italic leading-none tracking-tighter">
+              {currentVocab.word}
+            </h2>
+            <div className="h-[2px] w-12 bg-[#fbbf24] mt-2"></div>
           </div>
-          <p className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-red-600 to-orange-500 bg-clip-text text-transparent italic leading-relaxed py-1">{currentVocab.meaning}</p>
+          <div className="relative">
+            <PremiumSoundFeature isPremiumUser={isPremiumUser}>
+              <button onClick={() => speakWord(currentVocab.word)} className="w-10 h-10 rounded-xl bg-[#1a1a1d] border border-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-md active:scale-90">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg>
+              </button>
+            </PremiumSoundFeature>
+            {!isPremiumUser && <div className="absolute -top-1 -right-1 w-4 h-4 bg-black/80 rounded-full flex items-center justify-center border border-white/10"><svg className="w-2 h-2 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zm5.83-6.23a8 8 0 11-11.66 0 8 8 0 0111.66 0z" /></svg></div>}
+          </div>
         </div>
-        <p onClick={() => setShowComments(true)} className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-5 cursor-pointer hover:text-black">{post.comments && post.comments.length > 0 ? `View all ${post.comments.length} comments` : "Add a comment..."}</p>
+        <p className="text-sm font-bold text-gray-500 italic mt-3 leading-relaxed">
+          {currentVocab.meaning}
+        </p>
       </div>
 
-      <div className={`px-4 mt-2 overflow-hidden transition-all duration-500 ${isOpen ? "max-h-60" : "max-h-0"}`}>
-        <div className="bg-gray-50/50 rounded-[2rem] p-4 grid grid-cols-2 gap-3 border border-gray-100">
+      {/* 5. PRIMARY ACTIONS (Balanced) */}
+      <div className="px-4 py-3 flex items-center gap-2">
+        <button onClick={handleVote} className={`flex-[1.1] flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase transition-all shadow-lg active:scale-95 ${isVoted ? "bg-[#ef4444] text-white" : "bg-[#1a1a1d] text-gray-500 border border-white/5"}`}>
+          <svg className="w-4 h-4" fill={isVoted ? "white" : "none"} stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+          <span className="tracking-tighter">{currentVocab.voteCount || 0}</span>
+        </button>
+
+        <button onClick={handleShare} className="flex-[1.8] py-3.5 rounded-xl bg-[#1a1a1d] border border-white/5 font-black text-[10px] uppercase text-gray-400 tracking-[0.2em] shadow-lg active:bg-neutral-800 transition-all">
+          SHARE
+        </button>
+
+        <button onClick={handleSavePost} className={`w-12 h-[52px] flex items-center justify-center rounded-xl border transition-all active:scale-90 ${isSaved ? "bg-white text-black" : "bg-[#1a1a1d] border-white/5 text-gray-500 shadow-lg"}`}>
+          <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
+        </button>
+        <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className={`w-12 h-[52px] flex items-center justify-center rounded-xl transition-all shadow-lg active:scale-95 ${isOpen ? "bg-[#2563eb] text-white" : "bg-[#3b82f6] text-white"}`}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+        </button>
+      </div>
+
+      {/* 6. STATS PANEL */}
+      <div className={`px-4 transition-all duration-500 overflow-hidden ${isOpen ? "max-h-[250px] mb-4 opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="grid grid-cols-2 gap-2 mt-2">
           {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
-            <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all ${userLevel === lvl ? 'border-red-500 bg-white' : 'border-transparent bg-white/50'}`}><div className="flex items-center gap-2"><span className="text-[10px] font-black uppercase text-gray-500">{lvl}</span></div><span className="text-[11px] font-black text-gray-900">{currentVocab.commandStats?.[lvl] || 0}</span></button>
+            <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3.5 rounded-xl bg-[#141417] border transition-all ${userLevel === lvl ? "border-yellow-500/50 shadow-[0_0_15px_rgba(251,191,36,0.1)]" : "border-white/5"}`}>
+              <span className="text-[9.5px] font-black uppercase text-gray-500 tracking-tighter">{lvl}</span>
+              <span className="text-[11px] font-black text-white">{currentVocab.commandStats?.[lvl] || 0}</span>
+            </button>
           ))}
         </div>
       </div>
+
+      {/* 7. FOOTER */}
+      <div className="pb-6 text-center mt-2">
+        <button onClick={() => setShowComments(true)} className="text-[8.5px] font-black text-gray-500 uppercase tracking-[0.25em] border-b border-gray-800 pb-0.5 hover:text-white transition-all">
+          COMMENTS ({post.comments?.length || 0})
+        </button>
+      </div>
+
       {showComments && <CommentModal post={post} userEmail={userEmail} API_URL={API_URL} onClose={() => setShowComments(false)} onRefresh={onRefresh} />}
     </div>
   );

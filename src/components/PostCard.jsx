@@ -175,36 +175,33 @@ const renderMediaInternal = () => {
   });
 
   const hasMultipleItems = mediaItems.length > 1;
-  const activeIdx = playingIndex[post._id];
-  const isVideoPlaying = activeIdx !== undefined;
-  const currentItem = mediaItems[activeIdx] || mediaItems[currentVocabIdx];
-
-  const isShorts = currentItem?.type === 'embed' && currentItem?.url?.includes('shorts/');
-  const showNavButtons = hasMultipleItems && isShorts && isVideoPlaying;
+  // Check if ANY video is currently playing in this post
+  const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
 
   return (
-    <div className="relative group w-full h-[600px] bg-black">
+    <div className="relative group w-full h-[600px] bg-black overflow-hidden">
       <style>{`
         .community-swiper .swiper-pagination-bullet { background: white !important; opacity: 0.6; }
         .community-swiper .swiper-pagination-bullet-active { background: #ef4444 !important; opacity: 1; }
-        .community-swiper .swiper-pagination { z-index: 10000 !important; bottom: 20px !important; }
+        .community-swiper .swiper-pagination { z-index: 50 !important; bottom: 20px !important; }
       `}</style>
 
-      {showNavButtons && (
-        <>
+      {/* ↔️ Navigation Buttons: Only show when a video is PLAYING and there are multiple items */}
+      {hasMultipleItems && isAnyVideoPlaying && (
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-[100] pointer-events-none">
           <button 
             onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} 
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-[10001] w-11 h-11 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
+            className="pointer-events-auto w-12 h-12 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
           >
-            ←
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} 
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-[10001] w-11 h-11 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
+            className="pointer-events-auto w-12 h-12 bg-black/60 border border-white/20 text-white rounded-full flex items-center justify-center backdrop-blur-md active:scale-90 transition-all shadow-2xl"
           >
-            →
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
-        </>
+        </div>
       )}
 
       <Swiper 
@@ -215,31 +212,54 @@ const renderMediaInternal = () => {
         onSlideChange={(swiper) => {
           const item = mediaItems[swiper.activeIndex];
           if (item) setCurrentVocabIdx(item.vocabIndex);
+          // ⚠️ IMPORTANT: Reset playing state on slide change to hide buttons automatically
           setPlayingIndex({}); 
         }}
       >
         {mediaItems.map((item, idx) => {
-          let videoId = ""; let itemIsShorts = false; let finalUrl = item.url;
+          let videoId = ""; 
+          let itemIsShorts = false; 
+          let finalUrl = item.url;
+          
           if (item.type === 'embed' || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
-            if (item.url.includes('shorts/')) { videoId = item.url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]; itemIsShorts = true; }
+            if (item.url.includes('shorts/')) { 
+              videoId = item.url.split('shorts/')[1]?.split('?')[0]?.split('&')[0]; 
+              itemIsShorts = true; 
+            }
             else if (item.url.includes('v=')) { videoId = item.url.split('v=')[1]?.split('&')[0]; }
             else if (item.url.includes('youtu.be/')) { videoId = item.url.split('youtu.be/')[1]?.split('?')[0]?.split('&')[0]; }
             finalUrl = `https://www.youtube.com/embed/${videoId}`;
           }
+
           const isPlaying = playingIndex[post._id] === idx;
+
           return (
-            <SwiperSlide key={idx} className="bg-black relative">
-              <div className="w-full h-full flex items-center justify-center overflow-hidden">
+            <SwiperSlide key={idx} className="bg-black relative h-full">
+              <div className="w-full h-full flex items-center justify-center">
                 {item.type === 'video' ? (
-                  <video src={item.url} className="w-full h-auto max-h-full" controls playsInline />
+                  // Video controls for manual swipe
+                  <video src={item.url} className="w-full h-auto max-h-full" controls playsInline onPlay={() => setPlayingIndex({[post._id]: idx})} />
                 ) : (item.type === 'embed' || videoId) ? (
                   <div className={`w-full ${itemIsShorts ? 'h-full' : 'aspect-video'} relative bg-black`}>
                     {isPlaying ? (
-                      <iframe className="w-full h-full border-0" src={`${finalUrl}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen></iframe>
+                      <iframe 
+                        className="w-full h-full border-0" 
+                        src={`${finalUrl}?autoplay=1&rel=0&modestbranding=1&origin=${window.location.origin}`} 
+                        allow="autoplay; encrypted-media; picture-in-picture" 
+                        allowFullScreen
+                      ></iframe>
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center cursor-pointer group/play" onClick={() => setPlayingIndex({[post._id]: idx})}>
-                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} onError={(e) => e.target.src = `https://img.youtube.com/vi/${videoId}/0.jpg`} className="w-full h-full object-cover opacity-60" />
-                        <div className="absolute w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl"><span className="text-white text-3xl ml-1">▶</span></div>
+                      <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => setPlayingIndex({[post._id]: idx})}>
+                        <img 
+                          src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} 
+                          onError={(e) => e.target.src = `https://img.youtube.com/vi/${videoId}/0.jpg`} 
+                          className="w-full h-full object-cover opacity-60" 
+                        />
+                        <div className="absolute w-20 h-20 bg-red-600 rounded-full flex items-center justify-center shadow-2xl">
+                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10 text-white ml-1">
+                            <path fillRule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z" clipRule="evenodd" />
+                          </svg>
+                        </div>
                       </div>
                     )}
                   </div>

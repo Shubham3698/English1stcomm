@@ -23,7 +23,8 @@
     "react-image-crop": "^11.0.10",
     "react-router-dom": "^7.14.2",
     "sweetalert2": "^11.26.24",
-    "swiper": "^12.1.4"
+    "swiper": "^12.1.4",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

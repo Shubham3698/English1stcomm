@@ -23,7 +23,7 @@ export default function VocabCard({
       {/* --- Subtle Outer Glow on Hover --- */}
       <div className="absolute -inset-px bg-blue-500/5 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-      {/* --- Delete Button: Rounded Square --- */}
+      {/* --- Delete Button --- */}
       <button 
         type="button" 
         onClick={() => removeVocabSlot(vIdx)} 
@@ -32,7 +32,7 @@ export default function VocabCard({
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
       
-      {/* --- Text Content: Sharp Typography --- */}
+      {/* --- Text Content --- */}
       <div className="relative space-y-4">
         <div className="space-y-1.5">
           <label className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">Terminal Entry</label>
@@ -62,20 +62,34 @@ export default function VocabCard({
           )}
         </div>
         
-        <textarea 
-          placeholder="CONSTRUCT SENTENCE..." 
-          value={vItem.sentence} 
-          className="w-full bg-black/20 border border-white/5 rounded-xl p-4 text-[11px] font-medium text-gray-400 outline-none focus:border-white/20 shadow-[inner_0_2px_4px_rgba(0,0,0,0.5)] h-24 resize-none leading-relaxed transition-all"
-          onChange={e => updateVocabValue(vIdx, "sentence", e.target.value)} 
-        />
+        {/* --- 🔥 Conditional Sentence Strip --- */}
+        {vItem.sentence && vItem.sentence.trim() !== "" ? (
+          <div className="relative mt-2">
+             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.8)]"></div>
+             <textarea 
+                placeholder="CONSTRUCT SENTENCE..." 
+                value={vItem.sentence} 
+                className="w-full bg-[#121215] border border-white/5 rounded-xl p-4 pl-6 text-[11px] font-bold text-gray-300 italic outline-none focus:border-blue-500/20 shadow-inner h-24 resize-none leading-relaxed transition-all"
+                onChange={e => updateVocabValue(vIdx, "sentence", e.target.value)} 
+              />
+          </div>
+        ) : (
+          <div className="group/empty relative">
+             <textarea 
+                placeholder="CONSTRUCT SENTENCE (TYPE TO SHOW STRIP)..." 
+                value={vItem.sentence} 
+                className="w-full bg-black/20 border border-dashed border-white/5 rounded-xl p-4 text-[11px] font-medium text-gray-600 outline-none focus:border-blue-500/20 h-12 resize-none leading-relaxed transition-all overflow-hidden"
+                onChange={e => updateVocabValue(vIdx, "sentence", e.target.value)} 
+              />
+          </div>
+        )}
       </div>
 
-      {/* --- Media Section: Cinematic Cards --- */}
+      {/* --- Media Section --- */}
       <div className="relative space-y-4">
         {mediaItems.filter(m => m.vocabIndex === vIdx).map((mItem) => {
           const actualIdx = mediaItems.findIndex(m => m === mItem);
           const ytId = mItem.mode === "url" ? getYTId(mItem.value) : null;
-          
           const previewUrl = mItem.value instanceof File ? URL.createObjectURL(mItem.value) : mItem.value;
 
           return (
@@ -144,7 +158,6 @@ export default function VocabCard({
           );
         })}
 
-        {/* Add Media: Compact & Glowing */}
         <button 
           type="button" 
           onClick={addMedia} 

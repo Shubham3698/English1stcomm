@@ -11,7 +11,7 @@ import PremiumSoundFeature from "./PremiumSoundFeature";
 /**
  * PostCard Component
  * UI Match: Screenshot 2026-05-09 040633.png
- * Features: Multimedia Deck, Word Counter (e.g., 3/7), YT Shorts Nav, Word Chips, Stat Tracking
+ * Features: Multimedia Deck, Word Counter, Sentence Strip (Bottom Position), Stat Tracking
  */
 export default function PostCard({ 
   post, 
@@ -40,6 +40,7 @@ export default function PostCard({
         _id: post._id, 
         word: post.word, 
         meaning: post.meaning, 
+        sentence: post.sentence || "", 
         media: post.media || [{type:'image', url: post.image}], 
         wordStats: post.userStats, 
         votedBy: post.votedBy, 
@@ -162,8 +163,8 @@ export default function PostCard({
     return (
       <div className="relative group w-full aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner">
         
-        {/* 🔥 NEW: Word Count Indicator (e.g., 3/7 Word) */}
-        <div className="absolute top-3 right-3 z-[70] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl transition-opacity duration-300">
+        {/* Word Count Indicator */}
+        <div className="absolute top-3 right-3 z-[70] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl">
           <p className="text-[9px] font-black text-white/90 uppercase tracking-widest italic">
             {currentVocabIdx + 1}/{deck.length} Word
           </p>
@@ -172,8 +173,8 @@ export default function PostCard({
         {/* Manual Nav Buttons for Playing Shorts */}
         {mediaItems.length > 1 && isShortsPlaying && (
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none">
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg></button>
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
           </div>
         )}
 
@@ -207,7 +208,7 @@ export default function PostCard({
                       <iframe className={`w-full ${isShorts ? 'h-full' : 'aspect-video'} border-0`} src={`${finalUrl}?autoplay=1&rel=0`} allow="autoplay" allowFullScreen></iframe>
                     ) : (
                       <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => setPlayingIndex({[post._id]: idx})}>
-                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-contain opacity-50" alt="thumb" />
+                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-contain opacity-50" alt="post-thumb" />
                         <div className="absolute w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl"><svg viewBox="0 0 24 24" fill="white" className="w-6 h-6"><path d="M8 5v14l11-7z" /></svg></div>
                       </div>
                     )}
@@ -223,72 +224,61 @@ export default function PostCard({
     );
   };
 
-  // --- 6. FINAL UI RENDER ---
+  // --- 6. FINAL LAYOUT ---
   return (
     <div ref={cardRef} id={post._id} className="mb-8 mx-auto max-w-[380px] overflow-hidden bg-[#0d0d0f] border border-[#1f1f22] rounded-2xl shadow-2xl transition-all duration-500 font-sans">
       
-      {/* 1. HEADER (Exact UI Match) */}
+      {/* 1. Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#121215] border-b border-[#1f1f22]">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded bg-[#4f46e5] flex items-center justify-center text-[10px] font-black text-white uppercase shadow-lg">
             {post.userEmail?.charAt(0)}
           </div>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-            {post.userEmail?.split("@")[0]}
-          </span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{post.userEmail?.split("@")[0]}</span>
         </div>
-        <span className="text-[7px] bg-[#1a1a1d] border border-white/5 px-2 py-0.5 rounded text-gray-600 font-black uppercase">
-          {post.badgeName || "NORMAL"}
-        </span>
+        <span className="text-[7px] bg-[#1a1a1d] border border-white/5 px-2 py-0.5 rounded text-gray-600 font-black uppercase tracking-widest">{post.badgeName || "NORMAL"}</span>
       </div>
 
-      {/* 2. MEDIA DECK */}
+      {/* 2. Multimedia Deck */}
       <div className="p-1.5 relative" onDoubleClick={handleVote}>
         {renderMediaInternal()}
       </div>
 
-      {/* 3. WORD CHIPS NAVIGATION (UX Enhanced) */}
+      {/* 3. Word Chips Navigation */}
       {deck.length > 1 && (
-        <div className="flex gap-1.5 px-4 py-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1.5 px-4 py-1 overflow-x-auto no-scrollbar">
           {deck.map((item, idx) => (
-            <button 
-              key={idx} 
-              onClick={() => handleWordSelect(idx)} 
-              className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all border 
-                ${currentVocabIdx === idx 
-                  ? "bg-[#1a1a1d] border-[#3b82f6] text-[#3b82f6] shadow-[0_0_10px_rgba(59,130,246,0.1)]" 
-                  : "bg-transparent border-white/5 text-gray-600"}`}
-            >
-              {item.word}
-            </button>
+            <button key={idx} onClick={() => handleWordSelect(idx)} className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all ${currentVocabIdx === idx ? "bg-[#1a1a1d] border-[#3b82f6] text-[#3b82f6]" : "bg-transparent border-white/5 text-gray-600"}`}>{item.word}</button>
           ))}
         </div>
       )}
 
-      {/* 4. WORD INFO & SOUND */}
+      {/* 4. Word Info Section */}
       <div className="px-5 pt-4 pb-2">
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
-            <h2 className="text-3xl font-black text-white uppercase italic leading-none tracking-tighter">
-              {currentVocab.word}
-            </h2>
+            <h2 className="text-3xl font-black text-white uppercase italic leading-none tracking-tighter">{currentVocab.word}</h2>
             <div className="h-[2px] w-12 bg-[#fbbf24] mt-2"></div>
           </div>
-          <div className="relative">
-            <PremiumSoundFeature isPremiumUser={isPremiumUser}>
-              <button onClick={() => speakWord(currentVocab.word)} className="w-10 h-10 rounded-xl bg-[#1a1a1d] border border-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-md active:scale-90">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg>
-              </button>
-            </PremiumSoundFeature>
-            {!isPremiumUser && <div className="absolute -top-1 -right-1 w-4 h-4 bg-black/80 rounded-full flex items-center justify-center border border-white/10"><svg className="w-2 h-2 text-gray-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zm5.83-6.23a8 8 0 11-11.66 0 8 8 0 0111.66 0z" /></svg></div>}
-          </div>
+          <PremiumSoundFeature isPremiumUser={isPremiumUser}>
+            <button onClick={() => speakWord(currentVocab.word)} className="w-10 h-10 rounded-xl bg-[#1a1a1d] border border-white/5 flex items-center justify-center text-gray-500 shadow-md active:scale-90 transition-all"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg></button>
+          </PremiumSoundFeature>
         </div>
-        <p className="text-sm font-bold text-gray-500 italic mt-3 leading-relaxed">
-          {currentVocab.meaning}
-        </p>
+        
+        {/* Word Meaning */}
+        <p className="text-sm font-bold text-gray-400 italic mb-4 leading-relaxed">{currentVocab.meaning}</p>
+        
+        {/* 🔥 Sentence Strip positioned AFTER meaning */}
+        {currentVocab.sentence && (
+          <div className="bg-[#141417] border-l-4 border-[#fbbf24] p-3 rounded-r-lg mb-2 shadow-inner animate-in fade-in slide-in-from-bottom-1 duration-500">
+            <p className="text-[11px] font-black text-white/90 italic leading-relaxed">
+              "{currentVocab.sentence}"
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* 5. PRIMARY ACTIONS (Balanced) */}
+      {/* 5. PRIMARY ACTION BAR */}
       <div className="px-4 py-3 flex items-center gap-2">
         <button onClick={handleVote} className={`flex-[1.1] flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase transition-all shadow-lg active:scale-95 ${isVoted ? "bg-[#ef4444] text-white" : "bg-[#1a1a1d] text-gray-500 border border-white/5"}`}>
           <svg className="w-4 h-4" fill={isVoted ? "white" : "none"} stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
@@ -299,12 +289,8 @@ export default function PostCard({
           SHARE
         </button>
 
-        <button onClick={handleSavePost} className={`w-12 h-[52px] flex items-center justify-center rounded-xl border transition-all active:scale-90 ${isSaved ? "bg-white text-black" : "bg-[#1a1a1d] border-white/5 text-gray-500 shadow-lg"}`}>
-          <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
-        </button>
-        <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className={`w-12 h-[52px] flex items-center justify-center rounded-xl transition-all shadow-lg active:scale-95 ${isOpen ? "bg-[#2563eb] text-white" : "bg-[#3b82f6] text-white"}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-        </button>
+        <button onClick={handleSavePost} className={`w-12 h-[52px] flex items-center justify-center rounded-xl border transition-all active:scale-90 ${isSaved ? "bg-white text-black" : "bg-[#1a1a1d] border-white/5 text-gray-500 shadow-lg"}`}><svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg></button>
+        <button onClick={() => setActiveIndex(isOpen ? null : post._id)} className={`w-12 h-[52px] flex items-center justify-center rounded-xl transition-all shadow-lg active:scale-95 ${isOpen ? "bg-[#2563eb] text-white" : "bg-[#3b82f6] text-white"}`}><svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
       </div>
 
       {/* 6. STATS PANEL */}

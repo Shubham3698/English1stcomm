@@ -147,9 +147,12 @@ export default function PostCard({
   };
 
   // --- 5. RENDER MEDIA ---
+// --- 5. RENDER MEDIA ---
   const renderMediaInternal = () => {
     const activeSlide = swiperRef.current?.activeIndex || 0;
     const currentItem = mediaItems[activeSlide];
+    
+    // Yahan safe check lagaya hai ?. ke saath
     const isShortsPlaying = currentItem?.url?.includes('shorts/') && playingIndex[post._id] !== undefined;
 
     return (
@@ -178,13 +181,19 @@ export default function PostCard({
         >
           {mediaItems.map((item, idx) => {
             let videoId = "";
-            if (item.url.includes('youtube') || item.url.includes('youtu.be')) {
-              videoId = item.url.includes('shorts/') ? item.url.split('shorts/')[1]?.split(/[?&]/)[0] : item.url.split('v=')[1]?.split('&')[0];
+            
+            // 🔥 Yahan tha main error! item.url ko pehle check karna zaroori hai
+            if (item?.url && (item.url.includes('youtube') || item.url.includes('youtu.be'))) {
+              videoId = item.url.includes('shorts/') 
+                ? item.url.split('shorts/')[1]?.split(/[?&]/)[0] 
+                : item.url.split('v=')[1]?.split('&')[0];
             }
+            
             const isPlaying = playingIndex[post._id] === idx;
+            
             return (
               <SwiperSlide key={idx} className="bg-black flex items-center justify-center">
-                {item.type === 'video' ? (
+                {item?.type === 'video' ? (
                   <video src={item.url} className="w-full h-full object-contain" controls playsInline onPlay={() => setPlayingIndex({[post._id]: idx})} />
                 ) : (videoId) ? (
                   <div className="w-full h-full">
@@ -198,7 +207,8 @@ export default function PostCard({
                     )}
                   </div>
                 ) : (
-                  <img src={item.url} className="w-full h-full object-contain" alt="content" />
+                  // Safe check for image URL
+                  <img src={item?.url || post.image} className="w-full h-full object-contain" alt="content" />
                 )}
               </SwiperSlide>
             );
@@ -207,7 +217,6 @@ export default function PostCard({
       </div>
     );
   };
-
   // --- 6. FINAL LAYOUT ---
   return (
     <div ref={cardRef} id={post._id} className="mb-8 mx-auto max-w-[380px] overflow-hidden bg-[#0d0d0f] border border-[#1f1f22] rounded-2xl shadow-2xl transition-all duration-500 font-sans">

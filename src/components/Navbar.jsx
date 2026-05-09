@@ -30,7 +30,7 @@ export default function Navbar() {
       {/* 🔴 Top Navbar - Solid & Vibrant */}
       <nav className="bg-[#050507] text-white px-6 py-5 flex justify-between items-center sticky top-0 z-50 border-b-2 border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
         
-        {/* 🔴 Logo Section */}
+        {/* 🔴 Logo Section - Pointing to Community (/) */}
         <div 
           className="flex flex-col cursor-pointer active:scale-95 transition-transform"
           onClick={() => navigate("/")}
@@ -81,15 +81,23 @@ export default function Navbar() {
            </button>
         </div>
 
-        {/* 📌 Navigation Links - Vivid Neon Accents */}
-        <div className="mt-6 px-5 space-y-3 overflow-y-auto flex-1">
+        {/* 📌 Navigation Links - Updated Mapping */}
+        <div className="mt-6 px-5 space-y-3 overflow-y-auto flex-1 text-center">
           {[
-            { label: "🏠 Home", path: "/" },
+            // 🏠 Home Page ab "/home" par hai
+            { label: "🏠 Home Page", path: "/home", color: "border-white/10 bg-white/5 text-gray-400" },
+
+            // 📱 Community Post ab "/" par hai (Main Landing)
+            { label: "📱 Community Post", path: "/", color: "border-purple-500 bg-purple-500/10 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]" },
+            
             { label: "🔍 Find Vocab", path: "/find-vocab", color: "border-blue-500 bg-blue-500/10 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.1)]" },
-            { label: "📱 Community Post", path: "/community", color: "border-purple-500 bg-purple-500/10 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.1)]" },
+            
             { label: "📥 My Saved Vault", onClick: handleSavedClick, color: "border-emerald-500 bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" },
+            
             { label: "📚 E-Book Store", path: "/ebook-store", color: "border-pink-500 bg-pink-500/10 text-pink-400 shadow-[0_0_15px_rgba(236,72,153,0.1)]" },
+            
             { label: "⭐ Upgrade Plan", path: "/upgrade", color: "border-yellow-500 bg-yellow-500/10 text-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.2)]" },
+            
             { label: "👤 My Profile", onClick: handleUserClick, color: "mt-8 border-white/20 bg-white/10 text-white shadow-xl" }
           ].map((item, idx) => (
             <button
@@ -107,7 +115,6 @@ export default function Navbar() {
             </button>
           ))}
         </div>
-
 
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes shine {

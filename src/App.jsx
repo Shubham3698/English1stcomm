@@ -52,16 +52,34 @@ export default function App() {
       >
         <Navbar />
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/community" element={<CommunityPost />} />
-          <Route path="/saved-posts" element={<SavedPosts />} />
-          <Route path="/user" element={<User />} /> 
-          <Route path="/upgrade" element={<Upgrade />} />
-          <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
-          <Route path="/find-vocab" element={<FindVocab />} />
-          <Route path="/ebook-store" element={<EbookStore />} />
-        </Routes>
+      <Routes>
+  {/* 🔥 MAIN LANDING: Ab app khulne par seedha Community Post dikhega */}
+  <Route path="/" element={<CommunityPost />} />
+  
+  {/* 📱 DEDICATED COMMUNITY: Purane links ya direct access ke liye bhi wahi page */}
+  <Route path="/community" element={<CommunityPost />} />
+
+  {/* 🏠 DASHBOARD/HOME: Tera purana main page ab yahan shift ho gaya hai */}
+  <Route path="/home" element={<Home />} />
+
+  {/* 📥 VAULT: User ke saved items yahan milenge */}
+  <Route path="/saved-posts" element={<SavedPosts />} />
+
+  {/* 👤 PROFILE: User setting aur information */}
+  <Route path="/user" element={<User />} /> 
+
+  {/* ⭐ PLANS: Subscription aur Upgrade logic */}
+  <Route path="/upgrade" element={<Upgrade />} />
+
+  {/* 📝 CREATIONS: User ne jo posts banayi hain */}
+  <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
+
+  {/* 🔍 SEARCH: Vocabulary find karne ke liye */}
+  <Route path="/find-vocab" element={<FindVocab />} />
+
+  {/* 📚 STORE: E-books purchase aur browsing */}
+  <Route path="/ebook-store" element={<EbookStore />} />
+</Routes>
       </div>
     </BrowserRouter>
   );

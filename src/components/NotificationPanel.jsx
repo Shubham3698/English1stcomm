@@ -10,11 +10,17 @@ export default function NotificationPanel({ onClose }) {
   // 👤 Current User email
   const userEmail = localStorage.getItem("eng_userEmail");
 
+  // 🔥 DYNAMIC API URL LOGIC
+  // Localhost pe ho toh local server, warna Render server
+  const API_BASE = window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://your-backend-name.onrender.com"; // <--- BHAI YAHA APNI RENDER URL DALO
+
   // 🔄 Fetch Notifications
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/api/notifications/latest?email=${userEmail}`);
+        const response = await fetch(`${API_BASE}/api/notifications/latest?email=${userEmail}`);
         const data = await response.json();
         
         if (data.success) {
@@ -28,13 +34,13 @@ export default function NotificationPanel({ onClose }) {
       }
     };
     if(userEmail) fetchNotifications();
-  }, [userEmail]);
+  }, [userEmail, API_BASE]);
 
   // 🎯 Single Dismiss Logic
   const deleteSingle = async (e, id) => {
     e.stopPropagation(); 
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/dismiss', {
+      const res = await fetch(`${API_BASE}/api/notifications/dismiss`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: userEmail, postId: id })
@@ -52,7 +58,7 @@ export default function NotificationPanel({ onClose }) {
   // 🧹 Nuke All Logic
   const handleClearAll = async () => {
     try {
-      const res = await fetch('http://localhost:3000/api/notifications/clear-all', {
+      const res = await fetch(`${API_BASE}/api/notifications/clear-all`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: userEmail })
@@ -77,13 +83,10 @@ export default function NotificationPanel({ onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
 
-      {/* Panel */}
       <div className="relative w-full max-w-[350px] bg-[#0a0a0f] h-full border-l-2 border-white/10 shadow-2xl flex flex-col animate-slide-in font-sans text-white">
         
-        {/* Header */}
         <div className="p-6 border-b-2 border-white/5 flex justify-between items-center bg-white/5">
           <div className="flex flex-col">
             <h2 className="font-black text-[14px] uppercase tracking-widest italic leading-none">Signals Hub</h2>
@@ -92,7 +95,6 @@ export default function NotificationPanel({ onClose }) {
           <button onClick={onClose} className="text-gray-400 hover:text-white font-bold text-xl transition-colors">✕</button>
         </div>
 
-        {/* List Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide">
           {loading ? (
             <div className="text-center py-10 text-gray-500 font-black text-[10px] uppercase animate-pulse tracking-widest">Scanning Frequencies...</div>
@@ -102,7 +104,6 @@ export default function NotificationPanel({ onClose }) {
               onClick={() => handleSignalClick(n)} 
               className="relative p-5 bg-white/5 border border-white/5 rounded-2xl hover:border-yellow-400/40 hover:bg-yellow-400/5 transition-all cursor-pointer group shadow-lg"
             >
-              {/* ❌ Dismiss Button - Top Right (High UX) */}
               <button 
                 onClick={(e) => deleteSingle(e, n.id)}
                 className="absolute top-2.5 right-2.5 w-7 h-7 flex items-center justify-center rounded-lg bg-red-500/10 text-red-500/40 hover:bg-red-500 hover:text-white transition-all z-10"
@@ -113,13 +114,11 @@ export default function NotificationPanel({ onClose }) {
                 </svg>
               </button>
 
-              {/* 📡 Header Label */}
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.6)]"></div>
                 <span className="text-yellow-400 font-black text-[9px] uppercase tracking-[0.2em] italic">New Signal</span>
               </div>
               
-              {/* 📝 Content */}
               <div className="space-y-1">
                 <p className="text-gray-400 text-[10px] font-bold tracking-tight">
                   <span className="text-white/80">@{n.userName}</span> shared:
@@ -129,7 +128,6 @@ export default function NotificationPanel({ onClose }) {
                 </h3>
               </div>
 
-              {/* 🕒 Time-Ago - Bottom Right (Clean Separation) */}
               <div className="mt-4 flex justify-end border-t border-white/5 pt-2">
                 <span className="text-[8px] text-gray-600 font-black uppercase tracking-widest leading-none">
                   Captured: {n.time}
@@ -146,7 +144,6 @@ export default function NotificationPanel({ onClose }) {
           )}
         </div>
 
-        {/* Control Footer */}
         <div className="p-5 border-t-2 border-white/5 flex flex-col gap-3 bg-white/2">
           {notifications.length > 0 && (
             <button 

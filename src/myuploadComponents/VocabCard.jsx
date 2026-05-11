@@ -14,7 +14,6 @@ export default function VocabCard({
   };
 
   const addMedia = () => {
-    // Media item mein vIdx (Vocab Index) attach karna zaroori hai
     setMediaItems([...mediaItems, { type: 'image', value: "", mode: "file", vocabIndex: vIdx }]);
   };
 
@@ -37,8 +36,24 @@ export default function VocabCard({
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
       </button>
       
-      {/* Text Content Section */}
-      <div className="relative space-y-4">
+      {/* 🆕 TITLE & WORD SECTION */}
+      <div className="relative space-y-5">
+        
+        {/* 🚀 POST TITLE INPUT (Added this section) */}
+        <div className="space-y-1.5">
+          <label className="text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1 flex items-center gap-2">
+            <span className="w-2 h-[1px] bg-gray-700"></span> Signal Title
+          </label>
+          <input 
+            type="text" 
+            placeholder="E.G. 'TOP 5 SLANGS' OR 'MOVIE CONTEXT'..." 
+            value={vItem.title || ""} 
+            className="w-full bg-white/5 border border-white/5 rounded-xl px-4 py-3 outline-none font-bold text-[11px] text-blue-400 placeholder:text-gray-800 focus:border-blue-500/30 transition-all uppercase tracking-wider" 
+            onChange={e => updateVocabValue(vIdx, "title", e.target.value)} 
+          />
+        </div>
+
+        {/* Text Content Section */}
         <div className="space-y-1.5">
           <label className="text-[9px] font-black text-blue-500 uppercase tracking-[0.2em] ml-1">Vocab Entry #{vIdx + 1}</label>
           <input 
@@ -82,9 +97,7 @@ export default function VocabCard({
       {/* Media Section */}
       <div className="relative space-y-4">
         {mediaItems.map((mItem, mIdx) => {
-          // IMPORTANT: Only show media belonging to this specific vocab card
           if (mItem.vocabIndex !== vIdx) return null;
-
           const ytId = mItem.mode === "url" ? getYTId(mItem.value) : null;
           const previewUrl = (mItem.value instanceof File) ? URL.createObjectURL(mItem.value) : mItem.value;
 
@@ -148,7 +161,11 @@ export default function VocabCard({
                     <div className="rounded-lg overflow-hidden border border-white/10 aspect-video shadow-2xl">
                       <iframe className="w-full h-full" src={`https://www.youtube.com/embed/${ytId}?rel=0`} frameBorder="0" allowFullScreen title="yt-preview" />
                     </div>
-                  )}
+                  ) || (typeof mItem.value === 'string' && mItem.value.includes('http') && !ytId && (
+                    <div className="rounded-lg overflow-hidden border border-white/10 h-32">
+                      <img src={mItem.value} className="w-full h-full object-cover" alt="url-preview" />
+                    </div>
+                  ))}
                 </div>
               )}
 

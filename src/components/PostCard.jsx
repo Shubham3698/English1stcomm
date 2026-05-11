@@ -67,23 +67,41 @@ export default function PostCard({
     }
   };
 
-  useEffect(() => {
-    const urlPostId = searchParams.get("postId");
-    const urlHighlight = searchParams.get("highlight");
-    const targetWord = propHighlight || (urlPostId === post._id ? urlHighlight : null);
+useEffect(() => {
+  const urlPostId = searchParams.get("postId");
+  const urlHighlight = searchParams.get("highlight");
+  
+  // 1. Check karo ki kya ye card wahi hai jise scroll karna hai
+  if (urlPostId === post._id) {
+    const targetWord = propHighlight || urlHighlight;
 
     if (targetWord) {
+      // 2. Deck mein wo word dhoondo
       const targetIdx = deck.findIndex(v => v.word.toLowerCase() === targetWord.toLowerCase());
+      
       if (targetIdx !== -1) {
-        handleWordSelect(targetIdx);
-        if (propHighlight || urlPostId === post._id) {
-          setActiveIndex(post._id);
-          setTimeout(() => cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 600);
-        }
+        handleWordSelect(targetIdx); // Word select karo
+        setActiveIndex(post._id);    // Card expand karo
+
+        // 3. Scroll logic with a small delay (taaki expansion ke baad scroll ho)
+        setTimeout(() => {
+          if (cardRef.current) {
+            cardRef.current.scrollIntoView({ 
+              behavior: "smooth", 
+              block: "center" 
+            });
+            
+            // Optional: Chhota sa glow effect dene ke liye
+            cardRef.current.style.borderColor = "#3b82f6";
+            setTimeout(() => {
+              if (cardRef.current) cardRef.current.style.borderColor = "#1f1f22";
+            }, 2000);
+          }
+        }, 800); // 800ms ka delay expansion animation ke liye best hai
       }
     }
-  }, [propHighlight, searchParams, post._id]);
-
+  }
+}, [searchParams, post._id]); // propHighlight ko dependency se hata sakte ho agar issue kare
   const currentVocab = deck[currentVocabIdx] || deck[0];
   const isSaved = post.savedBy?.includes(userEmail); 
   const isVoted = currentVocab.votedBy?.includes(userEmail); 

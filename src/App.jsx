@@ -1,6 +1,10 @@
-import { Toaster } from 'react-hot-toast'; // Pehle se import hai, good!
+import { Toaster } from 'react-hot-toast';
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import toast from "react-hot-toast"; // ✅ Import toast for foreground notifications
+
+// ✅ Firebase functions import karo
+import { requestForToken, onMessageListener } from "./firebase"; 
 
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -13,7 +17,10 @@ import FindVocab from "./pages/FindVocab";
 import EbookStore from "./pages/EbookStore";
 
 export default function App() {
+  const userEmail = localStorage.getItem("eng_userEmail");
+
   useEffect(() => {
+    // 1. 🛡️ Security: Disable Right Click & F12 (Tera purana logic)
     const handleKey = (e) => {
       if (e.ctrlKey && (e.key === "u" || e.key === "i")) {
         e.preventDefault();
@@ -22,19 +29,52 @@ export default function App() {
         e.preventDefault();
       }
     };
-
     document.addEventListener("keydown", handleKey);
+
+    // 2. 🔔 Notification System Initializer
+    if (userEmail) {
+      // 🚀 Token mangne ka function call (Browser permission mangega)
+      requestForToken(userEmail);
+
+      // 📡 Foreground Message Listener (Jab app khuli ho tab toast dikhayega)
+      onMessageListener()
+        .then((payload) => {
+          console.log("Foreground Message:", payload);
+          toast(
+            (t) => (
+              <div className="flex flex-col">
+                <span className="font-black text-[12px] uppercase italic text-blue-400">
+                  {payload.notification.title}
+                </span>
+                <span className="text-[10px] font-bold text-white">
+                  {payload.notification.body}
+                </span>
+              </div>
+            ),
+            {
+              icon: '📡',
+              duration: 5000,
+              style: {
+                background: '#0d0d0f',
+                border: '1px solid #1e1e24',
+                padding: '12px',
+                borderRadius: '15px'
+              },
+            }
+          );
+        })
+        .catch((err) => console.log("Foreground notification error:", err));
+    }
+
     return () => document.removeEventListener("keydown", handleKey);
-  }, []);
+  }, [userEmail]);
 
   return (
     <BrowserRouter>
-      {/* ✅ 1. Toaster yahan add karo taaki ye har page par kaam kare */}
       <Toaster 
         position="top-center" 
         reverseOrder={false} 
         toastOptions={{
-          // Optional: yahan se tu default style bhi set kar sakta hai
           duration: 2000,
           style: {
             background: '#333',
@@ -52,34 +92,17 @@ export default function App() {
       >
         <Navbar />
 
-      <Routes>
-  {/* 🔥 MAIN LANDING: Ab app khulne par seedha Community Post dikhega */}
-  <Route path="/" element={<CommunityPost />} />
-  
-  {/* 📱 DEDICATED COMMUNITY: Purane links ya direct access ke liye bhi wahi page */}
-  <Route path="/community" element={<CommunityPost />} />
-
-  {/* 🏠 DASHBOARD/HOME: Tera purana main page ab yahan shift ho gaya hai */}
-  <Route path="/home" element={<Home />} />
-
-  {/* 📥 VAULT: User ke saved items yahan milenge */}
-  <Route path="/saved-posts" element={<SavedPosts />} />
-
-  {/* 👤 PROFILE: User setting aur information */}
-  <Route path="/user" element={<User />} /> 
-
-  {/* ⭐ PLANS: Subscription aur Upgrade logic */}
-  <Route path="/upgrade" element={<Upgrade />} />
-
-  {/* 📝 CREATIONS: User ne jo posts banayi hain */}
-  <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
-
-  {/* 🔍 SEARCH: Vocabulary find karne ke liye */}
-  <Route path="/find-vocab" element={<FindVocab />} />
-
-  {/* 📚 STORE: E-books purchase aur browsing */}
-  <Route path="/ebook-store" element={<EbookStore />} />
-</Routes>
+        <Routes>
+          <Route path="/" element={<CommunityPost />} />
+          <Route path="/community" element={<CommunityPost />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/saved-posts" element={<SavedPosts />} />
+          <Route path="/user" element={<User />} /> 
+          <Route path="/upgrade" element={<Upgrade />} />
+          <Route path="/my-posts" element={<EnglishAppMyPosts />} /> 
+          <Route path="/find-vocab" element={<FindVocab />} />
+          <Route path="/ebook-store" element={<EbookStore />} />
+        </Routes>
       </div>
     </BrowserRouter>
   );

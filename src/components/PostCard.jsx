@@ -175,7 +175,7 @@ useEffect(() => {
 
     return (
       <div className="relative group w-full aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner" onDoubleClick={handleVote}>
-        <div className="absolute top-3 right-3 z-[70] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl">
+        <div className="absolute top-3 right-3 z-[2] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl">
           <p className="text-[9px] font-black text-white/90 uppercase tracking-widest italic">{currentVocabIdx + 1}/{deck.length} Word</p>
         </div>
 

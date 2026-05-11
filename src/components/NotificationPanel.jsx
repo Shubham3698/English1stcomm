@@ -14,7 +14,7 @@ export default function NotificationPanel({ onClose }) {
   // Localhost pe ho toh local server, warna Render server
   const API_BASE = window.location.hostname === "localhost" 
     ? "http://localhost:3000" 
-    : "https://your-backend-name.onrender.com"; // <--- BHAI YAHA APNI RENDER URL DALO
+    : "https://serdeptry1st.onrender.com"; // <--- BHAI YAHA APNI RENDER URL DALO
 
   // 🔄 Fetch Notifications
   useEffect(() => {

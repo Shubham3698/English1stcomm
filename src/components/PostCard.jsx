@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
@@ -104,23 +104,45 @@ useEffect(() => {
 }, [searchParams, post._id]); // propHighlight ko dependency se hata sakte ho agar issue kare
   const currentVocab = deck[currentVocabIdx] || deck[0];
   const isSaved = post.savedBy?.includes(userEmail); 
-  const isVoted = currentVocab.votedBy?.includes(userEmail); 
+  // ✅ Naya (Updated): Ye check karega ki kya pure deck mein kisi bhi word par vote hai
+const isVoted = useMemo(() => {
+  // 1. Check current word (for heart color)
+  const currentWordVoted = currentVocab.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
+  
+  // 2. Check pure post level (for filter sync)
+  const mainPostVoted = post.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
+  
+  return currentWordVoted || mainPostVoted;
+}, [currentVocab, post.votedBy, userEmail]);
   const userLevel = currentVocab.wordStats?.find((v) => v.email === userEmail)?.level; 
 
   // --- 4. ACTION HANDLERS (RETAINED) ---
-  const handleVote = async (e) => {
-    if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Bhai login karo! 🔑");
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail })
-      });
-      if (res.ok) onRefresh(); 
-    } catch (err) { toast.error("Error voting!"); }
-  };
+const handleVote = async (e) => {
+  if (e) e.stopPropagation();
+  if (!userEmail) return toast.error("Bhai login karo! 🔑");
 
+  // 🚀 Ek "Syncing" toast dikhao taaki user ko fast feel ho
+  const toastId = toast.loading("Syncing your vote...");
+
+  try {
+    const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userEmail })
+    });
+
+    if (res.ok) {
+      // ✅ Success toast aur refresh
+      toast.success("Signal Captured! 📡", { id: toastId });
+      onRefresh(); 
+    } else {
+      toast.error("Failed to sync vote.", { id: toastId });
+    }
+  } catch (err) { 
+    console.error("Vote Error:", err);
+    toast.error("Network Error! Check connection.", { id: toastId }); 
+  }
+};
   const handleStatUpdate = async (e, level) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Login first! 🔑");

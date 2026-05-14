@@ -18,9 +18,9 @@ export default function PostCard({
   API_URL,
   highlightWord: propHighlight 
 }) {
-  // --- 1. CORE STATES (RETAINED) ---
+  // --- 1. CORE STATES ---
   const [showComments, setShowComments] = useState(false);
-  const [showStats, setShowStats] = useState(false); // 🔥 Toggles the stats grid
+  const [showStats, setShowStats] = useState(false); 
   const [currentVocabIdx, setCurrentVocabIdx] = useState(0); 
   const [playingIndex, setPlayingIndex] = useState({}); 
   const [searchParams] = useSearchParams(); 
@@ -29,36 +29,41 @@ export default function PostCard({
 
   const isExpanded = activeIndex === post._id;
 
-  // --- 2. MULTIMEDIA & DECK MAPPING (RETAINED) ---
-  const deck = post.vocabData && post.vocabData.length > 0 
-    ? post.vocabData 
-    : [{ 
-        _id: post._id, 
-        word: post.word, 
-        meaning: post.meaning, 
-        sentence: post.sentence || "", 
-        media: post.media || [{type:'image', url: post.image}], 
-        wordStats: post.userStats, 
-        votedBy: post.votedBy, 
-        voteCount: post.voteCount, 
-        commandStats: post.commandStats 
-      }];
+  // --- 2. MULTIMEDIA & DECK MAPPING ---
+  const deck = useMemo(() => {
+    return post.vocabData && post.vocabData.length > 0 
+      ? post.vocabData 
+      : [{ 
+          _id: post._id, 
+          word: post.word, 
+          meaning: post.meaning, 
+          sentence: post.sentence || "", 
+          media: post.media || (post.image ? [{type:'image', url: post.image}] : []), 
+          wordStats: post.userStats, 
+          votedBy: post.votedBy, 
+          voteCount: post.voteCount, 
+          commandStats: post.commandStats 
+        }];
+  }, [post]);
 
-  const slideToVocabMap = [];
-  const mediaItems = [];
-  deck.forEach((vocab, vIdx) => {
-    if (vocab.media && vocab.media.length > 0) {
-      vocab.media.forEach((m) => {
-        mediaItems.push({ ...m, vocabIndex: vIdx });
-        slideToVocabMap.push(vIdx);
-      });
-    } else {
-      mediaItems.push({ type: 'image', url: post.image, vocabIndex: vIdx });
-      slideToVocabMap.push(vIdx); 
-    }
-  });
+  const { mediaItems, slideToVocabMap } = useMemo(() => {
+    const items = [];
+    const map = [];
+    deck.forEach((vocab, vIdx) => {
+      // Sirf wahi media items lo jinke paas valid URL ya image ho
+      if (vocab.media && vocab.media.length > 0) {
+        vocab.media.forEach((m) => {
+          if(m.url) {
+            items.push({ ...m, vocabIndex: vIdx });
+            map.push(vIdx);
+          }
+        });
+      }
+    });
+    return { mediaItems: items, slideToVocabMap: map };
+  }, [deck]);
 
-  // --- 3. LOGIC SYNC (RETAINED) ---
+  // --- 3. LOGIC SYNC ---
   const handleWordSelect = (idx) => {
     setCurrentVocabIdx(idx);
     const firstSlideOfWord = slideToVocabMap.indexOf(idx);
@@ -67,82 +72,61 @@ export default function PostCard({
     }
   };
 
-useEffect(() => {
-  const urlPostId = searchParams.get("postId");
-  const urlHighlight = searchParams.get("highlight");
-  
-  // 1. Check karo ki kya ye card wahi hai jise scroll karna hai
-  if (urlPostId === post._id) {
-    const targetWord = propHighlight || urlHighlight;
+  useEffect(() => {
+    const urlPostId = searchParams.get("postId");
+    const urlHighlight = searchParams.get("highlight");
+    
+    if (urlPostId === post._id) {
+      const targetWord = propHighlight || urlHighlight;
+      if (targetWord) {
+        const targetIdx = deck.findIndex(v => v.word.toLowerCase() === targetWord.toLowerCase());
+        if (targetIdx !== -1) {
+          handleWordSelect(targetIdx);
+          setActiveIndex(post._id);
 
-    if (targetWord) {
-      // 2. Deck mein wo word dhoondo
-      const targetIdx = deck.findIndex(v => v.word.toLowerCase() === targetWord.toLowerCase());
-      
-      if (targetIdx !== -1) {
-        handleWordSelect(targetIdx); // Word select karo
-        setActiveIndex(post._id);    // Card expand karo
-
-        // 3. Scroll logic with a small delay (taaki expansion ke baad scroll ho)
-        setTimeout(() => {
-          if (cardRef.current) {
-            cardRef.current.scrollIntoView({ 
-              behavior: "smooth", 
-              block: "center" 
-            });
-            
-            // Optional: Chhota sa glow effect dene ke liye
-            cardRef.current.style.borderColor = "#3b82f6";
-            setTimeout(() => {
-              if (cardRef.current) cardRef.current.style.borderColor = "#1f1f22";
-            }, 2000);
-          }
-        }, 800); // 800ms ka delay expansion animation ke liye best hai
+          setTimeout(() => {
+            if (cardRef.current) {
+              cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+              cardRef.current.style.borderColor = "#3b82f6";
+              setTimeout(() => {
+                if (cardRef.current) cardRef.current.style.borderColor = "#1f1f22";
+              }, 2000);
+            }
+          }, 800);
+        }
       }
     }
-  }
-}, [searchParams, post._id]); // propHighlight ko dependency se hata sakte ho agar issue kare
+  }, [searchParams, post._id, deck]);
+
   const currentVocab = deck[currentVocabIdx] || deck[0];
   const isSaved = post.savedBy?.includes(userEmail); 
-  // ✅ Naya (Updated): Ye check karega ki kya pure deck mein kisi bhi word par vote hai
-const isVoted = useMemo(() => {
-  // 1. Check current word (for heart color)
-  const currentWordVoted = currentVocab.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
   
-  // 2. Check pure post level (for filter sync)
-  const mainPostVoted = post.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
-  
-  return currentWordVoted || mainPostVoted;
-}, [currentVocab, post.votedBy, userEmail]);
+  const isVoted = useMemo(() => {
+    const currentWordVoted = currentVocab.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
+    const mainPostVoted = post.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
+    return currentWordVoted || mainPostVoted;
+  }, [currentVocab, post.votedBy, userEmail]);
+
   const userLevel = currentVocab.wordStats?.find((v) => v.email === userEmail)?.level; 
 
-  // --- 4. ACTION HANDLERS (RETAINED) ---
-const handleVote = async (e) => {
-  if (e) e.stopPropagation();
-  if (!userEmail) return toast.error("Bhai login karo! 🔑");
+  // --- 4. ACTION HANDLERS ---
+  const handleVote = async (e) => {
+    if (e) e.stopPropagation();
+    if (!userEmail) return toast.error("Bhai login karo! 🔑");
+    const toastId = toast.loading("Syncing your vote...");
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail })
+      });
+      if (res.ok) {
+        toast.success("Signal Captured! 📡", { id: toastId });
+        onRefresh(); 
+      } else { toast.error("Failed to sync vote.", { id: toastId }); }
+    } catch (err) { toast.error("Network Error!", { id: toastId }); }
+  };
 
-  // 🚀 Ek "Syncing" toast dikhao taaki user ko fast feel ho
-  const toastId = toast.loading("Syncing your vote...");
-
-  try {
-    const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: userEmail })
-    });
-
-    if (res.ok) {
-      // ✅ Success toast aur refresh
-      toast.success("Signal Captured! 📡", { id: toastId });
-      onRefresh(); 
-    } else {
-      toast.error("Failed to sync vote.", { id: toastId });
-    }
-  } catch (err) { 
-    console.error("Vote Error:", err);
-    toast.error("Network Error! Check connection.", { id: toastId }); 
-  }
-};
   const handleStatUpdate = async (e, level) => {
     if (e) e.stopPropagation();
     if (!userEmail) return toast.error("Login first! 🔑");
@@ -187,12 +171,10 @@ const handleVote = async (e) => {
   };
 
   // --- 5. RENDER MEDIA ---
-// --- 5. RENDER MEDIA ---
   const renderMediaInternal = () => {
+    if (mediaItems.length === 0) return null;
     const activeSlide = swiperRef.current?.activeIndex || 0;
     const currentItem = mediaItems[activeSlide];
-    
-    // Yahan safe check lagaya hai ?. ke saath
     const isShortsPlaying = currentItem?.url?.includes('shorts/') && playingIndex[post._id] !== undefined;
 
     return (
@@ -221,16 +203,12 @@ const handleVote = async (e) => {
         >
           {mediaItems.map((item, idx) => {
             let videoId = "";
-            
-            // 🔥 Yahan tha main error! item.url ko pehle check karna zaroori hai
             if (item?.url && (item.url.includes('youtube') || item.url.includes('youtu.be'))) {
               videoId = item.url.includes('shorts/') 
                 ? item.url.split('shorts/')[1]?.split(/[?&]/)[0] 
                 : item.url.split('v=')[1]?.split('&')[0];
             }
-            
             const isPlaying = playingIndex[post._id] === idx;
-            
             return (
               <SwiperSlide key={idx} className="bg-black flex items-center justify-center">
                 {item?.type === 'video' ? (
@@ -247,7 +225,6 @@ const handleVote = async (e) => {
                     )}
                   </div>
                 ) : (
-                  // Safe check for image URL
                   <img src={item?.url || post.image} className="w-full h-full object-contain" alt="content" />
                 )}
               </SwiperSlide>
@@ -257,6 +234,7 @@ const handleVote = async (e) => {
       </div>
     );
   };
+
   // --- 6. FINAL LAYOUT ---
   return (
     <div ref={cardRef} id={post._id} className="mb-8 mx-auto max-w-[380px] overflow-hidden bg-[#0d0d0f] border border-[#1f1f22] rounded-2xl shadow-2xl transition-all duration-500 font-sans">
@@ -272,12 +250,12 @@ const handleVote = async (e) => {
         <span className="text-[7px] bg-[#1a1a1d] border border-white/5 px-2 py-0.5 rounded text-gray-600 font-black uppercase tracking-widest">{post.badgeName || "NORMAL"}</span>
       </div>
 
-      {/* 2. Media Deck (Expanded State only) */}
-      <div className={`transition-all duration-700 ease-in-out overflow-hidden ${isExpanded ? "max-h-[500px] opacity-100 p-2" : "max-h-0 opacity-0"}`}>
+      {/* 2. Media Deck (Expanded State AND check if media exists) */}
+      <div className={`transition-all duration-700 ease-in-out overflow-hidden ${isExpanded && mediaItems.length > 0 ? "max-h-[500px] opacity-100 p-2" : "max-h-0 opacity-0"}`}>
         {renderMediaInternal()}
       </div>
 
-      {/* 3. Word Pills Navigation (Retained) */}
+      {/* 3. Word Pills Navigation */}
       {deck.length > 1 && (
         <div className="flex gap-1.5 px-5 py-3 overflow-x-auto no-scrollbar">
           {deck.map((item, idx) => (
@@ -286,7 +264,7 @@ const handleVote = async (e) => {
         </div>
       )}
 
-      {/* 4. Main Focus Area (Click to Expand Stage 2) */}
+      {/* 4. Main Focus Area (Toggles Expansion) */}
       <div onClick={() => { setActiveIndex(isExpanded ? null : post._id); setShowStats(false); }} className="px-6 pt-2 pb-4 cursor-pointer group">
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
@@ -302,14 +280,12 @@ const handleVote = async (e) => {
         </div>
         {currentVocab.sentence && (
           <div className="bg-[#141417] border-l-4 border-[#fbbf24] p-3.5 rounded-r-xl my-3 shadow-inner">
-            <p className="text-[12px] font-black text-white/90 italic leading-relaxed">
-              "{currentVocab.sentence}"
-            </p>
+            <p className="text-[12px] font-black text-white/90 italic leading-relaxed">"{currentVocab.sentence}"</p>
           </div>
         )}
       </div>
 
-      {/* 5. Primary Actions & Stats (Stage 2 & 3 Combined) */}
+      {/* 5. Primary Actions & Stats (Expands even if no media) */}
       <div className={`transition-all duration-500 overflow-hidden ${isExpanded ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
         <div className="px-5 py-3 flex items-center gap-2 border-t border-white/5">
           <button onClick={handleVote} className={`flex-[1.1] flex items-center justify-center gap-2 py-4 rounded-xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all ${isVoted ? "bg-[#ef4444] text-white" : "bg-[#1a1a1d] text-gray-500 border border-white/5"}`}>
@@ -318,13 +294,12 @@ const handleVote = async (e) => {
           </button>
           <button onClick={handleShare} className="flex-[1.8] py-4 rounded-xl bg-[#1a1a1d] border border-white/5 font-black text-[10px] uppercase text-gray-400 tracking-widest shadow-lg active:bg-neutral-800 transition-all">SHARE</button>
           <button onClick={handleSavePost} className={`w-14 h-[56px] flex items-center justify-center rounded-xl border transition-all ${isSaved ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "bg-[#1a1a1d] border-white/5 text-gray-500 shadow-lg"}`}><svg className="w-6 h-6" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg></button>
-          
           <button onClick={(e) => { e.stopPropagation(); setShowStats(!showStats); }} className={`w-14 h-[56px] flex items-center justify-center rounded-xl transition-all shadow-lg active:scale-95 ${showStats ? "bg-[#2563eb] text-white" : "bg-[#3b82f6] text-white"}`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
           </button>
         </div>
 
-        {/* 6. Stats Panel (Toggled by Blue Button) */}
+        {/* 6. Stats Panel */}
         <div className={`transition-all duration-500 overflow-hidden ${showStats ? "max-h-[250px] mb-4 opacity-100 px-5" : "max-h-0 opacity-0"}`}>
           <div className="grid grid-cols-2 gap-2 mt-2 pb-5">
             {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
@@ -337,7 +312,7 @@ const handleVote = async (e) => {
         </div>
       </div>
 
-      {/* 7. Footer - Comments Bar (Always Static) */}
+      {/* 7. Footer */}
       <div className="pb-8 text-center mt-2 border-t border-white/5 pt-4">
         <button onClick={(e) => { e.stopPropagation(); setShowComments(true); }} className="text-[8.5px] font-black text-gray-500 uppercase tracking-[0.25em] border-b border-white/10 pb-1 hover:text-white transition-all">REACTIONS ({post.comments?.length || 0})</button>
       </div>

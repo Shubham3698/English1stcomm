@@ -46,51 +46,46 @@ export default function CommunityPost() {
     const interval = setInterval(() => fetchPosts(true), 30000);
     return () => clearInterval(interval);
   }, [fetchPosts]);
+
+// CommunityPost.jsx
 const filteredPosts = useMemo(() => {
-  if (!dbPosts) return [];
+  if (!dbPosts || !Array.isArray(dbPosts)) return [];
+
+  // 1. User email ko normalize karo taaki matching 100% accurate ho
+  const currentUser = userEmail?.trim().toLowerCase();
 
   return dbPosts.filter((post) => {
-    // 1. Search Logic
-    const title = post.title?.toLowerCase() || "";
-    const word = post.word?.toLowerCase() || "";
-    const query = searchQuery.toLowerCase();
-    const matchesSearch = title.includes(query) || word.includes(query);
+    // --- SECTION 1: GLOBAL SEARCH (Title + Main Word) ---
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = 
+      post.title?.toLowerCase().includes(query) || 
+      post.word?.toLowerCase().includes(query);
     
     if (!matchesSearch) return false;
 
-    // 2. Data Preparation (Safety Checks)
-    const mainVoted = Array.isArray(post.votedBy) ? post.votedBy : [];
-    const savedBy = Array.isArray(post.savedBy) ? post.savedBy : [];
-    const currentUser = userEmail?.toLowerCase();
-
-    // 3. Card Level Scan (Har card ke andar ja kar check karega)
-    const hasVotedAnyCard = post.vocabData?.some(card => 
-      Array.isArray(card.votedBy) && 
-      card.votedBy.some(email => email?.toLowerCase() === currentUser)
-    );
-
-    // 4. Main Level Check
-    const hasVotedMain = mainVoted.some(email => email?.toLowerCase() === currentUser);
-
-    // 5. Tab Filter Logic
+    // --- SECTION 2: FILTER TAB LOGIC ---
+    // Agar "all" selected hai toh aage check karne ki zaroorat nahi
     if (activeFilter === "all") return true;
 
-    // ✅ Voted: Agar Main ya Kisi bhi card par user ka email hai
-    if (activeFilter === "voted") {
-      return hasVotedMain || hasVotedAnyCard;
-    }
+    // 🔥 SINGLE SOURCE OF TRUTH: Sirf post level check
+    // Backend Middleware ne ensure kiya hai ki card-level vote yahan sync hoga
+    const isVoted = Array.isArray(post.votedBy) && 
+                    post.votedBy.some(email => email.toLowerCase().trim() === currentUser);
 
-    // ✅ Unvoted: User ka email kahin bhi nahi hona chahiye
-    if (activeFilter === "unvoted") {
-      return !hasVotedMain && !hasVotedAnyCard;
-    }
+    const isLiked = Array.isArray(post.savedBy) && 
+                    post.savedBy.some(email => email.toLowerCase().trim() === currentUser);
 
-    // ✅ Liked/Saved
-    if (activeFilter === "liked") {
-      return savedBy.some(email => email?.toLowerCase() === currentUser);
+    switch (activeFilter) {
+      case "voted":
+        return isVoted;
+      case "unvoted":
+        // Jo voted nahi hai, wahi unvoted hai
+        return !isVoted;
+      case "liked":
+        return isLiked;
+      default:
+        return true;
     }
-
-    return true;
   });
 }, [dbPosts, searchQuery, activeFilter, userEmail]);
   return (

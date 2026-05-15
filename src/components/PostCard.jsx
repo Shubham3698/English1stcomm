@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
@@ -18,7 +18,7 @@ export default function PostCard({
   API_URL,
   highlightWord: propHighlight 
 }) {
-  // --- 1. CORE STATES ---
+  // --- 1. CORE ENGINE STATES ---
   const [showComments, setShowComments] = useState(false);
   const [showStats, setShowStats] = useState(false); 
   const [currentVocabIdx, setCurrentVocabIdx] = useState(0); 
@@ -27,9 +27,13 @@ export default function PostCard({
   const swiperRef = useRef(null);
   const cardRef = useRef(null); 
 
+  // --- SMART COMMENT ENGINE STATES ---
+  const [activeCommentIdx, setActiveCommentIdx] = useState(0);
+  const [commentFade, setCommentFade] = useState(true);
+
   const isExpanded = activeIndex === post._id;
 
-  // --- 2. MULTIMEDIA & DECK MAPPING ---
+  // --- 2. DECK & MEDIA NORMALIZATION ---
   const deck = useMemo(() => {
     return post.vocabData && post.vocabData.length > 0 
       ? post.vocabData 
@@ -50,11 +54,10 @@ export default function PostCard({
     const items = [];
     const map = [];
     deck.forEach((vocab, vIdx) => {
-      // Sirf wahi media items lo jinke paas valid URL ya image ho
       if (vocab.media && vocab.media.length > 0) {
         vocab.media.forEach((m) => {
           if(m.url) {
-            items.push({ ...m, vocabIndex: vIdx });
+            items.push({ ...m, vocabIndex: vIdx, word: vocab.word });
             map.push(vIdx);
           }
         });
@@ -63,14 +66,39 @@ export default function PostCard({
     return { mediaItems: items, slideToVocabMap: map };
   }, [deck]);
 
-  // --- 3. LOGIC SYNC ---
-  const handleWordSelect = (idx) => {
+  // --- 3. SMART ENGAGEMENT LOGIC ---
+  const defaultEngagementComments = useMemo(() => [
+    { name: "System", text: "New signal detected! Save it to your vault. 🧠", isBot: true },
+    { name: "Learner", text: "Adding this to my daily vocabulary. Super useful! 🔥", isBot: true },
+    { name: "Mentor", text: "Great word! Try practicing this in a sentence. 💎", isBot: true },
+    { name: "Community", text: "Got questions? Join the discussion below! 👇", isBot: true }
+  ], []);
+
+  const displayComments = useMemo(() => {
+    return post.comments && post.comments.length > 0 ? post.comments : defaultEngagementComments;
+  }, [post.comments, defaultEngagementComments]);
+
+  useEffect(() => {
+    if (displayComments.length > 0) {
+      const interval = setInterval(() => {
+        setCommentFade(false);
+        setTimeout(() => {
+          setActiveCommentIdx((prev) => (prev + 1) % displayComments.length);
+          setCommentFade(true);
+        }, 500);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [displayComments]);
+
+  // --- 4. NAVIGATION & SYNC ---
+  const handleWordSelect = useCallback((idx) => {
     setCurrentVocabIdx(idx);
     const firstSlideOfWord = slideToVocabMap.indexOf(idx);
     if (firstSlideOfWord !== -1 && swiperRef.current) {
       swiperRef.current.slideTo(firstSlideOfWord, 500);
     }
-  };
+  }, [slideToVocabMap]);
 
   useEffect(() => {
     const urlPostId = searchParams.get("postId");
@@ -83,94 +111,85 @@ export default function PostCard({
         if (targetIdx !== -1) {
           handleWordSelect(targetIdx);
           setActiveIndex(post._id);
-
           setTimeout(() => {
             if (cardRef.current) {
               cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-              cardRef.current.style.borderColor = "#3b82f6";
-              setTimeout(() => {
-                if (cardRef.current) cardRef.current.style.borderColor = "#1f1f22";
-              }, 2000);
             }
           }, 800);
         }
       }
     }
-  }, [searchParams, post._id, deck]);
+  }, [searchParams, post._id, deck, propHighlight, setActiveIndex, handleWordSelect]);
 
   const currentVocab = deck[currentVocabIdx] || deck[0];
   const isSaved = post.savedBy?.includes(userEmail); 
-  
   const isVoted = useMemo(() => {
-    const currentWordVoted = currentVocab.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
-    const mainPostVoted = post.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
-    return currentWordVoted || mainPostVoted;
+    return currentVocab.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase()) || 
+           post.votedBy?.some(e => e.toLowerCase() === userEmail?.toLowerCase());
   }, [currentVocab, post.votedBy, userEmail]);
 
   const userLevel = currentVocab.wordStats?.find((v) => v.email === userEmail)?.level; 
 
-  // --- 4. ACTION HANDLERS ---
+  // --- 5. ACTIONS ---
   const handleVote = async (e) => {
     if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Bhai login karo! 🔑");
-    const toastId = toast.loading("Syncing your vote...");
+    if (!userEmail) return toast.error("Please login first! 🔑");
+    const toastId = toast.loading("Syncing...");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail })
       });
-      if (res.ok) {
-        toast.success("Signal Captured! 📡", { id: toastId });
-        onRefresh(); 
-      } else { toast.error("Failed to sync vote.", { id: toastId }); }
-    } catch (err) { toast.error("Network Error!", { id: toastId }); }
+      if (res.ok) { toast.success("Vibe Matched! 🔥", { id: toastId }); onRefresh(); } 
+      else { toast.error("Failed.", { id: toastId }); }
+    } catch (err) { toast.error("Error!", { id: toastId }); }
   };
 
   const handleStatUpdate = async (e, level) => {
     if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Login first! 🔑");
+    if (!userEmail) return toast.error("Login required!");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update-word-stat/${post._id}/${currentVocab._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ level, email: userEmail })
       });
-      if (res.ok) { onRefresh(); toast.success(`${level.toUpperCase()} updated!`); }
-    } catch (err) { toast.error("Update Failed!"); }
+      if (res.ok) { onRefresh(); toast.success(`${level.toUpperCase()} set!`); }
+    } catch (err) { toast.error("Error!"); }
   };
 
-  const handleSavePost = async (e) => {
-    if (e) e.stopPropagation();
-    if (!userEmail) return toast.error("Login to save! 💾");
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/save/${post._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail })
-      });
-      if (res.ok) { onRefresh(); toast.success("Vault updated! 📥"); }
-    } catch (err) { toast.error("Error saving post!"); }
+  const speakWord = (word) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(word);
+      u.lang = 'en-US'; u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    }
   };
 
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
     const wordName = currentVocab.word.replace(/"/g, '');
     const shareUrl = `${window.location.origin}/community?postId=${post._id}&highlight=${encodeURIComponent(wordName)}`;
-    if (navigator.share) await navigator.share({ title: wordName, url: shareUrl });
-    else { navigator.clipboard.writeText(shareUrl); toast.success("Link Copied! 📋"); }
+    if (navigator.share) await navigator.share({ title: `Learn ${wordName}`, url: shareUrl });
+    else { navigator.clipboard.writeText(shareUrl); toast.success("Copied! 📋"); }
   };
 
-  const speakWord = (word) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US'; utterance.rate = 0.8;
-      window.speechSynthesis.speak(utterance);
-    }
+  const handleSavePost = async (e) => {
+    if (e) e.stopPropagation();
+    if (!userEmail) return toast.error("Login required!");
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/save/${post._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail })
+      });
+      if (res.ok) { onRefresh(); toast.success("Saved! 📥"); }
+    } catch (err) { toast.error("Error!"); }
   };
 
-  // --- 5. RENDER MEDIA ---
+  // --- 6. RENDER MULTIMEDIA SLIDER ---
   const renderMediaInternal = () => {
     if (mediaItems.length === 0) return null;
     const activeSlide = swiperRef.current?.activeIndex || 0;
@@ -235,86 +254,97 @@ export default function PostCard({
     );
   };
 
-  // --- 6. FINAL LAYOUT ---
   return (
-    <div ref={cardRef} id={post._id} className="mb-8 mx-auto max-w-[380px] overflow-hidden bg-[#0d0d0f] border border-[#1f1f22] rounded-2xl shadow-2xl transition-all duration-500 font-sans">
+    <div ref={cardRef} id={post._id} className="mb-6 mx-auto w-full max-w-[370px] overflow-hidden bg-[#0a0a0c] border border-white/10 rounded-[2rem] shadow-2xl transition-all duration-500 font-sans group">
       
-      {/* 1. Header */}
-      <div className="flex items-center justify-between px-5 py-4 bg-[#121215] border-b border-[#1f1f22]">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded bg-[#4f46e5] flex items-center justify-center text-[10px] font-black text-white uppercase shadow-lg">
-            {post.userEmail?.charAt(0)}
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-5 py-4 bg-white/[0.02]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-[10px] font-black text-white shadow-lg">
+            {post.userEmail?.charAt(0).toUpperCase()}
           </div>
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{post.userEmail?.split("@")[0]}</span>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-white tracking-widest leading-none">{post.userEmail?.split("@")[0]}</span>
+            <span className="text-[7px] text-gray-500 font-bold uppercase mt-1">Authorized</span>
+          </div>
         </div>
-        <span className="text-[7px] bg-[#1a1a1d] border border-white/5 px-2 py-0.5 rounded text-gray-600 font-black uppercase tracking-widest">{post.badgeName || "NORMAL"}</span>
+        <div className="px-2 py-0.5 bg-white/5 border border-white/10 rounded-md">
+          <span className="text-[7px] text-yellow-500 font-black uppercase tracking-tighter">{post.badgeName || "NORMAL"}</span>
+        </div>
       </div>
 
-      {/* 2. Media Deck (Expanded State AND check if media exists) */}
-      <div className={`transition-all duration-700 ease-in-out overflow-hidden ${isExpanded && mediaItems.length > 0 ? "max-h-[500px] opacity-100 p-2" : "max-h-0 opacity-0"}`}>
+      {/* EXPANDED MEDIA CONTAINER */}
+      <div className={`px-2 transition-all duration-700 ease-out overflow-hidden ${isExpanded && mediaItems.length > 0 ? "max-h-[480px] opacity-100 my-2" : "max-h-0 opacity-0"}`}>
         {renderMediaInternal()}
       </div>
 
-      {/* 3. Word Pills Navigation */}
+      {/* PILLS NAVIGATION */}
       {deck.length > 1 && (
-        <div className="flex gap-1.5 px-5 py-3 overflow-x-auto no-scrollbar">
+        <div className="px-5 my-2 flex gap-1.5 overflow-x-auto no-scrollbar">
           {deck.map((item, idx) => (
-            <button key={idx} onClick={(e) => { e.stopPropagation(); handleWordSelect(idx); }} className={`whitespace-nowrap px-3.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all ${currentVocabIdx === idx ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.3)]" : "bg-transparent border-white/5 text-gray-600"}`}>{item.word}</button>
+            <button key={idx} onClick={(e) => { e.stopPropagation(); handleWordSelect(idx); }} className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[8px] font-black uppercase border transition-all ${currentVocabIdx === idx ? "bg-blue-600 border-blue-400 text-white shadow-lg" : "bg-white/5 border-white/5 text-gray-500"}`}>{item.word}</button>
           ))}
         </div>
       )}
 
-      {/* 4. Main Focus Area (Toggles Expansion) */}
-      <div onClick={() => { setActiveIndex(isExpanded ? null : post._id); setShowStats(false); }} className="px-6 pt-2 pb-4 cursor-pointer group">
+      {/* MAIN TEXT FOCUS AREA */}
+      <div onClick={() => { setActiveIndex(isExpanded ? null : post._id); setShowStats(false); }} className="px-6 pt-2 pb-4 cursor-pointer">
         <div className="flex justify-between items-start">
-          <div className="flex flex-col">
-            <h2 className="text-4xl font-black text-white uppercase italic leading-none tracking-tighter group-hover:text-blue-500 transition-colors">{currentVocab.word}</h2>
-            <div className="h-[2px] w-12 bg-[#fbbf24] mt-2 mb-2"></div>
-            <p className="text-xl font-bold text-gray-400 italic leading-relaxed">{currentVocab.meaning}</p>
+          <div className="flex flex-col flex-1">
+            <h2 className="text-4xl font-black text-white uppercase italic leading-none tracking-tighter group-hover:text-blue-400 transition-colors">{currentVocab.word}</h2>
+            <div className="h-1 w-10 bg-yellow-500 rounded-full my-3"></div>
+            <p className="text-xl font-bold text-gray-400 leading-tight italic">{currentVocab.meaning}</p>
           </div>
           <PremiumSoundFeature isPremiumUser={isPremiumUser}>
-            <button onClick={(e) => { e.stopPropagation(); speakWord(currentVocab.word); }} className="w-11 h-11 rounded-xl bg-[#1a1a1d] border border-white/5 flex items-center justify-center text-gray-500 active:scale-90 transition-all hover:text-white shadow-lg">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg>
-            </button>
+            <button onClick={(e)=>{e.stopPropagation(); speakWord(currentVocab.word)}} className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white active:scale-90 shadow-xl transition-all"><svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z"/></svg></button>
           </PremiumSoundFeature>
         </div>
         {currentVocab.sentence && (
-          <div className="bg-[#141417] border-l-4 border-[#fbbf24] p-3.5 rounded-r-xl my-3 shadow-inner">
-            <p className="text-[12px] font-black text-white/90 italic leading-relaxed">"{currentVocab.sentence}"</p>
+          <div className="mt-3 p-3 bg-white/[0.03] border-l-2 border-yellow-500 rounded-r-xl">
+            <p className="text-[11px] font-bold text-white/70 italic leading-snug">"{currentVocab.sentence}"</p>
           </div>
         )}
       </div>
 
-      {/* 5. Primary Actions & Stats (Expands even if no media) */}
-      <div className={`transition-all duration-500 overflow-hidden ${isExpanded ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
-        <div className="px-5 py-3 flex items-center gap-2 border-t border-white/5">
-          <button onClick={handleVote} className={`flex-[1.1] flex items-center justify-center gap-2 py-4 rounded-xl font-black text-xs uppercase shadow-lg active:scale-95 transition-all ${isVoted ? "bg-[#ef4444] text-white" : "bg-[#1a1a1d] text-gray-500 border border-white/5"}`}>
-            <svg className="w-4 h-4" fill={isVoted ? "white" : "none"} stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-            <span className="tracking-tighter">{currentVocab.voteCount || 0}</span>
+      {/* CORE ACTIONS SYSTEMS */}
+      <div className={`transition-all duration-500 overflow-hidden ${isExpanded ? "max-h-[350px] opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="px-5 py-3 grid grid-cols-4 gap-2 border-t border-white/5 bg-white/[0.01]">
+          <button onClick={handleVote} className={`flex flex-col items-center justify-center py-2 rounded-xl transition-all active:scale-95 ${isVoted ? "bg-red-500 text-white shadow-lg shadow-red-500/20" : "bg-white/5 text-gray-500"}`}>
+            <svg className="w-4 h-4" fill={isVoted ? "white" : "none"} stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+            <span className="text-[9px] font-black mt-0.5">{currentVocab.voteCount || 0}</span>
           </button>
-          <button onClick={handleShare} className="flex-[1.8] py-4 rounded-xl bg-[#1a1a1d] border border-white/5 font-black text-[10px] uppercase text-gray-400 tracking-widest shadow-lg active:bg-neutral-800 transition-all">SHARE</button>
-          <button onClick={handleSavePost} className={`w-14 h-[56px] flex items-center justify-center rounded-xl border transition-all ${isSaved ? "bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)]" : "bg-[#1a1a1d] border-white/5 text-gray-500 shadow-lg"}`}><svg className="w-6 h-6" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg></button>
-          <button onClick={(e) => { e.stopPropagation(); setShowStats(!showStats); }} className={`w-14 h-[56px] flex items-center justify-center rounded-xl transition-all shadow-lg active:scale-95 ${showStats ? "bg-[#2563eb] text-white" : "bg-[#3b82f6] text-white"}`}>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
-          </button>
+          <button onClick={handleShare} className="flex flex-col items-center justify-center bg-white/5 text-gray-500 rounded-xl active:scale-95"><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg><span className="text-[7px] font-black uppercase mt-0.5">Share</span></button>
+          <button onClick={handleSavePost} className={`flex items-center justify-center rounded-xl transition-all active:scale-95 ${isSaved ? "bg-white text-black shadow-xl" : "bg-white/5 text-gray-500"}`}><svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"/></svg></button>
+          <button onClick={(e)=>{e.stopPropagation(); setShowStats(!showStats)}} className={`flex items-center justify-center rounded-xl transition-all active:scale-95 ${showStats ? "bg-blue-600 text-white" : "bg-blue-500/10 text-blue-500"}`}><svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg></button>
         </div>
 
-        {/* 6. Stats Panel */}
-        <div className={`transition-all duration-500 overflow-hidden ${showStats ? "max-h-[250px] mb-4 opacity-100 px-5" : "max-h-0 opacity-0"}`}>
-          <div className="grid grid-cols-2 gap-2 mt-2 pb-5">
+        {/* PROGRESS METRICS HUD */}
+        <div className={`transition-all duration-500 overflow-hidden ${showStats ? "max-h-[180px] opacity-100 px-5 pb-5" : "max-h-0 opacity-0"}`}>
+          <div className="grid grid-cols-2 gap-2 pt-1">
             {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
-              <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3.5 rounded-xl bg-[#141417] border transition-all ${userLevel === lvl ? "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.1)]" : "border-white/5"}`}>
-                <span className="text-[9.5px] font-black uppercase text-gray-500 tracking-tighter">{lvl}</span>
-                <span className="text-[11px] font-black text-white">{currentVocab.commandStats?.[lvl] || 0}</span>
+              <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border transition-all ${userLevel === lvl ? "border-blue-500 bg-blue-500/5 shadow-inner" : "border-white/5"}`}>
+                <span className="text-[9px] font-black uppercase text-gray-500">{lvl === 'dailyUse' ? 'Daily' : lvl}</span>
+                <span className="text-[10px] font-black text-white">{currentVocab.commandStats?.[lvl] || 0}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 7. Footer */}
-      <div className="pb-8 text-center mt-2 border-t border-white/5 pt-4">
-        <button onClick={(e) => { e.stopPropagation(); setShowComments(true); }} className="text-[8.5px] font-black text-gray-500 uppercase tracking-[0.25em] border-b border-white/10 pb-1 hover:text-white transition-all">REACTIONS ({post.comments?.length || 0})</button>
+      {/* FOOTER & SOCIAL INSIGHT PILL */}
+      <div className="pb-6 px-5 border-t border-white/5 pt-4 bg-gradient-to-t from-white/[0.02] to-transparent">
+        <div onClick={(e) => { e.stopPropagation(); setShowComments(true); }} className="flex flex-col items-center gap-2 cursor-pointer group">
+          <div className={`flex items-center gap-2 px-3 py-1.5 bg-white/[0.03] border border-white/5 rounded-full transition-all duration-700 ${commentFade ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black text-white uppercase ${displayComments[activeCommentIdx]?.isBot ? 'bg-yellow-500' : 'bg-blue-600'}`}>
+              {displayComments[activeCommentIdx]?.name?.charAt(0)}
+            </div>
+            <p className="text-[9px] font-bold text-gray-400 italic line-clamp-1 max-w-[200px]">"{displayComments[activeCommentIdx]?.text}"</p>
+          </div>
+          <button className="relative px-6 py-1">
+            <span className="relative z-10 text-[8px] font-black text-gray-600 uppercase tracking-[0.3em] group-hover:text-blue-400 transition-colors">REACTIONS ({post.comments?.length || 0})</span>
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-blue-500 group-hover:w-full transition-all duration-500"></div>
+          </button>
+        </div>
       </div>
 
       {showComments && <CommentModal post={post} userEmail={userEmail} API_URL={API_URL} onClose={() => setShowComments(false)} onRefresh={onRefresh} />}

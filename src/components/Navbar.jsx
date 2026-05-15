@@ -9,24 +9,27 @@ export default function Navbar() {
   const [showSignIn, setShowSignIn] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
   const navigate = useNavigate();
 
-  // 🔄 Check Login Status
+  // 🔄 Check Login & Premium Status
   useEffect(() => {
     const checkUser = () => {
       const user = localStorage.getItem("eng_userEmail");
+      const premium = localStorage.getItem("eng_isPremium") === "true";
       setIsLoggedIn(!!user);
+      setIsPremiumUser(premium);
     };
     checkUser();
     window.addEventListener('storage', checkUser);
     return () => window.removeEventListener('storage', checkUser);
   }, []);
 
-  // 🚪 Handle Logout
   const handleLogout = () => {
     localStorage.removeItem("eng_userEmail");
     localStorage.removeItem("eng_userName");
     localStorage.removeItem("eng_fcmToken");
+    localStorage.removeItem("eng_isPremium");
     setIsLoggedIn(false);
     setIsMenuOpen(false);
     toast.success("Logged Out! 🚪", {
@@ -35,7 +38,6 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // 🔐 Protected Navigation
   const goToPath = (path) => {
     if (isLoggedIn) {
       navigate(path);
@@ -61,61 +63,72 @@ export default function Navbar() {
         </div>
 
         {/* 🔴 RIGHT CONTROLS */}
-        <div className="flex items-center gap-3 md:gap-5">
-            
-            {/* 🔔 SMART BELL ICON (Toggle Logic) */}
-            <div 
-                onClick={() => {
-                    if (isLoggedIn) {
-                        setShowNotifications(!showNotifications); // Toggle On/Off
-                    } else {
-                        setShowSignIn(true);
-                        toast.error("Sign in to check signals! 📡");
-                    }
-                }}
-                className={`relative w-11 h-11 flex items-center justify-center bg-white/5 border-2 rounded-xl cursor-pointer transition-all active:scale-90
-                ${isLoggedIn ? (showNotifications ? 'border-yellow-400 bg-yellow-400/10' : 'border-white/10 hover:border-yellow-400') : 'border-white/5 opacity-40'}`}
+        <div className="flex items-center gap-2 md:gap-4">
+          
+          {/* 🔥 DYNAMIC UPGRADE BUTTON (Visible if not premium) */}
+          {isLoggedIn && !isPremiumUser && (
+            <button 
+              onClick={() => navigate("/upgrade")}
+              className="hidden sm:flex px-4 py-2 bg-yellow-400/10 border border-yellow-400/50 text-yellow-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-black transition-all shadow-[0_0_15px_rgba(250,205,21,0.2)] animate-pulse"
             >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill={showNotifications ? "#facd15" : "none"} stroke="currentColor" strokeWidth="2.5">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                {isLoggedIn && !showNotifications && (
-                    <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-600 rounded-full border-2 border-[#050507] animate-pulse"></span>
-                )}
-            </div>
-
-            {/* 👤 PROFILE AVATAR */}
-            <div 
-                onClick={() => isLoggedIn ? navigate("/user") : setShowSignIn(true)}
-                className={`w-11 h-11 rounded-xl border-2 overflow-hidden cursor-pointer active:scale-90 transition-all flex items-center justify-center
-                ${isLoggedIn ? 'border-yellow-400/50' : 'border-white/10 bg-white/5 text-gray-500'}`}
-            >
-                {isLoggedIn ? (
-                    <img 
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${localStorage.getItem("eng_userName")}`} 
-                        alt="user" 
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                )}
-            </div>
-
-            {/* ☰ HAMBURGER MENU */}
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              className="w-11 h-11 flex items-center justify-center bg-white/5 border-2 border-white/20 rounded-xl hover:border-yellow-400 active:scale-90 group"
-            >
-              <div className="space-y-1.5">
-                <div className="w-6 h-0.5 bg-white"></div>
-                <div className="w-4 h-0.5 bg-gray-400 group-hover:w-6 transition-all"></div>
-                <div className="w-6 h-0.5 bg-white"></div>
-              </div>
+              Get Pro 💎
             </button>
+          )}
+
+          {/* 🔔 NOTIFICATION BELL */}
+          <div 
+            onClick={() => {
+              if (isLoggedIn) setShowNotifications(!showNotifications);
+              else { setShowSignIn(true); toast.error("Sign in to check signals! 📡"); }
+            }}
+            className={`relative w-11 h-11 flex items-center justify-center bg-white/5 border-2 rounded-xl cursor-pointer transition-all active:scale-90
+            ${isLoggedIn ? (showNotifications ? 'border-yellow-400 bg-yellow-400/10' : 'border-white/10 hover:border-yellow-400') : 'border-white/5 opacity-40'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={showNotifications ? "#facd15" : "none"} stroke="currentColor" strokeWidth="2.5">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            {isLoggedIn && !showNotifications && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-[#050507] animate-pulse"></span>
+            )}
+          </div>
+
+          {/* 👤 PROFILE & PRO BADGE */}
+          <div className="relative group">
+            <div 
+              onClick={() => isLoggedIn ? navigate("/user") : setShowSignIn(true)}
+              className={`w-11 h-11 rounded-xl border-2 overflow-hidden cursor-pointer active:scale-90 transition-all flex items-center justify-center
+              ${isLoggedIn ? (isPremiumUser ? 'border-yellow-400' : 'border-white/10') : 'border-white/10 bg-white/5 text-gray-500'}`}
+            >
+              {isLoggedIn ? (
+                <img 
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${localStorage.getItem("eng_userName")}`} 
+                  alt="user" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              )}
+            </div>
+            {isLoggedIn && isPremiumUser && (
+              <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[7px] font-black px-1.5 py-0.5 rounded-md border border-[#050507] shadow-lg">PRO</span>
+            )}
+          </div>
+
+          {/* ☰ HAMBURGER */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="w-11 h-11 flex items-center justify-center bg-white/5 border-2 border-white/20 rounded-xl hover:border-yellow-400 active:scale-90 group"
+          >
+            <div className="space-y-1.5">
+              <div className="w-6 h-0.5 bg-white"></div>
+              <div className="w-4 h-0.5 bg-gray-400 group-hover:w-6 transition-all"></div>
+              <div className="w-6 h-0.5 bg-white"></div>
+            </div>
+          </button>
         </div>
       </nav>
 
@@ -127,7 +140,7 @@ export default function Navbar() {
         }`}
       />
 
-      {/* 📱 SIDEBAR SLIDE-IN MENU */}
+      {/* 📱 SIDEBAR */}
       <div
         className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#0a0a0f] border-l-2 border-white/10 z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
@@ -145,7 +158,9 @@ export default function Navbar() {
             { label: "Search Words", path: "/find-vocab", color: "border-blue-500/20 bg-blue-500/5 text-blue-400" },
             { label: "Saved Vault", onClick: () => goToPath("/saved-posts"), color: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400" },
             { label: "E-Book Store", path: "/ebook-store", color: "border-pink-500/20 bg-pink-500/5 text-pink-400" },
-            { label: "My Profile", onClick: () => goToPath("/user"), color: "mt-10 border-white/10 bg-white/5 text-white hover:border-yellow-400" }
+            // 🔥 Added Upgrade Route for Non-Premium Users in Mobile Menu
+            ...(!isPremiumUser ? [{ label: "PRO Upgrade 💎", path: "/upgrade", color: "border-yellow-400 bg-yellow-400/10 text-yellow-400" }] : []),
+            { label: "My Profile", onClick: () => goToPath("/user"), color: "mt-6 border-white/10 bg-white/5 text-white hover:border-yellow-400" }
           ].map((item, idx) => (
             <button
               key={idx}
@@ -175,18 +190,14 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 🔔 NOTIFICATION PANEL (With Slide Animation Handling) */}
-      <div 
-        className={`fixed inset-0 z-[150] pointer-events-none transition-all duration-500 ${showNotifications ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <div className={`pointer-events-auto h-full w-full flex justify-end transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) ${showNotifications ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* 🔔 NOTIFICATION PANEL */}
+      <div className={`fixed inset-0 z-[150] pointer-events-none transition-all duration-500 ${showNotifications ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`pointer-events-auto h-full w-full flex justify-end transform transition-transform duration-500 ${showNotifications ? 'translate-x-0' : 'translate-x-full'}`}>
            <NotificationPanel onClose={() => setShowNotifications(false)} />
         </div>
       </div>
 
-      {showSignIn && (
-        <SignInModal onClose={() => setShowSignIn(false)} />
-      )}
+      {showSignIn && <SignInModal onClose={() => setShowSignIn(false)} />}
     </>
   );
 }

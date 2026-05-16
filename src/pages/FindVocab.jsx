@@ -109,7 +109,7 @@ export default function FindVocab() {
             {/* TAB NAV */}
             <div className="flex gap-4 p-1.5 bg-[#121217] rounded-2xl w-fit mb-10 border border-white/5">
               <button onClick={() => setActiveTab("dictionary")} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === "dictionary" ? "bg-white text-black" : "text-gray-500"}`}>Definition</button>
-              <button onClick={() => setActiveTab("posts")} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === "posts" ? "bg-white text-black" : "text-gray-500"}`}>Posts  ({result.relatedPosts?.length || 0})</button>
+              <button onClick={() => setActiveTab("posts")} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === "posts" ? "bg-white text-black" : "text-gray-500"}`}> ({result.relatedPosts?.length || 0})</button>
             </div>
 
             {/* CONTENT */}

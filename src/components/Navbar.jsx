@@ -13,7 +13,7 @@ export default function Navbar() {
   const [userEmail, setUserEmail] = useState("");
   const navigate = useNavigate();
 
-  // 🔄 Check Login & Premium Status
+  // 🔄 Sync User State
   useEffect(() => {
     const checkUser = () => {
       const email = localStorage.getItem("eng_userEmail");
@@ -40,16 +40,15 @@ export default function Navbar() {
   };
 
   const goToPath = (path) => {
-    if (isLoggedIn) {
-      navigate(path);
-    } else {
+    if (isLoggedIn) navigate(path);
+    else {
       setShowSignIn(true);
       toast.error("Please Login First! 🛑");
     }
     setIsMenuOpen(false);
   };
 
-  // 🔥 VIP Logic for Profile Border
+  // 🔥 VIP Logic for Profile Badge & Border
   const isVIP = isPremiumUser || userEmail === "pandey0shubhm3698@gmail.com";
 
   return (
@@ -66,8 +65,8 @@ export default function Navbar() {
           </span>
         </div>
 
-        {/* 🔴 RIGHT CONTROLS (Removed Upgrade from here) */}
-        <div className="flex items-center gap-2 md:gap-4">
+        {/* 🔴 RIGHT CONTROLS */}
+        <div className="flex items-center gap-3 md:gap-5">
           
           {/* 🔔 NOTIFICATION BELL */}
           <div 
@@ -76,29 +75,28 @@ export default function Navbar() {
               else { setShowSignIn(true); toast.error("Sign in to check signals! 📡"); }
             }}
             className={`relative w-11 h-11 flex items-center justify-center bg-white/5 border-2 rounded-xl cursor-pointer transition-all active:scale-90
-            ${isLoggedIn ? (showNotifications ? 'border-yellow-400 bg-yellow-400/10' : 'border-white/10 hover:border-yellow-400') : 'border-white/5 opacity-40'}`}
+            ${isLoggedIn ? (showNotifications ? 'border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : 'border-white/10 hover:border-yellow-400') : 'border-white/5 opacity-40'}`}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill={showNotifications ? "#facd15" : "none"} stroke="currentColor" strokeWidth="2.5">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
             {isLoggedIn && !showNotifications && (
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-[#050507] animate-pulse"></span>
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-600 rounded-full border-2 border-[#050507] animate-pulse"></span>
             )}
           </div>
 
-          {/* 👤 PROFILE */}
+          {/* 👤 USER PROFILE WITH PRO BADGE */}
           <div className="relative group">
             <div 
               onClick={() => isLoggedIn ? navigate("/user") : setShowSignIn(true)}
-              className={`w-11 h-11 rounded-xl border-2 overflow-hidden cursor-pointer active:scale-90 transition-all flex items-center justify-center
-              ${isLoggedIn ? (isVIP ? 'border-yellow-400 shadow-[0_0_10px_rgba(234,179,8,0.3)]' : 'border-white/10') : 'border-white/10 bg-white/5'}`}
+              className={`w-11 h-11 rounded-xl border-2 overflow-hidden cursor-pointer active:scale-90 transition-all flex items-center justify-center relative
+              ${isLoggedIn ? (isVIP ? 'border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.25)]' : 'border-white/10 hover:border-blue-500') : 'border-white/10 bg-white/5 text-gray-500'}`}
             >
               {isLoggedIn ? (
                 <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${localStorage.getItem("eng_userName")}`} 
-                  alt="user" 
-                  className="w-full h-full object-cover"
+                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${localStorage.getItem("eng_userName") || 'learner'}`} 
+                  alt="user" className="w-full h-full object-cover"
                 />
               ) : (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -107,15 +105,21 @@ export default function Navbar() {
                 </svg>
               )}
             </div>
+
+            {/* 🔥 DYNAMIC PRO BADGE OVERLAY */}
             {isLoggedIn && isVIP && (
-              <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-[7px] font-black px-1.5 py-0.5 rounded-md border border-[#050507] shadow-lg">PRO</span>
+              <div className="absolute -top-2 -right-2 z-10 pointer-events-none">
+                <div className="bg-yellow-400 text-black text-[7px] font-[1000] px-1.5 py-0.5 rounded-md border-2 border-[#050507] shadow-xl animate-bounce">
+                  PRO
+                </div>
+              </div>
             )}
           </div>
 
           {/* ☰ HAMBURGER */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="w-11 h-11 flex items-center justify-center bg-white/5 border-2 border-white/20 rounded-xl hover:border-yellow-400 active:scale-90 group"
+            className="w-11 h-11 flex items-center justify-center bg-white/5 border-2 border-white/10 rounded-xl hover:border-blue-500 active:scale-90 group transition-all"
           >
             <div className="space-y-1.5">
               <div className="w-6 h-0.5 bg-white"></div>
@@ -126,41 +130,42 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* 🌑 MENU OVERLAY */}
+      {/* 🌑 SIDEBAR OVERLAY */}
       <div
         onClick={() => setIsMenuOpen(false)}
-        className={`fixed inset-0 bg-black/90 backdrop-blur-sm z-[110] transition-opacity duration-500 ${
+        className={`fixed inset-0 bg-black/90 backdrop-blur-md z-[110] transition-opacity duration-500 ${
           isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"
         }`}
       />
 
       {/* 📱 SIDEBAR */}
       <div
-        className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#0a0a0f] border-l-2 border-white/10 z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col ${
+        className={`fixed top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#0a0a0f] border-l-2 border-white/10 z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col shadow-[-20px_0_50px_rgba(0,0,0,0.5)] ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="p-8 border-b-2 border-white/5 flex justify-between items-center bg-white/2">
-            <h2 className="font-black text-white text-[13px] uppercase tracking-[0.4em]">Control Center</h2>
-            <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-90">✕</button>
+        <div className="p-8 border-b-2 border-white/5 flex justify-between items-center bg-white/[0.02]">
+            <h2 className="font-black text-white text-[13px] uppercase tracking-[0.4em]">Operational Hub</h2>
+            <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90">✕</button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-8 px-6 space-y-4 scrollbar-hide">
-          {/* 🔥 UPGRADE BUTTON - HIGHLIGHTED IN SIDEBAR ONLY */}
+          
+          {/* 🔥 MAIN SIDEBAR UPGRADE BUTTON (Always visible for maximum conversion) */}
           <button
               onClick={() => { navigate("/upgrade"); setIsMenuOpen(false); }}
-              className="w-full text-center px-6 py-5 rounded-2xl transition-all duration-300 font-black border-2 border-yellow-500 bg-yellow-500 text-black shadow-[0_0_30px_rgba(234,179,8,0.25)] uppercase text-[12px] tracking-[0.2em] active:scale-95 animate-pulse mb-6"
+              className="w-full text-center px-6 py-5 rounded-2xl transition-all duration-300 font-black border-2 border-yellow-500 bg-yellow-500 text-black shadow-[0_0_30px_rgba(234,179,8,0.2)] uppercase text-[12px] tracking-[0.2em] active:scale-95 animate-pulse mb-8"
           >
               PRO Upgrade 💎
           </button>
 
           {[
-            { label: "Home Page", path: "/home", color: "border-white/5 bg-white/2 text-gray-400" },
-            { label: "Community Feed", path: "/", color: "border-yellow-500/20 bg-yellow-500/5 text-yellow-500" },
-            { label: "Search Words", path: "/find-vocab", color: "border-blue-500/20 bg-blue-500/5 text-blue-400" },
-            { label: "Saved Vault", onClick: () => goToPath("/saved-posts"), color: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400" },
-            { label: "E-Book Store", path: "/ebook-store", color: "border-pink-500/20 bg-pink-500/5 text-pink-400" },
-            { label: "My Profile", onClick: () => goToPath("/user"), color: "mt-6 border-white/10 bg-white/5 text-white hover:border-yellow-400" }
+            { label: "Neural Home", path: "/home", color: "border-white/5 bg-white/[0.02] text-gray-400" },
+            { label: "Community Signals", path: "/", color: "border-yellow-500/20 bg-yellow-500/5 text-yellow-500" },
+            { label: "Find Vocabulary", path: "/find-vocab", color: "border-blue-500/20 bg-blue-500/5 text-blue-400" },
+            { label: "Saved Intelligence", onClick: () => goToPath("/saved-posts"), color: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400" },
+            { label: "Acquisition Store", path: "/ebook-store", color: "border-pink-500/20 bg-pink-500/5 text-pink-400" },
+            { label: "My Profile Hub", onClick: () => goToPath("/user"), color: "mt-10 border-white/10 bg-white/5 text-white hover:border-yellow-400 shadow-xl" }
           ].map((item, idx) => (
             <button
               key={idx}
@@ -170,27 +175,28 @@ export default function Navbar() {
                 setIsMenuOpen(false);
               }}
               className={`w-full text-left px-6 py-4 rounded-2xl transition-all duration-300 font-black border-2
-                ${item.color} uppercase text-[11px] tracking-widest active:scale-95`}
+                ${item.color} uppercase text-[11px] tracking-widest active:scale-95 leading-none`}
             >
               {item.label}
             </button>
           ))}
         </div>
 
+        {/* LOGOUT / LOGIN SECTION */}
         <div className="p-8 border-t-2 border-white/5 bg-black/40">
             {isLoggedIn ? (
-                <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 border-2 border-red-600/30 text-red-500 font-black uppercase text-[11px] rounded-2xl hover:bg-red-600 hover:text-white transition-all">
-                    Logout 🚪
+                <button onClick={handleLogout} className="w-full py-4 bg-red-600/10 border-2 border-red-600/30 text-red-500 font-black uppercase text-[11px] rounded-2xl hover:bg-red-600 hover:text-white transition-all tracking-widest">
+                    Terminate Session 🚪
                 </button>
             ) : (
-                <button onClick={() => { setIsMenuOpen(false); setShowSignIn(true); }} className="w-full py-4 bg-yellow-400 border-2 border-yellow-400 text-black font-black uppercase text-[11px] rounded-2xl hover:bg-white transition-all">
-                    Login 🔑
+                <button onClick={() => { setIsMenuOpen(false); setShowSignIn(true); }} className="w-full py-4 bg-yellow-400 border-2 border-yellow-400 text-black font-black uppercase text-[11px] rounded-2xl hover:bg-white transition-all tracking-widest">
+                    Authorize Login 🔑
                 </button>
             )}
         </div>
       </div>
 
-      {/* 🔔 NOTIFICATION PANEL */}
+      {/* 🔔 NOTIFICATION PANEL (Overlay) */}
       <div className={`fixed inset-0 z-[150] pointer-events-none transition-all duration-500 ${showNotifications ? 'opacity-100' : 'opacity-0'}`}>
         <div className={`pointer-events-auto h-full w-full flex justify-end transform transition-transform duration-500 ${showNotifications ? 'translate-x-0' : 'translate-x-full'}`}>
            <NotificationPanel onClose={() => setShowNotifications(false)} />

@@ -207,16 +207,26 @@ export default function PostCard({
   // --- 6. RENDER MULTIMEDIA SLIDER ---
   const renderMediaInternal = () => {
     if (mediaItems.length === 0) return null;
+    const activeSlide = swiperRef.current?.activeIndex || 0;
+    const currentItem = mediaItems[activeSlide];
+    const isShortsPlaying = currentItem?.url?.includes('shorts/') && playingIndex[post._id] !== undefined;
+
     return (
-      <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-inner bg-black" onDoubleClick={handleVote}>
+      <div className="relative group w-full aspect-[3/4] bg-black rounded-xl overflow-hidden border border-white/5 shadow-inner" onDoubleClick={handleVote}>
+        <div className="absolute top-3 right-3 z-[2] bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full pointer-events-none shadow-xl">
+          <p className="text-[9px] font-black text-white/90 uppercase tracking-widest italic">{currentVocabIdx + 1}/{deck.length} Word</p>
+        </div>
+
+        {mediaItems.length > 1 && isShortsPlaying && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none">
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-black/40 rounded-full flex items-center justify-center text-white backdrop-blur-sm active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
+          </div>
+        )}
+
         <Swiper 
-          onSwiper={(s) => (swiperRef.current = s)} 
-          modules={[Pagination, EffectCreative]} 
-          effect="creative"
-          creativeEffect={{
-            prev: { shadow: true, translate: [0, 0, -400] },
-            next: { translate: ['100%', 0, 0] }
-          }}
+          onSwiper={(s) => (swiperRef.current = s)}
+          modules={[Pagination]} 
           pagination={mediaItems.length > 1 ? { clickable: true } : false} 
           onSlideChange={(s) => {
             const item = mediaItems[s.activeIndex];
@@ -227,7 +237,7 @@ export default function PostCard({
         >
           {mediaItems.map((item, idx) => {
             let videoId = "";
-            if (item.url && (item.url.includes('youtube') || item.url.includes('youtu.be'))) {
+            if (item?.url && (item.url.includes('youtube') || item.url.includes('youtu.be'))) {
               videoId = item.url.includes('shorts/') 
                 ? item.url.split('shorts/')[1]?.split(/[?&]/)[0] 
                 : item.url.split('v=')[1]?.split('&')[0];
@@ -235,21 +245,21 @@ export default function PostCard({
             const isPlaying = playingIndex[post._id] === idx;
             return (
               <SwiperSlide key={idx} className="bg-black flex items-center justify-center">
-                {item.type === 'video' ? (
+                {item?.type === 'video' ? (
                   <video src={item.url} className="w-full h-full object-contain" controls playsInline onPlay={() => setPlayingIndex({[post._id]: idx})} />
-                ) : videoId ? (
-                  <div className="w-full h-full relative">
+                ) : (videoId) ? (
+                  <div className="w-full h-full">
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`} allow="autoplay" allowFullScreen></iframe>
                     ) : (
                       <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => setPlayingIndex({[post._id]: idx})}>
-                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-contain opacity-50" alt="thumbnail" />
-                        <div className="absolute w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl transition-transform active:scale-90"><svg viewBox="0 0 24 24" fill="white" className="w-6 h-6"><path d="M8 5v14l11-7z"/></svg></div>
+                        <img src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} className="w-full h-full object-contain opacity-50" />
+                        <div className="absolute w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-2xl"><svg viewBox="0 0 24 24" fill="white" className="w-6 h-6"><path d="M8 5v14l11-7z" /></svg></div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <img src={item.url || post.image} className="w-full h-full object-contain" alt="content" />
+                  <img src={item?.url || post.image} className="w-full h-full object-contain" alt="content" />
                 )}
               </SwiperSlide>
             );
@@ -258,6 +268,7 @@ export default function PostCard({
       </div>
     );
   };
+
 
   return (
     <div ref={cardRef} id={post._id} className="mb-6 mx-auto w-full max-w-[370px] overflow-hidden bg-[#0a0a0c] border border-white/10 rounded-[2rem] shadow-2xl transition-all duration-500 font-sans group">

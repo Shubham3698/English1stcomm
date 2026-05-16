@@ -28,7 +28,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear(); // Saara kachra ek saath saaf
+    localStorage.clear();
     setIsLoggedIn(false);
     setIsPremiumUser(false);
     setUserEmail("");
@@ -66,17 +66,9 @@ export default function Navbar() {
           </span>
         </div>
 
-        {/* 🔴 RIGHT CONTROLS */}
+        {/* 🔴 RIGHT CONTROLS (Removed Upgrade from here) */}
         <div className="flex items-center gap-2 md:gap-4">
           
-          {/* 🔥 UPGRADE BUTTON (Always Visible) */}
-          <button 
-            onClick={() => navigate("/upgrade")}
-            className="px-4 py-2 bg-yellow-400 border-2 border-yellow-400/50 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-transparent hover:text-yellow-400 transition-all shadow-[0_0_20px_rgba(250,205,21,0.3)] animate-pulse"
-          >
-            Upgrade 💎
-          </button>
-
           {/* 🔔 NOTIFICATION BELL */}
           <div 
             onClick={() => {
@@ -150,18 +142,25 @@ export default function Navbar() {
       >
         <div className="p-8 border-b-2 border-white/5 flex justify-between items-center bg-white/2">
             <h2 className="font-black text-white text-[13px] uppercase tracking-[0.4em]">Control Center</h2>
-            <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/30 text-red-500">✕</button>
+            <button onClick={() => setIsMenuOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-90">✕</button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-8 px-6 space-y-4 scrollbar-hide">
+          {/* 🔥 UPGRADE BUTTON - HIGHLIGHTED IN SIDEBAR ONLY */}
+          <button
+              onClick={() => { navigate("/upgrade"); setIsMenuOpen(false); }}
+              className="w-full text-center px-6 py-5 rounded-2xl transition-all duration-300 font-black border-2 border-yellow-500 bg-yellow-500 text-black shadow-[0_0_30px_rgba(234,179,8,0.25)] uppercase text-[12px] tracking-[0.2em] active:scale-95 animate-pulse mb-6"
+          >
+              PRO Upgrade 💎
+          </button>
+
           {[
-            // Upgrade button sidebar mein hamesha top par
-            { label: "PRO Upgrade ⚡", path: "/upgrade", color: "border-yellow-500 bg-yellow-500 text-black shadow-[0_0_20px_rgba(234,179,8,0.2)]" },
             { label: "Home Page", path: "/home", color: "border-white/5 bg-white/2 text-gray-400" },
             { label: "Community Feed", path: "/", color: "border-yellow-500/20 bg-yellow-500/5 text-yellow-500" },
             { label: "Search Words", path: "/find-vocab", color: "border-blue-500/20 bg-blue-500/5 text-blue-400" },
             { label: "Saved Vault", onClick: () => goToPath("/saved-posts"), color: "border-emerald-500/20 bg-emerald-500/5 text-emerald-400" },
-            { label: "My Profile", onClick: () => goToPath("/user"), color: "mt-10 border-white/10 bg-white/5 text-white hover:border-yellow-400" }
+            { label: "E-Book Store", path: "/ebook-store", color: "border-pink-500/20 bg-pink-500/5 text-pink-400" },
+            { label: "My Profile", onClick: () => goToPath("/user"), color: "mt-6 border-white/10 bg-white/5 text-white hover:border-yellow-400" }
           ].map((item, idx) => (
             <button
               key={idx}

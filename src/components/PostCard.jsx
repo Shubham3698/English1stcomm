@@ -302,6 +302,7 @@ export default function PostCard({
   return (
     <div ref={cardRef} id={post._id} className="mb-6 mx-auto w-full max-w-[370px] overflow-hidden bg-[#0a0a0c] border border-white/10 rounded-[2rem] shadow-2xl transition-all duration-500 font-sans group">
       
+      
       {/* HEADER */}
       <div className="flex items-center justify-between px-5 py-4 bg-white/[0.02]">
         <div className="flex items-center gap-3">
@@ -331,6 +332,38 @@ export default function PostCard({
           ))}
         </div>
       )}
+
+      <div className={`px-6 transition-all duration-500 ease-in-out overflow-hidden ${!isExpanded ? "max-h-20 opacity-100 mt-4 mb-1" : "max-h-0 opacity-0 m-0"}`}>
+  <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-2 rounded-2xl backdrop-blur-md shadow-inner group/ctx">
+    
+    {/* 🖼️ Context Image */}
+    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 flex-shrink-0 bg-black shadow-lg">
+      <img 
+        src={deck[0]?.media?.[0]?.url || post.image || "https://img.icons8.com/ios-filled/50/ffffff/idea.png"} 
+        alt="Context" 
+        className="w-full h-full object-cover group-hover/ctx:scale-110 transition-transform duration-700"
+      />
+    </div>
+
+    {/* 🏷️ Context Title */}
+    <div className="flex flex-col overflow-hidden">
+      <div className="flex items-center gap-1.5">
+        <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse" />
+        <span className="text-[8px] font-black text-blue-500 uppercase tracking-[0.2em] opacity-70">
+          Source_Intelligence
+        </span>
+      </div>
+      <h3 className="text-[11px] font-black text-white/90 uppercase tracking-tighter truncate italic">
+        {post.title || "Uncategorized Signal"}
+      </h3>
+    </div>
+
+    {/* ⚡ Status Light */}
+    <div className="ml-auto pr-2">
+       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+    </div>
+  </div>
+</div>
 
       {/* CONTENT AREA */}
       <div onClick={() => { setActiveIndex(isExpanded ? null : post._id); setShowStats(false); }} className="px-6 pt-2 pb-4 cursor-pointer">

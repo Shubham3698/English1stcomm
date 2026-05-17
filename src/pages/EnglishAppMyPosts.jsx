@@ -48,18 +48,43 @@ export default function EnglishAppMyPosts() {
     finally { setTranslating(null); }
   };
 
-  const startEdit = (post) => {
+const startEdit = (post) => {
     setEditingId(post._id);
-    const reconstructedVocab = post.vocabData || [{ word: post.word, meaning: post.meaning, sentence: post.sentence || "" }];
+
+    // 🔥 FIX 1: Root Title ko vocabData ke andar map karo taaki VocabCard usey pakad sake
+    const reconstructedVocab = post.vocabData?.map((v, idx) => ({
+      ...v,
+      title: idx === 0 ? post.title : v.title, // Pehle card me root title dalo
+      isSynced: false // Force VocabCard to run sync
+    })) || [{ 
+      word: post.word, 
+      meaning: post.meaning, 
+      sentence: post.sentence || "",
+      title: post.title, // Fallback for old single posts
+      isSynced: false
+    }];
+
     setVocabItems(reconstructedVocab);
+
     const reconstructedMedia = [];
     if (post.vocabData) {
       post.vocabData.forEach((v, vIdx) => {
         v.media?.forEach(m => {
-          reconstructedMedia.push({ type: m.type || 'image', value: m.url, mode: m.mode || 'file', vocabIndex: vIdx });
+          // 🔥 FIX 2: Mode handling taaki URL wala preview dikhe
+          const isUrl = typeof m.url === 'string' && m.url.startsWith('http');
+          reconstructedMedia.push({ 
+            type: m.type || 'image', 
+            value: m.url, 
+            mode: isUrl ? 'url' : 'file', // URL he toh url mode set karo
+            vocabIndex: vIdx 
+          });
         });
-      });
+      } );
+    } else if (post.image) {
+      // For old single posts
+      reconstructedMedia.push({ type: 'image', value: post.image, mode: 'url', vocabIndex: 0 });
     }
+
     setMediaItems(reconstructedMedia);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     toast.success("Ready to Edit! ✍️");

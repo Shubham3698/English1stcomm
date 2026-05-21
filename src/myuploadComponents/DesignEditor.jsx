@@ -3,7 +3,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import * as fabric from "fabric";
 
-export default function DesignEditor({ tempImage, setTempImage, onSave, displayDims, setDisplayDims }) {
+export default function DesignEditor({ tempImage, setTempImage, onSave, displayDims, setDisplayDims, isAiProcessing, onSkipAi }) {
   const [isCropping, setIsCropping] = useState(true);
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
@@ -56,24 +56,6 @@ export default function DesignEditor({ tempImage, setTempImage, onSave, displayD
     setIsCropping(false);
   };
 
-  const addShape = (type) => {
-    const canvas = fabricCanvasRef.current;
-    if (!canvas) return;
-    setDrawMode("select");
-    
-    let obj;
-    const common = { fill: 'transparent', stroke: brushColor, strokeWidth: 3, left: 50, top: 50 };
-    if (type === 'rect') obj = new fabric.Rect({ ...common, width: 60, height: 60 });
-    else if (type === 'circle') obj = new fabric.Circle({ ...common, radius: 30 });
-    else if (type === 'text') obj = new fabric.IText("EDIT_TEXT", { fontSize: 18, fill: brushColor, left: 50, top: 50, fontWeight: '900', fontStyle: 'italic' });
-    else if (type === 'arrow') {
-      const points = [{ x: 0, y: 5 }, { x: 25, y: 5 }, { x: 25, y: 0 }, { x: 35, y: 10 }, { x: 25, y: 20 }, { x: 25, y: 15 }, { x: 0, y: 15 }];
-      obj = new fabric.Polygon(points, { fill: brushColor, left: 50, top: 50 });
-    }
-    canvas.add(obj);
-    canvas.setActiveObject(obj);
-  };
-
   return (
     <div className="fixed inset-0 z-[10000] bg-[#08080a]/95 backdrop-blur-xl flex flex-col items-center justify-center p-4">
       <div className="bg-[#0d0d0f] border border-white/10 p-6 rounded-2xl w-full max-w-sm shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-y-auto max-h-[95vh] relative">
@@ -84,9 +66,24 @@ export default function DesignEditor({ tempImage, setTempImage, onSave, displayD
             <h3 className="text-[11px] font-black uppercase text-blue-500 tracking-[0.2em] italic">
               {isCropping ? "Unit_Calibration" : "Neural_Design_Interface"}
             </h3>
-            <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5">Step {isCropping ? "01" : "02"} of Processing</p>
+            <p className="text-[8px] text-gray-600 font-bold uppercase mt-0.5">
+              Step {isCropping ? "01" : "02"} of Processing
+            </p>
           </div>
-          <button onClick={() => setTempImage(null)} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-red-500 transition-all">✕</button>
+          
+          {/* Skip / Close System Option */}
+          <div className="flex items-center gap-2">
+            {!isCropping && isAiProcessing && (
+              <button 
+                type="button" 
+                onClick={onSkipAi}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 font-black text-[8px] uppercase tracking-wider animate-pulse hover:bg-amber-500 hover:text-black transition-all"
+              >
+                ⏩ Skip AI Text
+              </button>
+            )}
+            <button onClick={() => setTempImage(null)} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-red-500 transition-all">✕</button>
+          </div>
         </div>
 
         {isCropping ? (
@@ -97,6 +94,20 @@ export default function DesignEditor({ tempImage, setTempImage, onSave, displayD
           </div>
         ) : (
           <div className="flex flex-col gap-4">
+            
+            {/* AI Scanning Status Notification */}
+            {isAiProcessing && (
+              <div className="bg-blue-500/5 border border-blue-500/10 rounded-xl p-3 flex items-center gap-3 animate-in fade-in duration-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-wider">
+                  Gemini is crafting contextual sentences in background...
+                </p>
+              </div>
+            )}
+
             {/* Pro Toolbar */}
             <div className="grid grid-cols-4 gap-2 bg-white/5 p-3 rounded-xl border border-white/5 shadow-inner">
               <button onClick={() => setDrawMode(drawMode === "free" ? "select" : "free")} className={`p-2.5 rounded-lg text-[8px] font-black tracking-tighter border transition-all ${drawMode === 'free' ? 'bg-blue-600 text-white border-blue-400' : 'bg-black/40 text-gray-500 border-white/5'}`}>BRUSH</button>

@@ -1,81 +1,119 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function Home() {
-  const navigate = useNavigate();
+export default function VocabPage() {
+  const [word, setWord] = useState("");
+  const [meaning, setMeaning] = useState("");
+  const [sentences, setSentences] = useState("");
+  const [loadingMeaning, setLoadingMeaning] = useState(false);
+  const [loadingSentences, setLoadingSentences] = useState(false);
+
+  // Render ka backend URL ya localhost
+  const API_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://serdeptry1st.onrender.com";
+
+  const handleFetchData = async (fieldType) => {
+    if (!word || !word.trim()) {
+      toast.error("Pehle word toh likho bhai! ✍️");
+      return;
+    }
+
+    if (fieldType === "meaning") setLoadingMeaning(true);
+    if (fieldType === "sentence") setLoadingSentences(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/words/define`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: word.trim(), type: fieldType }),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData.success) {
+        if (fieldType === "meaning") {
+          setMeaning(resData.data);
+          toast.success("Hindi Meaning aa gaya! 🎉");
+        } else {
+          setSentences(resData.data);
+          toast.success("Examples aa gaye! 🔥");
+        }
+      } else {
+        toast.error(resData.message || "Server ne response nahi diya!");
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      toast.error("Backend connect nahi ho paa raha!");
+    } finally {
+      setLoadingMeaning(false);
+      setLoadingSentences(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#0f0f15] flex flex-col items-center px-6 pt-16 font-sans text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#08080a] text-slate-100 flex flex-col items-center justify-center p-4 font-sans">
+      <Toaster position="top-center" />
       
-      {/* 🚀 Hero Section */}
-      <div className="w-full max-w-md text-center flex flex-col items-center">
-        {/* Modern Badge */}
-        <div className="inline-block bg-white/5 text-gray-400 text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-[0.2em] mb-8 border border-white/10 shadow-xl">
-          Awareness is Power <span className="text-blue-400">⚡</span>
+      <div className="w-full max-w-md bg-[#0e0e11] p-6 sm:p-8 rounded-[2rem] border border-white/5 shadow-2xl space-y-6">
+        <div className="text-center">
+          <h2 className="text-xl font-black italic uppercase tracking-wider bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+            🤖 ChatGPT Vocab Generator
+          </h2>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Instant Dictionary Node</p>
         </div>
-        
-        {/* 🛠️ Hero Heading - Modern Italic Style */}
-        <h1 className="w-full text-5xl sm:text-6xl font-black tracking-tighter italic leading-[0.95] uppercase mb-8 break-words px-2">
-          Words are <br /> 
-          <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent block">Everywhere.</span>
-        </h1>
 
-        <p className="text-gray-500 text-sm font-medium leading-relaxed px-4 mb-12 max-w-[90%]">
-          We are surrounded by English words every single day—on billboards, 
-          packaging, and digital screens. Stop ignoring them. <span className="text-white">React</span> to them, 
-          <span className="text-white"> Collect</span> them, and make them yours.
-        </p>
-
-        {/* 📱 Explore Button - Sleek Dark Look */}
-        <button 
-          onClick={() => navigate("/community")}
-          className="group relative w-full bg-white text-black py-5 rounded-xl font-black uppercase tracking-[0.2em] text-xs shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95 transition-all mb-4 overflow-hidden"
-        >
-          <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-black/5 to-transparent group-hover:animate-shine transition-all duration-500" 
-               style={{ animation: 'shine 2s infinite' }} 
+        {/* Word Input */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest ml-1">Target Word</label>
+          <input
+            type="text"
+            placeholder="TYPE ANY WORD HERE..."
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            className="w-full bg-black/40 border border-white/10 text-white rounded-xl px-4 py-3.5 text-sm font-black outline-none focus:border-emerald-500 uppercase italic transition-all shadow-inner placeholder:text-gray-700"
           />
-          <span className="relative z-10">Explore Community Posts</span>
-        </button>
-
-        <p className="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mt-2">
-          Join the Serial Learners Club
-        </p>
-      </div>
-
-      {/* 📊 Feature Cards - Sharp & Modern Layout */}
-      <div className="w-full max-w-md grid grid-cols-2 gap-4 mt-16">
-        <div className="bg-white/[0.03] p-8 rounded-2xl border border-white/10 flex flex-col items-center text-center hover:bg-white/[0.05] transition-all group">
-          <span className="text-3xl mb-4 block group-hover:scale-110 transition-transform">👁️</span>
-          <h3 className="font-black text-[11px] uppercase tracking-widest text-white">Spot it</h3>
-          <p className="text-[10px] text-gray-500 mt-2 font-bold italic leading-tight">
-            Capture words from your daily life.
-          </p>
         </div>
-        
-        <div className="bg-white/[0.03] p-8 rounded-2xl border border-white/10 flex flex-col items-center text-center hover:bg-white/[0.05] transition-all group">
-          <span className="text-3xl mb-4 block group-hover:scale-110 transition-transform">📥</span>
-          <h3 className="font-black text-[11px] uppercase tracking-widest text-white">Collect it</h3>
-          <p className="text-[10px] text-gray-500 mt-2 font-bold italic leading-tight">
-            Save them to your personal vault.
-          </p>
+
+        {/* Buttons to Fetch */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => handleFetchData("meaning")}
+            disabled={loadingMeaning}
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 px-4 rounded-xl font-black uppercase text-[9px] tracking-wider shadow-lg transition-all active:scale-95 disabled:opacity-40"
+          >
+            {loadingMeaning ? "Fetching..." : "💡 Get Meaning"}
+          </button>
+          <button
+            onClick={() => handleFetchData("sentence")}
+            disabled={loadingSentences}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3 px-4 rounded-xl font-black uppercase text-[9px] tracking-wider shadow-lg transition-all active:scale-95 disabled:opacity-40"
+          >
+            {loadingSentences ? "Drafting..." : "📝 Get Sentences"}
+          </button>
+        </div>
+
+        <hr className="border-white/[0.03]" />
+
+        {/* Output Fields */}
+        <div className="space-y-4">
+          {/* Meaning Result */}
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Hindi Translation</label>
+            <div className="w-full bg-black/20 border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-emerald-400 min-h-[48px] flex items-center">
+              {meaning || <span className="text-gray-700 italic text-[11px]">Meaning text will appear here...</span>}
+            </div>
+          </div>
+
+          {/* Sentences Result */}
+          <div className="space-y-1">
+            <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Practical Examples Matrix</label>
+            <div className="w-full bg-black/20 border border-white/5 rounded-xl p-4 text-[12px] font-medium text-gray-300 italic whitespace-pre-line min-h-[100px] leading-relaxed">
+              {sentences || <span className="text-gray-700 italic text-[11px]">Example sentences will appear here...</span>}
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Footer hint */}
-      <div className="mt-20 mb-10 flex flex-col items-center gap-4">
-        <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-        <p className="text-gray-600 text-[8px] font-black uppercase tracking-[0.5em]">
-          Designed for the Curious Mind
-        </p>
-      </div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 100%; }
-            100% { left: 100%; }
-          }
-      `}} />
     </div>
   );
 }

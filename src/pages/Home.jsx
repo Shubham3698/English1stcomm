@@ -15,7 +15,7 @@ export default function VocabPage() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  // --- AUTHENTICATED USER STATE ---
+  // --- STRICTLY AUTHENTICATED USER STATE ---
   const [userEmail, setUserEmail] = useState("");
 
   const API_URL =
@@ -23,20 +23,14 @@ export default function VocabPage() {
       ? "http://localhost:3000"
       : "https://serdeptry1st.onrender.com";
 
-  // 1. Initial Load pe direct session/auth context se logged-in user ka Gmail read karega
+  // 1. Initial Load: Correct Key "eng_userEmail" se data uthana
   useEffect(() => {
-    // Agar tum Firebase Auth use kar rahe ho, to ye hook use karna:
-    // auth.onAuthStateChanged((user) => { if (user) setUserEmail(user.email); });
-    
-    // Normal storage flow context extraction:
-    const loggedInUserEmail = localStorage.getItem("userEmail") || localStorage.getItem("email");
+    const loggedInUserEmail = localStorage.getItem("eng_userEmail");
     
     if (loggedInUserEmail) {
       setUserEmail(loggedInUserEmail.trim());
     } else {
-      // Fallback fallback setting default state agar pure local env me account available na ho
-      setUserEmail("guest_user@gmail.com");
-      console.warn("No active session found. Fallback state deployed.");
+      setUserEmail("guest_user@gmail.com"); 
     }
   }, []);
 
@@ -50,7 +44,7 @@ export default function VocabPage() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // 2. Database se dynamic history fetch, based on logged-in user's true Gmail
+  // 2. Database se is current logged-in user ki history fetch karna
   const fetchHistoryFromDB = async () => {
     if (!userEmail) return;
     try {
@@ -64,7 +58,6 @@ export default function VocabPage() {
     }
   };
 
-  // Jab userEmail active ho tab fetch handle call update target
   useEffect(() => {
     if (userEmail) {
       fetchHistoryFromDB();
@@ -79,8 +72,8 @@ export default function VocabPage() {
       return;
     }
 
-    if (!userEmail) {
-      toast.error("User Identity context is missing! 🚫");
+    if (!userEmail || userEmail === "guest_user@gmail.com") {
+      toast.error("Bhai pehle Login karo! 🚫");
       return;
     }
 
@@ -95,7 +88,7 @@ export default function VocabPage() {
         },
         body: JSON.stringify({
           word: searchTarget,
-          userId: userEmail, // True Logged In Gmail mapping passed straight into cluster database
+          userId: userEmail, 
           getAlternative: isAlternative,
         }),
       });
@@ -119,7 +112,7 @@ export default function VocabPage() {
 
         handlePronounce(resData.data.word);
         setWord("");
-        fetchHistoryFromDB(); // Real-time state synchronization
+        fetchHistoryFromDB(); 
       } else {
         toast.error(resData.message || "Server ne data push nahi kiya!");
       }
@@ -152,11 +145,15 @@ export default function VocabPage() {
       {/* --- DASHBOARD USER PROFILE SUMMARY STRIP --- */}
       <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/5 rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg">
         <div className="flex flex-col min-w-0 flex-1 pr-4">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Account</span>
-          <span className="text-xs text-cyan-400 font-mono font-medium truncate">
-            {userEmail || "Detecting user session..."}
-          </span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Logged In As</span>
+          
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-cyan-400 font-mono font-medium truncate">
+              {userEmail === "guest_user@gmail.com" ? "Guest Mode (Not Logged In)" : userEmail}
+            </span>
+          </div>
         </div>
+        
         <div className="flex gap-4 items-center flex-shrink-0">
           <div className="text-right">
             <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Total Queries</span>
@@ -190,7 +187,7 @@ export default function VocabPage() {
             </div>
             {history.length === 0 ? (
               <div className="text-center py-6 text-xs text-slate-600 uppercase font-bold bg-black/20 rounded-2xl border border-white/5">
-                No history data linked to this account yet 🔍
+                No history data linked to {userEmail} yet 🔍
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-black/30 rounded-2xl border border-white/5">

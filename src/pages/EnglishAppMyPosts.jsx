@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Tesseract from "tesseract.js";
 
 import DesignEditor from "../myuploadComponents/DesignEditor";
 import VocabCard from "../myuploadComponents/VocabCard";
@@ -17,7 +16,7 @@ export default function EnglishAppMyPosts() {
   const [translating, setTranslating] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [isCropping, setIsCropping] = useState(true); // 🔥 Add this for Prop fix
+  const [isCropping, setIsCropping] = useState(true);
 
   const navigate = useNavigate();
   const API_URL = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
@@ -48,19 +47,18 @@ export default function EnglishAppMyPosts() {
     finally { setTranslating(null); }
   };
 
-const startEdit = (post) => {
+  const startEdit = (post) => {
     setEditingId(post._id);
 
-    // 🔥 FIX 1: Root Title ko vocabData ke andar map karo taaki VocabCard usey pakad sake
     const reconstructedVocab = post.vocabData?.map((v, idx) => ({
       ...v,
-      title: idx === 0 ? post.title : v.title, // Pehle card me root title dalo
-      isSynced: false // Force VocabCard to run sync
+      title: idx === 0 ? post.title : v.title,
+      isSynced: false
     })) || [{ 
       word: post.word, 
       meaning: post.meaning, 
       sentence: post.sentence || "",
-      title: post.title, // Fallback for old single posts
+      title: post.title,
       isSynced: false
     }];
 
@@ -70,18 +68,16 @@ const startEdit = (post) => {
     if (post.vocabData) {
       post.vocabData.forEach((v, vIdx) => {
         v.media?.forEach(m => {
-          // 🔥 FIX 2: Mode handling taaki URL wala preview dikhe
           const isUrl = typeof m.url === 'string' && m.url.startsWith('http');
           reconstructedMedia.push({ 
             type: m.type || 'image', 
             value: m.url, 
-            mode: isUrl ? 'url' : 'file', // URL he toh url mode set karo
+            mode: isUrl ? 'url' : 'file', 
             vocabIndex: vIdx 
           });
         });
-      } );
+      });
     } else if (post.image) {
-      // For old single posts
       reconstructedMedia.push({ type: 'image', value: post.image, mode: 'url', vocabIndex: 0 });
     }
 
@@ -110,6 +106,7 @@ const startEdit = (post) => {
     setMediaItems(updated);
   };
 
+  // 🔥 Completely removed OCR/Tesseract logic from here 🔥
   const finalizeImage = async (fabricCanvas) => {
     const bgImg = new Image();
     bgImg.crossOrigin = "anonymous";
@@ -133,14 +130,8 @@ const startEdit = (post) => {
       const finalFile = new File([blob], `edit_${Date.now()}.png`, { type: "image/png" });
       updateMediaValue(activeMediaIndex, finalFile, "file");
 
-      const scanToast = toast.loading("AI Scanning Text...");
-      try {
-        const result = await Tesseract.recognize(finalFile, 'eng');
-        const vocabIdx = mediaItems[activeMediaIndex].vocabIndex;
-        updateVocabValue(vocabIdx, "sentence", result.data.text.replace(/\n/g, ' ').trim());
-        toast.success("Text Found!", { id: scanToast });
-      } catch (e) { toast.error("OCR Failed", { id: scanToast }); }
       setTempImage(null);
+      toast.success("Design Saved! 🎨");
     };
   };
 
@@ -166,32 +157,56 @@ const startEdit = (post) => {
         <DesignEditor tempImage={tempImage} setTempImage={setTempImage} displayDims={displayDims} setDisplayDims={setDisplayDims} onSave={finalizeImage} />
       )}
 
-      <div className="w-full max-w-sm bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
+      <div className="w-full max-w-[100vw] sm:max-w-md bg-white p-4 sm:p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8 overflow-hidden">
+        
         <div className="flex justify-between items-center mb-6 px-1">
           <h2 className="text-xl font-black italic uppercase">{editingId ? "Edit Memory" : "Magic Deck"}</h2>
           {editingId && <button onClick={resetForm} className="text-[10px] font-black text-red-500 uppercase">✕ Cancel</button>}
         </div>
-        <form onSubmit={handleFinalSubmit} className="space-y-8">
-          {vocabItems.map((vItem, vIdx) => (
-            <VocabCard 
-              key={vIdx} vItem={vItem} vIdx={vIdx} 
-              updateVocabValue={updateVocabValue} 
-              removeVocabSlot={(idx) => setVocabItems(vocabItems.filter((_, i) => i !== idx))} 
-              handleAutoTranslate={handleAutoTranslate} 
-              translating={translating} 
-              mediaItems={mediaItems} 
-              setMediaItems={setMediaItems} 
-              updateMediaValue={updateMediaValue} 
-              setTempImage={setTempImage} 
-              setActiveMediaIndex={setActiveMediaIndex}
-              setIsCropping={setIsCropping} // 🔥 FIXED PROP
-            />
-          ))}
-          <button type="button" onClick={() => setVocabItems([...vocabItems, { word: "", meaning: "", sentence: "" }])} className="w-full py-4 border-2 border-dashed border-gray-100 rounded-[2rem] text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-all">+ Add New Card</button>
+
+        <form onSubmit={handleFinalSubmit} className="space-y-6">
+          
+          <div className="flex overflow-x-auto gap-4 pb-6 pt-2 px-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] items-center">
+            
+            {vocabItems.map((vItem, vIdx) => (
+              <div key={vIdx} className="w-[85vw] max-w-[340px] shrink-0 snap-center h-[680px] bg-[#111114] rounded-[2rem] shadow-2xl overflow-hidden border border-white/5 transition-all hover:border-blue-500/30 relative">
+                <VocabCard 
+                  vItem={vItem} 
+                  vIdx={vIdx} 
+                  updateVocabValue={updateVocabValue} 
+                  removeVocabSlot={(idx) => setVocabItems(vocabItems.filter((_, i) => i !== idx))} 
+                  handleAutoTranslate={handleAutoTranslate} 
+                  translating={translating} 
+                  mediaItems={mediaItems} 
+                  setMediaItems={setMediaItems} 
+                  updateMediaValue={updateMediaValue} 
+                  setTempImage={setTempImage} 
+                  setActiveMediaIndex={setActiveMediaIndex}
+                  setIsCropping={setIsCropping} 
+                />
+              </div>
+            ))}
+
+            <div className="w-[85vw] max-w-[340px] shrink-0 snap-center h-[680px] flex">
+              <button 
+                type="button" 
+                onClick={() => setVocabItems([...vocabItems, { word: "", meaning: "", sentence: "" }])} 
+                className="w-full h-full bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-[2rem] text-[12px] font-black text-gray-400 uppercase tracking-widest hover:text-blue-500 hover:border-blue-400 hover:bg-blue-50/50 transition-all flex flex-col items-center justify-center gap-3 shadow-inner"
+              >
+                <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-100 text-3xl font-light">
+                  +
+                </div>
+                Add New Card
+              </button>
+            </div>
+
+          </div>
+
           <button disabled={uploading} className="w-full bg-red-600 text-white p-6 rounded-[2.5rem] font-black uppercase text-xs shadow-xl active:scale-95 disabled:bg-gray-400 transition-all">
             {uploading ? "Processing..." : editingId ? "Update Smart Deck ✅" : "Save Smart Deck 🚀"}
           </button>
         </form>
+
       </div>
 
       <div className="w-full max-w-sm space-y-4">

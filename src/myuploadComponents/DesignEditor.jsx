@@ -8,7 +8,7 @@ export default function DesignEditor({ tempImage, setTempImage, onSave, displayD
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
   const [drawMode, setDrawMode] = useState("select"); 
-  const [brushColor, setBrushColor] = useState("#3b82f6"); // Default Neon Blue
+  const [brushColor, setBrushColor] = useState("#3b82f6"); 
   
   const imgRef = useRef(null);
   const fabricCanvasRef = useRef(null);
@@ -125,7 +125,8 @@ export default function DesignEditor({ tempImage, setTempImage, onSave, displayD
           onClick={isCropping ? getCroppedImg : () => onSave(fabricCanvasRef.current)}
           className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-[0.3em] shadow-[0_10px_20px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
         >
-          {isCropping ? "Initialize_Design" : "Finalize_&_Scan_Signal"}
+          {/* 🔥 FIX: Changed button text to remove 'Scan Signal' 🔥 */}
+          {isCropping ? "Initialize_Design" : "Finalize_Design"}
         </button>
       </div>
       

@@ -71,7 +71,6 @@ export default function VocabCard({
       </button>
 
       {/* --- Section 1: Inputs --- */}
-      {/* 🔥 FIX: Halki si spacing kam ki hai taaki media ko jagah mile 🔥 */}
       <div className="flex-none space-y-3.5 mt-1 w-full">
         
         <div className="space-y-1 text-left pr-12 w-full">
@@ -129,7 +128,6 @@ export default function VocabCard({
             const previewUrl = (mItem.value instanceof File) ? URL.createObjectURL(mItem.value) : mItem.value;
 
             return (
-              /* 🔥 FIX: Media Card ki height aur width proportionally shrink ki hai (220x230) taaki trim na ho 🔥 */
               <div key={mIdx} className="w-[220px] h-[230px] shrink-0 snap-center relative p-3 bg-white/[0.02] rounded-3xl border border-white/5 animate-in fade-in zoom-in duration-500 flex flex-col justify-between overflow-hidden">
                 
                 <div className="flex justify-between items-center mb-2 bg-black/40 p-1.5 rounded-xl border border-white/5 shrink-0">
@@ -147,7 +145,6 @@ export default function VocabCard({
                 ) : (
                   <div className="flex-grow flex flex-col justify-center min-h-0 w-full">
                     {mItem.mode === "file" && !(typeof mItem.value === 'string' && mItem.value.startsWith('http')) ? (
-                      /* 🔥 Image Preview Container reduced to h-[120px] 🔥 */
                       <div className="relative w-full h-[120px] rounded-xl overflow-hidden bg-black/60 border border-white/5 flex items-center justify-center">
                         {mItem.value instanceof File ? (
                           <img src={previewUrl} className="w-full h-full object-cover" alt="preview" />
@@ -171,7 +168,6 @@ export default function VocabCard({
                           onChange={(e) => handleUrlChange(mIdx, e.target.value)} 
                         />
                         {ytId ? (
-                          /* 🔥 Video Preview Container reduced to h-[90px] 🔥 */
                           <div className="w-full h-[90px] rounded-xl overflow-hidden border border-white/10 relative">
                             <iframe className="w-full h-full pointer-events-none opacity-60" src={`https://www.youtube.com/embed/${ytId}?rel=0&controls=0`} frameBorder="0" title="preview" />
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="bg-blue-600 px-2 py-1 rounded-md text-[7px] font-black text-white uppercase shadow-xl border border-blue-400">Video</div></div>
@@ -189,7 +185,6 @@ export default function VocabCard({
             );
           })}
 
-          {/* 🔥 FIX: Add Button ko bhi shrink kiya (160x230) taaki screen space bache 🔥 */}
           <button type="button" onClick={addMedia} className="w-[160px] h-[230px] shrink-0 snap-center rounded-3xl bg-blue-600/5 border-2 border-dashed border-blue-500/20 text-blue-500 font-black uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-lg flex flex-col items-center justify-center gap-2">
             <span className="text-2xl font-light">+</span> Add Media
           </button>

@@ -7,6 +7,7 @@ import VocabCard from "../myuploadComponents/VocabCard";
 import ArchiveItem from "../myuploadComponents/ArchiveItem";
 
 export default function EnglishAppMyPosts() {
+  const [deckTitle, setDeckTitle] = useState(""); // 🔥 Naya state Ultimate Title ke liye
   const [vocabItems, setVocabItems] = useState([{ word: "", meaning: "", sentence: "" }]);
   const [mediaItems, setMediaItems] = useState([]);
   const [tempImage, setTempImage] = useState(null);
@@ -49,6 +50,7 @@ export default function EnglishAppMyPosts() {
 
   const startEdit = (post) => {
     setEditingId(post._id);
+    setDeckTitle(post.title || ""); // 🔥 Edit karte waqt purana title load hoga
 
     const reconstructedVocab = post.vocabData?.map((v, idx) => ({
       ...v,
@@ -87,6 +89,7 @@ export default function EnglishAppMyPosts() {
   };
 
   const resetForm = () => {
+    setDeckTitle(""); // 🔥 Reset hone pe title bhi clear hoga
     setVocabItems([{ word: "", meaning: "", sentence: "" }]);
     setMediaItems([]);
     setEditingId(null);
@@ -106,7 +109,6 @@ export default function EnglishAppMyPosts() {
     setMediaItems(updated);
   };
 
-  // 🔥 Completely removed OCR/Tesseract logic from here 🔥
   const finalizeImage = async (fabricCanvas) => {
     const bgImg = new Image();
     bgImg.crossOrigin = "anonymous";
@@ -137,9 +139,15 @@ export default function EnglishAppMyPosts() {
 
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
+    if(!deckTitle.trim()){
+      toast.error("Please enter a Deck Title!");
+      return;
+    }
+    
     setUploading(true);
     const data = new FormData();
     data.append("userEmail", localStorage.getItem("eng_userEmail"));
+    data.append("title", deckTitle); // 🔥 Backend ko Ultimate Title bhejna
     data.append("vocabData", JSON.stringify(vocabItems));
     mediaItems.forEach(m => { if (m.value instanceof File) data.append("images", m.value); });
     data.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({ ...m, url: m.value instanceof File ? null : m.value }))));
@@ -161,11 +169,25 @@ export default function EnglishAppMyPosts() {
         
         <div className="flex justify-between items-center mb-6 px-1">
           <h2 className="text-xl font-black italic uppercase">{editingId ? "Edit Memory" : "Magic Deck"}</h2>
-          {editingId && <button onClick={resetForm} className="text-[10px] font-black text-red-500 uppercase">✕ Cancel</button>}
+          {editingId && <button type="button" onClick={resetForm} className="text-[10px] font-black text-red-500 uppercase">✕ Cancel</button>}
         </div>
 
         <form onSubmit={handleFinalSubmit} className="space-y-6">
           
+          {/* 🔥 ULTIMATE DECK TITLE INPUT 🔥 */}
+          <div className="px-1">
+            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2 block">Ultimate Deck Title</label>
+            <input 
+              type="text" 
+              placeholder="E.G. 'JOKER MOVIE VOCAB'..." 
+              value={deckTitle} 
+              onChange={(e) => setDeckTitle(e.target.value)} 
+              required
+              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-sm font-black text-gray-800 outline-none focus:border-blue-400 transition-all uppercase tracking-wider placeholder:text-gray-300 shadow-inner" 
+            />
+          </div>
+
+          {/* MAIN SWIPER */}
           <div className="flex overflow-x-auto gap-4 pb-6 pt-2 px-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] items-center">
             
             {vocabItems.map((vItem, vIdx) => (

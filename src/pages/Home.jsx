@@ -15,7 +15,12 @@ export default function VocabPage() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
-  // --- STRICTLY AUTHENTICATED USER STATE ---
+  // --- IMAGE STATES ---
+  const [imageSrc, setImageSrc] = useState(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [imageAction, setImageAction] = useState(""); 
+  const [isImageExpanded, setIsImageExpanded] = useState(false);
+
   const [userEmail, setUserEmail] = useState("");
 
   const API_URL =
@@ -23,10 +28,8 @@ export default function VocabPage() {
       ? "http://localhost:3000"
       : "https://serdeptry1st.onrender.com";
 
-  // 1. Initial Load: Correct Key "eng_userEmail" se data uthana
   useEffect(() => {
     const loggedInUserEmail = localStorage.getItem("eng_userEmail");
-    
     if (loggedInUserEmail) {
       setUserEmail(loggedInUserEmail.trim());
     } else {
@@ -44,7 +47,6 @@ export default function VocabPage() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // 2. Database se is current logged-in user ki history fetch karna
   const fetchHistoryFromDB = async () => {
     if (!userEmail) return;
     try {
@@ -64,18 +66,47 @@ export default function VocabPage() {
     }
   }, [userEmail]);
 
+  // 🔥 UPDATE: Generate Image logic with Cloudinary support
+  const handleGenerateImage = async (actionType = "normal", wordToGenerate) => {
+    if (!wordToGenerate || !userEmail) return;
+    
+    setIsImageLoading(true);
+    setImageAction(actionType);
+
+    if (actionType === "normal") {
+      setImageSrc(null);
+      setIsImageExpanded(false);
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/image/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // User ID bhej rahe hain taaki DB mein URL save ho sake
+        body: JSON.stringify({ phrase: wordToGenerate, actionType, userId: userEmail }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.imageUrl) {
+        // Base64 ki jagah ab direct Cloudinary URL aayega
+        setImageSrc(data.imageUrl);
+        fetchHistoryFromDB(); // History refresh karo taaki wahan update ho jaye
+      } else {
+        toast.error("Visual generation failed behind the scenes");
+      }
+    } catch (err) {
+      console.error("Image Fetch error:", err);
+    } finally {
+      setIsImageLoading(false);
+      setImageAction("");
+    }
+  };
+
   const handleSearchWord = async (wordToSearch = word, isAlternative = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
-
-    if (!searchTarget) {
-      toast.error("Pehle word likho ✍️");
-      return;
-    }
-
-    if (!userEmail || userEmail === "guest_user@gmail.com") {
-      toast.error("Bhai pehle Login karo! 🚫");
-      return;
-    }
+    if (!searchTarget) return toast.error("Pehle word likho ✍️");
+    if (!userEmail || userEmail === "guest_user@gmail.com") return toast.error("Bhai pehle Login karo! 🚫");
 
     setLoading(true);
     setShowHistory(false);
@@ -83,14 +114,8 @@ export default function VocabPage() {
     try {
       const response = await fetch(`${API_URL}/api/words/define`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          word: searchTarget,
-          userId: userEmail, 
-          getAlternative: isAlternative,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: searchTarget, userId: userEmail, getAlternative: isAlternative }),
       });
 
       const resData = await response.json();
@@ -104,20 +129,25 @@ export default function VocabPage() {
         setAntonyms(resData.data.antonyms);
         setSentences(resData.data.sentences);
 
-        if (isAlternative) {
-          toast.success("Nayi meaning generated! 🔄");
-        } else {
-          toast.success("Word analyzed 🚀");
-        }
+        if (isAlternative) toast.success("Nayi meaning generated! 🔄");
+        else toast.success("Word analyzed 🚀");
 
         handlePronounce(resData.data.word);
         setWord("");
         fetchHistoryFromDB(); 
+
+        // 🔥 OPTIMIZATION: Agar database mein pehle se image thi, toh fetch mat karo
+        if (resData.data.imageUrl) {
+            setImageSrc(resData.data.imageUrl);
+            setIsImageExpanded(false); // Gift box dikhega
+        } else {
+            handleGenerateImage("normal", resData.data.word);
+        }
+
       } else {
         toast.error(resData.message || "Server ne data push nahi kiya!");
       }
     } catch (err) {
-      console.error("Fetch error:", err);
       toast.error("Backend connect nahi ho raha!");
     } finally {
       setLoading(false);
@@ -134,6 +164,14 @@ export default function VocabPage() {
     setSentences(item.sentences);
     setShowHistory(false);
     handlePronounce(item.word);
+    
+    // 🔥 OPTIMIZATION: Agar history card mein imageUrl hai (Cloudinary se), toh API hit math karo
+    if (item.imageUrl) {
+        setImageSrc(item.imageUrl);
+        setIsImageExpanded(false);
+    } else {
+        handleGenerateImage("normal", item.word);
+    }
   };
 
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
@@ -142,11 +180,10 @@ export default function VocabPage() {
     <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10">
       <Toaster position="top-center" />
 
-      {/* --- DASHBOARD USER PROFILE SUMMARY STRIP --- */}
+      {/* DASHBOARD USER PROFILE SUMMARY STRIP */}
       <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/5 rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg">
         <div className="flex flex-col min-w-0 flex-1 pr-4">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Logged In As</span>
-          
           <div className="flex items-center gap-3">
             <span className="text-xs text-cyan-400 font-mono font-medium truncate">
               {userEmail === "guest_user@gmail.com" ? "Guest Mode (Not Logged In)" : userEmail}
@@ -198,7 +235,7 @@ export default function VocabPage() {
                     className="bg-black/40 border border-white/[0.05] hover:border-cyan-500/30 rounded-xl p-3 text-left transition-all"
                   >
                     <div className="text-cyan-400 text-[11px] uppercase font-black truncate">
-                      {item.word}
+                      {item.word} {item.imageUrl && "🖼️"}
                     </div>
                     <div className="text-[9px] text-slate-500 truncate mt-0.5">
                       {item.meaning}
@@ -216,7 +253,7 @@ export default function VocabPage() {
             🤖 Dameeto Vocab Node
           </h2>
           <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">
-            AI-Driven Structural Lexicon
+            AI-Driven Structural Lexicon & Vision
           </p>
         </div>
 
@@ -243,7 +280,6 @@ export default function VocabPage() {
         {activeWord && (
           <div className="border-t border-white/5 pt-6 space-y-4">
             
-            {/* User Message Bubble */}
             <div className="flex flex-col items-end space-y-1 pl-12">
               <div className="bg-gradient-to-br from-cyan-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-xs font-semibold leading-relaxed shadow-md">
                 Mujhe <span className="underline uppercase font-black text-yellow-300">{activeWord}</span> ka exact Hindi meaning, simple setup explanation aur practical examples ke sath samjhao! 🙌
@@ -251,11 +287,9 @@ export default function VocabPage() {
               <span className="text-[9px] uppercase font-bold text-slate-600 mr-1">You</span>
             </div>
 
-            {/* AI Assistant Message Bubble Response */}
             <div className="flex flex-col items-start space-y-1 pr-8">
               <div className="w-full bg-black/40 border border-white/[0.05] rounded-2xl rounded-tl-sm p-5 space-y-5 shadow-inner">
                 
-                {/* Header Action inside Assistant block */}
                 <div className="flex items-center justify-between border-b border-white/5 pb-3">
                   <div>
                     <h3 className="text-xl font-black italic uppercase text-cyan-400 tracking-wide flex items-center gap-2">
@@ -273,23 +307,18 @@ export default function VocabPage() {
                   </button>
                 </div>
 
-                {/* AI Answers Layout breakdown */}
                 <div className="space-y-4 text-[13px] leading-relaxed">
-                  
-                  {/* Point 1: Meaning */}
                   <div>
                     <p className="text-slate-400 font-medium">
                       👉 <span className="text-emerald-400 font-bold">Hindi Meaning:</span> Iska seedha matlab hota hai — <span className="text-emerald-300 font-extrabold text-base">{meaning}</span>.
                     </p>
                   </div>
 
-                  {/* Point 2: Explanation */}
                   <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                     <p className="text-amber-400 font-black text-[10px] uppercase tracking-wider mb-1">💡 Simple Explanation:</p>
                     <p className="text-slate-300 italic">{explanation}</p>
                   </div>
 
-                  {/* Point 3: Sentences */}
                   <div>
                     <p className="text-cyan-400 font-black text-[10px] uppercase tracking-wider mb-1">📝 Practical Sentences:</p>
                     <div className="text-slate-300 whitespace-pre-line pl-2 border-l-2 border-cyan-500/30 space-y-1 font-mono text-xs">
@@ -297,7 +326,6 @@ export default function VocabPage() {
                     </div>
                   </div>
 
-                  {/* Point 4: Synonyms / Antonyms Split */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-[12px]">
                     <div className="bg-indigo-500/[0.03] border border-indigo-500/10 rounded-xl p-3">
                       <span className="text-indigo-400 font-black text-[9px] uppercase block mb-1">✨ Similar Words</span>
@@ -309,16 +337,78 @@ export default function VocabPage() {
                     </div>
                   </div>
 
+                  {/* VISUAL EXPRESSION */}
+                  <div className="pt-4 border-t border-white/5">
+                    <p className="text-fuchsia-400 font-black text-[10px] uppercase tracking-wider mb-3">🎨 AI Visual Expression:</p>
+                    
+                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${isImageExpanded ? 'aspect-square' : 'py-8'}`}>
+                      
+                      {isImageLoading ? (
+                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10">
+                          <div className="w-6 h-6 border-2 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
+                          <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
+                            {imageAction === 'refine' ? 'Optimizing Details...' : 
+                             imageAction === 'regenerate' ? 'New Perspective...' : 
+                             'Saving to Cloudinary...'}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {/* Step 1: Image Ready but hidden */}
+                      {imageSrc && !isImageExpanded && !isImageLoading ? (
+                        <div className="flex flex-col items-center text-center px-4 animate-fade-in">
+                          <span className="text-3xl mb-2">🎁</span>
+                          <h3 className="text-sm font-bold text-white mb-1">Visual Ready!</h3>
+                          <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-4">Click below to reveal "{activeWord}"</p>
+                          <button 
+                            onClick={() => setIsImageExpanded(true)}
+                            className="px-6 py-2 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:opacity-90 text-white text-[11px] font-black uppercase rounded-lg transition-all shadow-[0_0_15px_rgba(192,38,211,0.3)] hover:scale-105"
+                          >
+                            Reveal Visual
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {/* Step 2: Expanded Image */}
+                      {imageSrc && isImageExpanded ? (
+                        <img 
+                          src={imageSrc} 
+                          alt={activeWord} 
+                          className="w-full h-full object-cover transition-opacity duration-700"
+                        />
+                      ) : null}
+                    </div>
+
+                    {imageSrc && isImageExpanded && (
+                      <div className="flex gap-2 mt-3 justify-center animate-fade-in">
+                        <button
+                          onClick={() => handleGenerateImage('regenerate', activeWord)}
+                          disabled={isImageLoading}
+                          className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-white/10 flex justify-center items-center gap-1.5 uppercase"
+                        >
+                          <span>🔄</span> Regenerate
+                        </button>
+                        
+                        <button
+                          onClick={() => handleGenerateImage('refine', activeWord)}
+                          disabled={isImageLoading}
+                          className="flex-1 py-2 px-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-fuchsia-500/20 flex justify-center items-center gap-1.5 uppercase"
+                        >
+                          <span>✨</span> Refine
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
 
-                {/* Regenerate Action nested cleanly inside system frame */}
                 <div className="flex justify-end border-t border-white/5 pt-3">
                   <button
                     onClick={() => handleSearchWord(activeWord, true)}
                     disabled={loading}
                     className="text-[9px] bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 px-3 py-1.5 rounded-lg font-black transition-all uppercase tracking-wider"
                   >
-                    {loading ? "Regenerating..." : "🔄 Change Context / New Meaning"}
+                    {loading ? "Regenerating Text..." : "🔄 Change Context / New Meaning"}
                   </button>
                 </div>
 

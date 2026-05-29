@@ -1,176 +1,282 @@
-import React, { useState, useRef, useEffect } from "react";
-import toast from 'react-hot-toast';
-import PostCard from "../components/PostCard";
-import PremiumSoundFeature from "../components/PremiumSoundFeature"; 
+import React, { useState, useEffect } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function FindVocab() {
-  const [query, setQuery] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("dictionary"); 
+export default function PracticePage() {
+  const [userEmail, setUserEmail] = useState("");
+  const [historyWords, setHistoryWords] = useState([]);
   
-  // 🔥 Translation States
-  const [translatedText, setTranslatedText] = useState("");
-  const [isTranslating, setIsTranslating] = useState(false);
+  // Game States
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentChallenge, setCurrentChallenge] = useState(null);
+  const [availableWords, setAvailableWords] = useState([]);
+  const [selectedWords, setSelectedWords] = useState([]);
+  const [isCorrect, setIsCorrect] = useState(null);
+  
+  // Naya state correct answer expand/collapse karne ke liye
+  const [showAnswer, setShowAnswer] = useState(false);
 
-  const API_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+  const API_URL =
+    window.location.hostname === "localhost"
+      ? "http://localhost:3000"
+      : "https://serdeptry1st.onrender.com";
 
-  // Nayi search par purana translation saaf karo
   useEffect(() => {
-    setTranslatedText("");
-  }, [result]);
+    const loggedInUserEmail = localStorage.getItem("eng_userEmail");
+    if (loggedInUserEmail) {
+      setUserEmail(loggedInUserEmail.trim());
+    } else {
+      setUserEmail("guest_user@gmail.com");
+    }
+  }, []);
 
-  const handleSearch = async (e) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return toast.error("Word required! ✍️");
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/search-live?q=${query.trim()}`);
-      const data = await res.json();
-      if (data.success) {
-        setResult(data);
-        setActiveTab("dictionary"); 
-      } else {
-        toast.error("Not found! ❌");
+  // 1. Pehle user ki history fetch karo
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!userEmail || userEmail === "guest_user@gmail.com") return;
+      try {
+        const response = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
+        const resData = await response.json();
+        if (response.ok && resData.success && resData.data.length > 0) {
+          const wordsOnly = resData.data.map(item => item.word);
+          setHistoryWords(wordsOnly);
+        }
+      } catch (err) {
+        console.error("History fetch error:", err);
       }
-    } catch (err) {
-      toast.error("Network Error!");
+    };
+    fetchHistory();
+  }, [userEmail]);
+
+  // 2. Ek random word uthao aur Gemini se game generate karwao
+  const generateNewChallenge = async () => {
+    if (historyWords.length === 0) {
+      return toast.error("Pehle Vocab page pe jaake kuch words search karo! 📚");
+    }
+
+    setIsLoading(true);
+    setIsCorrect(null);
+    setSelectedWords([]);
+    setShowAnswer(false);
+
+    const randomTargetWord = historyWords[Math.floor(Math.random() * historyWords.length)];
+
+    try {
+      const response = await fetch(`${API_URL}/api/words/generate-practice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: randomTargetWord, userId: userEmail }),
+      });
+
+      const resData = await response.json();
+
+      if (response.ok && resData.success) {
+        const data = resData.data;
+        setCurrentChallenge(data);
+
+        const correctWordsArr = data.englishSentence.split(" ");
+        let combinedWords = [...correctWordsArr, ...data.distractors];
+        
+        combinedWords = combinedWords.sort(() => Math.random() - 0.5);
+        
+        const wordObjects = combinedWords.map((word, index) => ({
+          id: `word-${index}`,
+          text: word
+        }));
+
+        setAvailableWords(wordObjects);
+      } else {
+        toast.error("Challenge load nahi hua!");
+      }
+    } catch (error) {
+      toast.error("Backend server error!");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // 🔥 On-Demand Translation Function
-  const handleTranslate = async () => {
-    if (!result?.definition) return;
-    setIsTranslating(true);
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/auto-translate?text=${encodeURIComponent(result.definition)}`);
-      const data = await res.json();
-      if (data.success) {
-        setTranslatedText(data.translated);
-        toast.success("AI Translation Ready! ✨");
-      } else {
-        toast.error("Translation failed!");
-      }
-    } catch (err) {
-      toast.error("Translation Server Error!");
-    } finally {
-      setIsTranslating(false);
+  // Word interactions
+  const handleWordSelect = (wordObj) => {
+    setAvailableWords(availableWords.filter(w => w.id !== wordObj.id));
+    setSelectedWords([...selectedWords, wordObj]);
+  };
+
+  const handleWordDeselect = (wordObj) => {
+    setSelectedWords(selectedWords.filter(w => w.id !== wordObj.id));
+    setAvailableWords([...availableWords, wordObj]);
+  };
+
+  // Check the answer
+  const checkAnswer = () => {
+    if (!currentChallenge) return;
+    const userSentence = selectedWords.map(w => w.text).join(" ").trim().toLowerCase();
+    const correctSentence = currentChallenge.englishSentence.trim().toLowerCase();
+
+    if (userSentence === correctSentence) {
+      setIsCorrect(true);
+      toast.success("Bilkul Sahi! Sateek Jawab 🎉");
+    } else {
+      setIsCorrect(false);
+      setShowAnswer(false); // Result aate hi pehle hide rakho
+      toast.error("Thoda gadbad hai, wapas try karo! 😅");
     }
   };
 
-  const speakWord = (word) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(word.replace(/"/g, ''));
-      utterance.lang = 'en-US'; utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
+  // Popup close karne ka function
+  const closePopup = () => {
+    setIsCorrect(null);
+    setShowAnswer(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white font-sans selection:bg-blue-500 pb-20">
-      
-      {/* 🔍 SEARCH HEADER */}
-      <div className="sticky top-0 z-50 bg-[#050507]/80 backdrop-blur-xl border-b border-white/5 px-6 py-6">
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative group">
-          <input 
-            type="text" value={query} onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-[#121217] border border-white/10 rounded-2xl py-4 pl-6 pr-16 text-lg font-medium outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-gray-600"
-            placeholder="Search any word..."
-          />
-          <button type="submit" disabled={loading} className="absolute right-2 top-2 bottom-2 bg-blue-600 px-5 rounded-xl font-bold hover:bg-blue-500 transition-colors disabled:opacity-50">
-            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "GO"}
-          </button>
-        </form>
+    <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10">
+      <Toaster position="top-center" />
+
+      {/* Title branding */}
+      <div className="text-center space-y-1 mb-8">
+        <h2 className="text-2xl font-black italic uppercase bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
+          🎮 Dameeto Syntax Builder
+        </h2>
+        <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">
+          AI-Driven Structural Practice
+        </p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 mt-10">
-        {result && (
-          <div className="animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/[0.05] rounded-[2.5rem] p-6 shadow-2xl">
+        
+        {!currentChallenge && !isLoading && (
+          <div className="text-center py-10 space-y-4">
+            <p className="text-slate-400 text-sm font-medium">
+              Tumhari saved vocabulary history se sentence building practice karo.
+            </p>
+            <button
+              onClick={generateNewChallenge}
+              className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:opacity-90 active:scale-95 px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all shadow-lg shadow-cyan-950/20"
+            >
+              🚀 Start Practice
+            </button>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
+            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
+              Structuring New Challenge...
+            </p>
+          </div>
+        )}
+
+        {currentChallenge && !isLoading && (
+          <div className="space-y-8 animate-fade-in">
             
-            {/* HERO WORD */}
-            <div className="mb-12">
-              <div className="flex flex-wrap items-end gap-4 mb-4">
-                <h1 className="text-6xl sm:text-8xl font-black tracking-tighter uppercase leading-none">{result.word?.replace(/"/g, '')}</h1>
-                <PremiumSoundFeature isPremiumUser={true} userEmail={localStorage.getItem("eng_userEmail")}>
-                  <button onClick={() => speakWord(result.word)} className="w-14 h-14 rounded-full bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-500 hover:bg-blue-600 hover:text-white transition-all">
-                    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg>
+            {/* Hindi Question */}
+            <div className="bg-black/40 border border-white/5 rounded-2xl p-5 text-center shadow-inner relative overflow-hidden">
+              <span className="text-[10px] uppercase font-black tracking-widest text-emerald-500 block mb-2">Translate This:</span>
+              <p className="text-lg md:text-xl font-medium text-white relative z-10">
+                "{currentChallenge.hindiSentence}"
+              </p>
+            </div>
+
+            {/* Answer Drop Zone (Selected Words) */}
+            <div className="min-h-[80px] border-b-2 border-white/10 pb-4 flex flex-wrap gap-2 items-start content-start">
+              {selectedWords.length === 0 ? (
+                <span className="text-slate-600 text-sm italic mt-2 w-full text-center">
+                  Words ko select karke yahan arrange karo...
+                </span>
+              ) : (
+                selectedWords.map((wordObj) => (
+                  <button
+                    key={wordObj.id}
+                    onClick={() => handleWordDeselect(wordObj)}
+                    className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl text-white font-medium text-sm transition-all shadow-sm active:scale-95"
+                  >
+                    {wordObj.text}
                   </button>
-                </PremiumSoundFeature>
-              </div>
-              <div className="inline-block bg-yellow-400 text-black px-4 py-2 rounded-xl">
-                <p className="text-2xl sm:text-3xl font-black uppercase">{result.meaning?.replace(/"/g, '') || "N/A"}</p>
-              </div>
+                ))
+              )}
             </div>
 
-            {/* TAB NAV */}
-            <div className="flex gap-4 p-1.5 bg-[#121217] rounded-2xl w-fit mb-10 border border-white/5">
-              <button onClick={() => setActiveTab("dictionary")} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === "dictionary" ? "bg-white text-black" : "text-gray-500"}`}>Definition</button>
-              <button onClick={() => setActiveTab("posts")} className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === "posts" ? "bg-white text-black" : "text-gray-500"}`}> ({result.relatedPosts?.length || 0})</button>
+            {/* Jumbled Words Pool */}
+            <div className="flex flex-wrap gap-3 justify-center pt-2">
+              {availableWords.map((wordObj) => (
+                <button
+                  key={wordObj.id}
+                  onClick={() => handleWordSelect(wordObj)}
+                  className="bg-[#121216] hover:bg-cyan-900/40 border border-white/5 hover:border-cyan-500/50 px-5 py-3 rounded-xl text-slate-300 font-bold text-sm transition-all shadow-md active:scale-95"
+                >
+                  {wordObj.text}
+                </button>
+              ))}
             </div>
 
-            {/* CONTENT */}
-            <div className="min-h-[300px]">
-              {activeTab === "dictionary" && (
-                <div className="space-y-10">
-                  <div className="bg-[#121217] p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-2 h-full bg-blue-600 transition-all group-hover:w-3"></div>
-                    
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-[10px] font-black text-blue-500 tracking-[0.3em] uppercase block">Analysis // {result.grammar || "LEXICON"}</span>
+            {/* Result & Actions */}
+            <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
+              
+              {/* STATUS POPUP */}
+              {isCorrect !== null && (
+                <div className={`relative p-5 rounded-2xl flex flex-col items-center gap-3 text-center font-bold text-sm transition-all duration-300 ${isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                  
+                  {/* CLOSE BUTTON */}
+                  <button 
+                    onClick={closePopup}
+                    className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-current transition-all active:scale-90"
+                    title="Close"
+                  >
+                    ✕
+                  </button>
+
+                  <p className="mt-1 text-base">{isCorrect ? '🏆 Correct Translation! You nailed it.' : '❌ Oops! Sequence galat hai.'}</p>
+                  
+                  {/* EXPANDABLE CORRECT ANSWER SECTION */}
+                  {!isCorrect && (
+                    <div className="mt-1 w-full flex flex-col items-center">
+                      <button
+                        onClick={() => setShowAnswer(!showAnswer)}
+                        className="text-[10px] uppercase font-black tracking-widest text-rose-300 hover:text-rose-100 underline decoration-dashed underline-offset-4 transition-all duration-200"
+                      >
+                        {showAnswer ? "Hide Answer ⬆️" : "👀 Show Correct Answer"}
+                      </button>
                       
-                      {/* 🔥 Translation Trigger Button */}
-                      {!translatedText && (
-                        <button 
-                          onClick={handleTranslate} 
-                          disabled={isTranslating}
-                          className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase text-gray-400 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
-                        >
-                          {isTranslating ? "Processing..." : "Translate to Hindi 🇮🇳"}
-                        </button>
-                      )}
-                    </div>
-
-                    <p className="text-2xl sm:text-3xl font-bold text-gray-200 leading-tight mb-6">
-                      {result.definition || "No context mapped."}
-                    </p>
-
-                    {/* 🔥 Fading in Translated Text */}
-                    {translatedText && (
-                      <div className="mt-6 pt-6 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
-                        <span className="text-[9px] font-black text-yellow-500 uppercase tracking-widest block mb-2">Hindi Explanation:</span>
-                        <p className="text-xl sm:text-2xl font-bold text-gray-400 italic">
-                          {translatedText}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {result.exampleSentences?.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-black text-gray-600 uppercase tracking-widest px-2">Example Usage</h3>
-                      {result.exampleSentences.map((s, i) => (
-                        <div key={i} className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 flex gap-5 hover:bg-white/[0.04] transition-all">
-                          <span className="text-blue-500 font-black text-lg">0{i+1}</span>
-                          <p className="text-lg text-gray-400 italic">"{s}"</p>
+                      {/* CAROUSEL / SLIDE-IN ANIMATION FOR ANSWER */}
+                      <div 
+                        className={`w-full overflow-hidden transition-all duration-500 ease-in-out transform ${
+                          showAnswer 
+                            ? "max-h-[200px] opacity-100 translate-y-0 scale-100 mt-4" 
+                            : "max-h-0 opacity-0 -translate-y-4 scale-95 mt-0"
+                        }`}
+                      >
+                        <div className="p-4 bg-gradient-to-r from-rose-950/40 to-black/60 border border-rose-500/30 rounded-xl w-full text-white font-medium shadow-2xl relative">
+                          <span className="text-rose-400 text-[9px] uppercase tracking-widest block mb-2 opacity-80">
+                            Exact Translation:
+                          </span>
+                          <p className="text-lg tracking-wider text-rose-50">
+                            {currentChallenge.englishSentence}
+                          </p>
                         </div>
-                      ))}
+                      </div>
+
                     </div>
                   )}
                 </div>
               )}
 
-              {activeTab === "posts" && (
-                <div className="grid sm:grid-cols-2 gap-8 animate-in fade-in slide-in-from-right-4">
-                  {result.relatedPosts?.map((post) => (
-                    <PostCard key={post._id} post={post} userEmail={localStorage.getItem("eng_userEmail")} highlightWord={result.word} isPremiumUser={true} />
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={checkAnswer}
+                  disabled={selectedWords.length === 0}
+                  className="flex-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 border border-cyan-500/30 disabled:opacity-30 disabled:cursor-not-allowed py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all"
+                >
+                  Verify Answer
+                </button>
+                <button
+                  onClick={generateNewChallenge}
+                  className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all"
+                >
+                  Next Challenge ⏭️
+                </button>
+              </div>
             </div>
+
           </div>
         )}
       </div>

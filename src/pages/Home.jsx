@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function VocabPage() {
@@ -20,6 +20,10 @@ export default function VocabPage() {
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
+
+  // 🔥 NAYA STATE AUR REF: Custom Image Upload Ke Liye
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [userEmail, setUserEmail] = useState("");
 
@@ -66,7 +70,7 @@ export default function VocabPage() {
     }
   }, [userEmail]);
 
-  // 🔥 UPDATE: Generate Image logic with Cloudinary support
+  // Generate Image logic with Cloudinary support
   const handleGenerateImage = async (actionType = "normal", wordToGenerate) => {
     if (!wordToGenerate || !userEmail) return;
     
@@ -82,16 +86,14 @@ export default function VocabPage() {
       const response = await fetch(`${API_URL}/api/image/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // User ID bhej rahe hain taaki DB mein URL save ho sake
         body: JSON.stringify({ phrase: wordToGenerate, actionType, userId: userEmail }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
-        // Base64 ki jagah ab direct Cloudinary URL aayega
         setImageSrc(data.imageUrl);
-        fetchHistoryFromDB(); // History refresh karo taaki wahan update ho jaye
+        fetchHistoryFromDB(); 
       } else {
         toast.error("Visual generation failed behind the scenes");
       }
@@ -100,6 +102,41 @@ export default function VocabPage() {
     } finally {
       setIsImageLoading(false);
       setImageAction("");
+    }
+  };
+
+  // Custom Image replace handle karne ke liye
+  const handleCustomImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !userEmail || !activeWord) return;
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("word", activeWord);
+    formData.append("userId", userEmail);
+
+    try {
+      const response = await fetch(`${API_URL}/api/image/upload-custom`, {
+        method: "POST",
+        body: formData, 
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.imageUrl) {
+        toast.success("Image successfully replace ho gayi! 🎉");
+        setImageSrc(data.imageUrl); 
+        fetchHistoryFromDB(); 
+      } else {
+        toast.error(data.error || "Custom image upload fail ho gaya.");
+      }
+    } catch (err) {
+      console.error("Custom Image Upload error:", err);
+      toast.error("Upload karte waqt error aa gaya!");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = ""; 
     }
   };
 
@@ -136,10 +173,9 @@ export default function VocabPage() {
         setWord("");
         fetchHistoryFromDB(); 
 
-        // 🔥 OPTIMIZATION: Agar database mein pehle se image thi, toh fetch mat karo
         if (resData.data.imageUrl) {
             setImageSrc(resData.data.imageUrl);
-            setIsImageExpanded(false); // Gift box dikhega
+            setIsImageExpanded(false); 
         } else {
             handleGenerateImage("normal", resData.data.word);
         }
@@ -165,7 +201,6 @@ export default function VocabPage() {
     setShowHistory(false);
     handlePronounce(item.word);
     
-    // 🔥 OPTIMIZATION: Agar history card mein imageUrl hai (Cloudinary se), toh API hit math karo
     if (item.imageUrl) {
         setImageSrc(item.imageUrl);
         setIsImageExpanded(false);
@@ -341,13 +376,15 @@ export default function VocabPage() {
                   <div className="pt-4 border-t border-white/5">
                     <p className="text-fuchsia-400 font-black text-[10px] uppercase tracking-wider mb-3">🎨 AI Visual Expression:</p>
                     
-                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${isImageExpanded ? 'aspect-square' : 'py-8'}`}>
+                    {/* 🔥 UPDATED: Removed aspect-square, using dynamic height based on content */}
+                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-8' : ''}`}>
                       
-                      {isImageLoading ? (
-                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10">
+                      {isImageLoading || isUploading ? (
+                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10 min-h-[200px]">
                           <div className="w-6 h-6 border-2 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
                           <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
-                            {imageAction === 'refine' ? 'Optimizing Details...' : 
+                            {isUploading ? 'Uploading Custom Visual...' : 
+                             imageAction === 'refine' ? 'Optimizing Details...' : 
                              imageAction === 'regenerate' ? 'New Perspective...' : 
                              'Saving to Cloudinary...'}
                           </p>
@@ -355,7 +392,7 @@ export default function VocabPage() {
                       ) : null}
 
                       {/* Step 1: Image Ready but hidden */}
-                      {imageSrc && !isImageExpanded && !isImageLoading ? (
+                      {imageSrc && !isImageExpanded && !isImageLoading && !isUploading ? (
                         <div className="flex flex-col items-center text-center px-4 animate-fade-in">
                           <span className="text-3xl mb-2">🎁</span>
                           <h3 className="text-sm font-bold text-white mb-1">Visual Ready!</h3>
@@ -370,20 +407,21 @@ export default function VocabPage() {
                       ) : null}
 
                       {/* Step 2: Expanded Image */}
+                      {/* 🔥 UPDATED: Changed object-cover to object-contain, w-full h-auto to keep ratio */}
                       {imageSrc && isImageExpanded ? (
                         <img 
                           src={imageSrc} 
                           alt={activeWord} 
-                          className="w-full h-full object-cover transition-opacity duration-700"
+                          className="w-full h-auto max-h-[500px] object-contain transition-opacity duration-700 bg-black/20"
                         />
                       ) : null}
                     </div>
 
                     {imageSrc && isImageExpanded && (
-                      <div className="flex gap-2 mt-3 justify-center animate-fade-in">
+                      <div className="flex gap-2 mt-3 justify-center animate-fade-in flex-wrap">
                         <button
                           onClick={() => handleGenerateImage('regenerate', activeWord)}
-                          disabled={isImageLoading}
+                          disabled={isImageLoading || isUploading}
                           className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-white/10 flex justify-center items-center gap-1.5 uppercase"
                         >
                           <span>🔄</span> Regenerate
@@ -391,11 +429,27 @@ export default function VocabPage() {
                         
                         <button
                           onClick={() => handleGenerateImage('refine', activeWord)}
-                          disabled={isImageLoading}
+                          disabled={isImageLoading || isUploading}
                           className="flex-1 py-2 px-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-fuchsia-500/20 flex justify-center items-center gap-1.5 uppercase"
                         >
                           <span>✨</span> Refine
                         </button>
+
+                        <button
+                          onClick={() => fileInputRef.current.click()}
+                          disabled={isImageLoading || isUploading}
+                          className="flex-1 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-emerald-500/20 flex justify-center items-center gap-1.5 uppercase"
+                        >
+                          <span>📂</span> {isUploading ? "Uploading..." : "Replace"}
+                        </button>
+
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          ref={fileInputRef} 
+                          onChange={handleCustomImageUpload} 
+                          className="hidden" 
+                        />
                       </div>
                     )}
                   </div>

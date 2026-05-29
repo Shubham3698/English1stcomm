@@ -12,8 +12,9 @@ export default function PracticePage() {
   const [selectedWords, setSelectedWords] = useState([]);
   const [isCorrect, setIsCorrect] = useState(null);
   
-  // Naya state correct answer expand/collapse karne ke liye
+  // Naye states
   const [showAnswer, setShowAnswer] = useState(false);
+  const [focusWord, setFocusWord] = useState(""); // <-- Naya state focus word ke liye
 
   const API_URL =
     window.location.hostname === "localhost"
@@ -59,6 +60,7 @@ export default function PracticePage() {
     setShowAnswer(false);
 
     const randomTargetWord = historyWords[Math.floor(Math.random() * historyWords.length)];
+    setFocusWord(randomTargetWord); // <-- Yahan word ko state mein save kar liya
 
     try {
       const response = await fetch(`${API_URL}/api/words/generate-practice`, {
@@ -225,7 +227,18 @@ export default function PracticePage() {
                     ✕
                   </button>
 
-                  <p className="mt-1 text-base">{isCorrect ? '🏆 Correct Translation! You nailed it.' : '❌ Oops! Sequence galat hai.'}</p>
+                  <div className="mt-1 flex flex-col items-center gap-2">
+                    <p className="text-base">{isCorrect ? '🏆 Correct Translation! You nailed it.' : '❌ Oops! Sequence galat hai.'}</p>
+                    
+                    {/* YAHAN HUM FOCUS WORD DIKHA RAHE HAIN AGAR ANSWER SAHI HAI */}
+                    {isCorrect && focusWord && (
+                      <div className="mt-2 bg-emerald-950/50 border border-emerald-500/30 px-4 py-2 rounded-xl shadow-inner">
+                        <p className="text-emerald-200 text-xs">
+                          🎯 Your Focus Word: <span className="text-emerald-400 font-black uppercase tracking-widest text-sm ml-1">{focusWord}</span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
                   
                   {/* EXPANDABLE CORRECT ANSWER SECTION */}
                   {!isCorrect && (

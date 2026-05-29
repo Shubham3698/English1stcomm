@@ -105,7 +105,7 @@ export default function VocabPage() {
     }
   };
 
-  // 🔥 NAYA FUNCTION: Custom Image replace handle karne ke liye
+  // Custom Image replace handle karne ke liye
   const handleCustomImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !userEmail || !activeWord) return;
@@ -119,15 +119,15 @@ export default function VocabPage() {
     try {
       const response = await fetch(`${API_URL}/api/image/upload-custom`, {
         method: "POST",
-        body: formData, // FormData use kar rahe hain file bhejne ke liye
+        body: formData, 
       });
 
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
         toast.success("Image successfully replace ho gayi! 🎉");
-        setImageSrc(data.imageUrl); // UI par nayi image dikhao
-        fetchHistoryFromDB(); // History update karo taaki DB sync ho jaye
+        setImageSrc(data.imageUrl); 
+        fetchHistoryFromDB(); 
       } else {
         toast.error(data.error || "Custom image upload fail ho gaya.");
       }
@@ -136,7 +136,7 @@ export default function VocabPage() {
       toast.error("Upload karte waqt error aa gaya!");
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = ""; // Input clear karo
+      if (fileInputRef.current) fileInputRef.current.value = ""; 
     }
   };
 
@@ -376,10 +376,11 @@ export default function VocabPage() {
                   <div className="pt-4 border-t border-white/5">
                     <p className="text-fuchsia-400 font-black text-[10px] uppercase tracking-wider mb-3">🎨 AI Visual Expression:</p>
                     
-                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${isImageExpanded ? 'aspect-square' : 'py-8'}`}>
+                    {/* 🔥 UPDATED: Removed aspect-square, using dynamic height based on content */}
+                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-8' : ''}`}>
                       
                       {isImageLoading || isUploading ? (
-                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10">
+                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10 min-h-[200px]">
                           <div className="w-6 h-6 border-2 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
                           <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
                             {isUploading ? 'Uploading Custom Visual...' : 
@@ -406,11 +407,12 @@ export default function VocabPage() {
                       ) : null}
 
                       {/* Step 2: Expanded Image */}
+                      {/* 🔥 UPDATED: Changed object-cover to object-contain, w-full h-auto to keep ratio */}
                       {imageSrc && isImageExpanded ? (
                         <img 
                           src={imageSrc} 
                           alt={activeWord} 
-                          className="w-full h-full object-cover transition-opacity duration-700"
+                          className="w-full h-auto max-h-[500px] object-contain transition-opacity duration-700 bg-black/20"
                         />
                       ) : null}
                     </div>
@@ -433,7 +435,6 @@ export default function VocabPage() {
                           <span>✨</span> Refine
                         </button>
 
-                        {/* 🔥 NAYA REPLACE BUTTON */}
                         <button
                           onClick={() => fileInputRef.current.click()}
                           disabled={isImageLoading || isUploading}
@@ -442,7 +443,6 @@ export default function VocabPage() {
                           <span>📂</span> {isUploading ? "Uploading..." : "Replace"}
                         </button>
 
-                        {/* 🔥 HIDDEN FILE INPUT */}
                         <input 
                           type="file" 
                           accept="image/*" 

@@ -4,11 +4,13 @@ import toast, { Toaster } from "react-hot-toast";
 export default function PracticePage() {
   const [userEmail, setUserEmail] = useState("");
   const [historyWords, setHistoryWords] = useState([]);
+  const [activeTab, setActiveTab] = useState("words");
   
-  // 🔥 SRS Review States
-  const [dueReviews, setDueReviews] = useState([]);
-  const [isReviewMode, setIsReviewMode] = useState(false);
-  
+  const [dueReviews, setDueReviews] = useState([]); 
+  const [isReviewMode, setIsReviewMode] = useState(false); 
+  const [mistakeWords, setMistakeWords] = useState([]); // Will hold unique words from ALL mistakes
+  const [allMistakesRaw, setAllMistakesRaw] = useState([]); // Back up data for targeted practice
+
   // Game Flow States
   const [selectedWordObj, setSelectedWordObj] = useState(null);
   const [practiceSentences, setPracticeSentences] = useState([]);
@@ -18,7 +20,6 @@ export default function PracticePage() {
   const [availableWords, setAvailableWords] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
   
-  // Results & UI
   const [isCorrect, setIsCorrect] = useState(null);
   const [userStats, setUserStats] = useState({ totalSearched: 0, totalPracticed: 0, totalMistakes: 0 });
 
@@ -35,35 +36,50 @@ export default function PracticePage() {
     }
   }, []);
 
-  // 1. Fetch All Data (History, Stats, and Due SRS Reviews)
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!userEmail || userEmail === "guest_user@gmail.com") return;
-      try {
-        // Fetch Words History
-        const histRes = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
-        const histData = await histRes.json();
-        if (histRes.ok && histData.success) setHistoryWords(histData.data);
+  // Centralized Sync Engine
+  const fetchAllData = async () => {
+    if (!userEmail || userEmail === "guest_user@gmail.com") return;
+    try {
+      // 1. Fetch History Words
+      const histRes = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
+      const histData = await histRes.json();
+      if (histRes.ok && histData.success) setHistoryWords(histData.data);
 
-        // Fetch User Stats
-        const statsRes = await fetch(`${API_URL}/api/words/stats/${encodeURIComponent(userEmail)}`);
-        const statsData = await statsRes.json();
-        if (statsRes.ok && statsData.success) setUserStats(statsData.data);
+      // 2. Fetch User Stats
+      const statsRes = await fetch(`${API_URL}/api/words/stats/${encodeURIComponent(userEmail)}`);
+      const statsData = await statsRes.json();
+      if (statsRes.ok && statsData.success) setUserStats(statsData.data);
 
-        // Fetch Due SRS Reviews
-        const reviewRes = await fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`);
-        const reviewData = await reviewRes.json();
-        if (reviewRes.ok && reviewData.success) setDueReviews(reviewData.data);
+      // 3. Fetch Due SRS Reviews
+      const reviewRes = await fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`);
+      const reviewData = await reviewRes.json();
+      if (reviewRes.ok && reviewData.success) setDueReviews(reviewData.data);
 
-      } catch (err) {
-        console.error("Data fetch error:", err);
+      // 4. Fetch All Mistakes (Fixed Logic using New Endpoint)
+      const allMistakesRes = await fetch(`${API_URL}/api/words/srs/all-mistakes/${encodeURIComponent(userEmail)}`);
+      const allMistakesData = await allMistakesRes.json();
+      
+      if (allMistakesRes.ok && allMistakesData.success) {
+        setAllMistakesRaw(allMistakesData.data);
+        const uniqueMistakeWords = [];
+        allMistakesData.data.forEach(item => {
+          if (!uniqueMistakeWords.some(w => w.word.toLowerCase() === item.word.toLowerCase())) {
+            uniqueMistakeWords.push({ word: item.word, rawItem: item });
+          }
+        });
+        setMistakeWords(uniqueMistakeWords);
       }
-    };
-    fetchData();
+
+    } catch (err) {
+      console.error("Data sync error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
   }, [userEmail, API_URL]);
 
-  // Saved sentences ko parse karna
-  const parseSavedSentences = (text) => {
+  const parseSavedSentences = (text, word) => {
     if (!text) return [];
     const lines = text.split('\n').filter(line => line.trim().length > 5);
     const parsed = [];
@@ -72,29 +88,43 @@ export default function PracticePage() {
       if (match) {
         let eng = match[1].replace(/^[\d\.\*\-\s]+/, '').trim();
         let hin = match[2].trim();
-        if (eng && hin) parsed.push({ englishSentence: eng, hindiSentence: hin });
+        if (eng && hin) parsed.push({ englishSentence: eng, hindiSentence: hin, word: word });
       }
     });
     return parsed.length > 0 ? parsed : lines.map(line => ({ 
         englishSentence: line.replace(/^[\d\.\*\-\s]+/, '').trim(), 
-        hindiSentence: "Translate this sentence:" 
+        hindiSentence: "Translate this sentence:",
+        word: word
     }));
   };
 
-  // 🔥 Start Review Mode (Anki Memory Flow)
-  const startReviewSession = () => {
-    if (dueReviews.length === 0) return toast.success("Aaj ke saare reviews complete hain! 🎉");
+  // Launch Today's Scheduled Queue
+  const startSRSSession = () => {
+    if (dueReviews.length === 0) return toast.success("Aaj ke scheduled reviews pure hain! 🎉");
     setIsReviewMode(true);
-    setSelectedWordObj({ word: "Review Mode" });
-    setPracticeSentences(dueReviews); // Backend se aaye huye object directly pass
+    setSelectedWordObj({ word: "Scheduled SRS Review" });
+    setPracticeSentences(dueReviews); 
     setCurrentSentenceIndex(0);
     loadSentenceGame(dueReviews[0]);
   };
 
-  // Start Normal Practice
-  const startPracticeForWord = (wordObj) => {
+  // Target Mistakes Practice 
+  const startMistakePracticeForWord = (wordName) => {
+    // Filter from ALL mistakes data, not just due queue
+    const filteredMistakes = allMistakesRaw.filter(item => item.word.toLowerCase() === wordName.toLowerCase());
+    if (filteredMistakes.length === 0) return toast.error("Is word ki abhi koi active mistakes nahi hain!");
+
+    setIsReviewMode(true); 
+    setSelectedWordObj({ word: wordName });
+    setPracticeSentences(filteredMistakes);
+    setCurrentSentenceIndex(0);
+    loadSentenceGame(filteredMistakes[0]);
+  };
+
+  // Normal Word List Practice
+  const startNormalPracticeForWord = (wordObj) => {
     if (!wordObj.sentences) return toast.error("Is word ke sentences save nahi hain.");
-    const parsedSentences = parseSavedSentences(wordObj.sentences);
+    const parsedSentences = parseSavedSentences(wordObj.sentences, wordObj.word);
     if (parsedSentences.length === 0) return toast.error("Sentences load nahi ho paye!");
     
     setIsReviewMode(false);
@@ -109,12 +139,12 @@ export default function PracticePage() {
     setIsCorrect(null);
     setSelectedWords([]);
 
-    const cleanSentence = sentenceObj.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
-    const correctWordsArr = cleanSentence.split(" ").filter(w => w);
+    const cleanSentence = sentenceObj.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g,"").toLowerCase().trim();
+    const correctWordsArr = cleanSentence.split(/\s+/).filter(w => w);
     const dummyWords = ["is", "the", "not", "very", "a", "an", "to", "are", "was"].sort(() => Math.random() - 0.5).slice(0, 2);
     
     let combinedWords = [...correctWordsArr, ...dummyWords].sort(() => Math.random() - 0.5);
-    setAvailableWords(combinedWords.map((word, index) => ({ id: `word-${index}`, text: word })));
+    setAvailableWords(combinedWords.map((word, index) => ({ id: `word-${index}-${Date.now()}`, text: word })));
   };
 
   const handleWordSelect = (wordObj) => {
@@ -127,11 +157,11 @@ export default function PracticePage() {
     setAvailableWords([...availableWords, wordObj]);
   };
 
-  // VERIFY ANSWER & TRIGGER SRS
+  // VERIFY ANSWER
   const checkAnswer = async () => {
     if (!currentChallenge) return;
     const userSentence = selectedWords.map(w => w.text).join(" ").trim().toLowerCase();
-    const correctSentenceClean = currentChallenge.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim().toLowerCase();
+    const correctSentenceClean = currentChallenge.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g,"").trim().toLowerCase();
 
     const isAnswerCorrect = userSentence === correctSentenceClean;
 
@@ -141,46 +171,57 @@ export default function PracticePage() {
     } else {
       setIsCorrect(false);
       toast.error("Oops! Galat sequence.");
-      // Silent 'Again' mark in DB if they failed
-      handleAnkiReview('again', false); 
+      
+      // Auto-flag as 'again' behind the scenes for normal mode mistakes
+      if (!isReviewMode) {
+        try {
+          await fetch(`${API_URL}/api/words/srs/review`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: userEmail,
+              word: currentChallenge.word || selectedWordObj.word, 
+              hindiSentence: currentChallenge.hindiSentence,
+              englishSentence: currentChallenge.englishSentence,
+              grade: 'again' 
+            })
+          });
+        } catch (err) { console.error("Silently saving to SentenceReview failed"); }
+      }
     }
 
-    // Update global Stats
+    // Global Stats Engine Trigger
     try {
-      const res = await fetch(`${API_URL}/api/words/stats/update`, {
+      await fetch(`${API_URL}/api/words/stats/update`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: userEmail, isCorrect: isAnswerCorrect })
       });
-      const resData = await res.json();
-      if (resData.success) {
-         setUserStats(prev => ({
-             ...prev,
-             totalPracticed: prev.totalPracticed + 1,
-             totalMistakes: isAnswerCorrect ? prev.totalMistakes : prev.totalMistakes + 1
-         }));
-      }
+      setUserStats(prev => ({
+          ...prev,
+          totalPracticed: prev.totalPracticed + 1,
+          totalMistakes: isAnswerCorrect ? prev.totalMistakes : prev.totalMistakes + 1
+      }));
     } catch (err) {}
   };
 
-  // 🔥 Update Anki SRS Interval and move to next
-  const handleAnkiReview = async (grade, shouldMoveNext = true) => {
+  // Spaced Repetition Engine Logic Trigger
+  const handleAnkiReview = async (grade) => {
     try {
       await fetch(`${API_URL}/api/words/srs/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: userEmail,
-          // Agar review mode hai to current challenge me word milega, warna selected word me
           word: currentChallenge.word || selectedWordObj.word, 
           hindiSentence: currentChallenge.hindiSentence,
           englishSentence: currentChallenge.englishSentence,
-          grade: grade // 'again', 'hard', 'good', 'easy'
+          grade: grade
         })
       });
-    } catch (err) { console.error("SRS update failed"); }
+    } catch (err) { console.error("SRS database save error"); }
 
-    if (shouldMoveNext) handleNextSentence();
+    handleNextSentence();
   };
 
   const handleNextSentence = () => {
@@ -189,16 +230,11 @@ export default function PracticePage() {
       setCurrentSentenceIndex(nextIndex);
       loadSentenceGame(practiceSentences[nextIndex]);
     } else {
-      toast.success(isReviewMode ? "Great! Review Session Complete! 🏆" : `'${selectedWordObj.word}' practice done! 👏`);
+      toast.success(isReviewMode ? "Awesome! Sequence Complete! 🏆" : `'${selectedWordObj.word}' Done! 👏`);
       setSelectedWordObj(null);
       setCurrentChallenge(null);
-      
-      // Refresh due reviews automatically if they were in review mode
-      if (isReviewMode) {
-          fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`)
-            .then(res => res.json())
-            .then(data => { if(data.success) setDueReviews(data.data); });
-      }
+      setIsReviewMode(false);
+      fetchAllData(); 
     }
   };
 
@@ -206,7 +242,7 @@ export default function PracticePage() {
     <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10 font-sans">
       <Toaster position="top-center" toastOptions={{ style: { background: '#121216', color: '#fff', border: '1px solid #333' } }} />
 
-      {/* Title Header */}
+      {/* Header */}
       <div className="text-center space-y-1 mb-6">
         <h2 className="text-2xl md:text-3xl font-black italic uppercase bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent tracking-wide">
           🎮 Dameeto Syntax Builder
@@ -220,124 +256,154 @@ export default function PracticePage() {
       <div className="w-full max-w-xl flex justify-between items-center bg-[#0b0b0e]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 mb-6 shadow-2xl">
         <div className="text-center flex-1 border-r border-white/5">
             <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Total Words</p>
-            <p className="text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">{userStats.totalSearched}</p>
+            <p className="text-xl font-black text-cyan-400">{userStats.totalSearched}</p>
         </div>
         <div className="text-center flex-1 border-r border-white/5">
             <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Practiced</p>
-            <p className="text-xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">{userStats.totalPracticed}</p>
+            <p className="text-xl font-black text-emerald-400">{userStats.totalPracticed}</p>
         </div>
         <div className="text-center flex-1">
             <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Mistakes</p>
-            <p className="text-xl font-black text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.3)]">{userStats.totalMistakes}</p>
+            <p className="text-xl font-black text-rose-400">{userStats.totalMistakes}</p>
         </div>
       </div>
 
       <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/[0.05] rounded-[2rem] p-5 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         
-        {/* ============================================================== */}
-        {/* SCREEN 1: DASHBOARD (Word Selection & SRS Banner) */}
-        {/* ============================================================== */}
+        {/* SCREEN 1: DASHBOARD LAYOUT */}
         {!selectedWordObj && (
-          <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+          <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
             
-            {/* 🔥 SRS Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-orange-900/30 to-rose-950/40 border border-orange-500/20 p-5 rounded-2xl flex justify-between items-center shadow-lg group">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
-               <div className="relative z-10">
-                  <h3 className="text-orange-400 font-black uppercase tracking-wider text-sm mb-1 flex items-center gap-2">
-                    🧠 Memory Review 
-                    {dueReviews.length > 0 && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span></span>}
+            {/* SRS Active Banner */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-amber-950/40 to-orange-950/30 border border-orange-500/20 p-4 rounded-2xl flex justify-between items-center shadow-md">
+               <div>
+                  <h3 className="text-orange-400 font-black uppercase tracking-wider text-xs mb-0.5 flex items-center gap-1.5">
+                    ⚡ SRS Active Reviews
                   </h3>
-                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
-                    Pending Fixes: <strong className="text-orange-300 text-xs ml-1">{dueReviews.length}</strong>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold">
+                    Due Today: <strong className="text-orange-300 text-xs ml-1">{dueReviews.length}</strong>
                   </p>
                </div>
                <button 
-                  onClick={startReviewSession}
-                  disabled={dueReviews.length === 0}
-                  className="relative z-10 bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border border-orange-500/30 disabled:opacity-30 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-[11px] font-black uppercase transition-all shadow-[0_0_15px_rgba(249,115,22,0.15)] active:scale-95"
+                 onClick={startSRSSession}
+                 disabled={dueReviews.length === 0}
+                 className="bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border border-orange-500/30 disabled:opacity-30 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all"
                >
-                  Play Reviews ▶
+                 Launch SRS ▶
                </button>
             </div>
 
-            {/* Word List */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
-                <h3 className="text-cyan-500 font-bold uppercase tracking-widest text-[10px]">Practice New Words</h3>
-                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
-              </div>
-
-              {historyWords.length === 0 ? (
-                <div className="text-center text-slate-500 py-10 text-sm italic bg-black/20 rounded-xl border border-white/5">
-                  Tumhari history khali hai, pehle dictionary me words search karo!
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2.5 justify-center max-h-[350px] overflow-y-auto pr-1 pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                  {historyWords.map((wordObj, i) => (
-                    <button
-                      key={i}
-                      onClick={() => startPracticeForWord(wordObj)}
-                      className="bg-black/40 border border-white/5 hover:border-cyan-500/50 hover:bg-cyan-900/20 px-4 py-2.5 rounded-xl text-slate-300 hover:text-cyan-50 font-bold tracking-wide text-sm transition-all active:scale-95 shadow-sm"
-                    >
-                      {wordObj.word}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* TAB NAVIGATION */}
+            <div className="grid grid-cols-2 gap-2 bg-black/40 p-1.5 rounded-xl border border-white/5">
+              <button 
+                onClick={() => setActiveTab("words")}
+                className={`py-2.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all ${activeTab === 'words' ? 'bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                📖 Words List
+              </button>
+              <button 
+                onClick={() => setActiveTab("mistakes")}
+                className={`py-2.5 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 ${activeTab === 'mistakes' ? 'bg-rose-500/10 border border-rose-500/30 text-rose-400 shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                ❌ Mistakes Tab 
+                {mistakeWords.length > 0 && <span className="bg-rose-500 text-white font-black px-1.5 py-0.5 rounded-full text-[9px]">{mistakeWords.length}</span>}
+              </button>
             </div>
+
+            {/* VIEW A: WORDS LIST */}
+            {activeTab === "words" && (
+              <div className="space-y-3">
+                <p className="text-center text-cyan-500 font-bold uppercase tracking-widest text-[9px]">Select Word to Start Normal Practice</p>
+                {historyWords.length === 0 ? (
+                  <div className="text-center text-slate-500 py-8 text-xs italic bg-black/10 border border-white/5 rounded-xl">History is empty. Search words first!</div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 justify-center max-h-[300px] overflow-y-auto pb-2 scrollbar-none">
+                    {historyWords.map((wordObj, i) => (
+                      <button
+                        key={i}
+                        onClick={() => startNormalPracticeForWord(wordObj)}
+                        className="bg-black/30 border border-white/5 hover:border-cyan-500/40 hover:bg-cyan-950/20 px-3.5 py-2.5 rounded-xl text-slate-300 font-bold text-sm transition-all"
+                      >
+                        {wordObj.word}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* VIEW B: MISTAKES TAB */}
+            {activeTab === "mistakes" && (
+              <div className="space-y-3">
+                <p className="text-center text-rose-400 font-bold uppercase tracking-widest text-[9px]">Words with recorded mistakes</p>
+                {mistakeWords.length === 0 ? (
+                  <div className="text-center text-slate-500 py-12 text-xs italic bg-emerald-950/10 border border-emerald-500/10 rounded-xl px-4">
+                    🎉 Sab saaf hai! Koi pending mistakes wale words nahi mile.
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 justify-center max-h-[300px] overflow-y-auto pb-2 scrollbar-none">
+                    {mistakeWords.map((item, i) => (
+                      <button
+                        key={i}
+                        onClick={() => startMistakePracticeForWord(item.word)}
+                        className="bg-rose-950/10 border border-rose-500/20 hover:border-rose-500 hover:bg-rose-950/30 px-4 py-3 rounded-xl text-rose-200 font-black text-sm transition-all shadow-sm flex items-center gap-2"
+                      >
+                        ⚠️ {item.word}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
         )}
 
-        {/* ============================================================== */}
-        {/* SCREEN 2: GAMEPLAY (Translate & Validate) */}
-        {/* ============================================================== */}
+        {/* SCREEN 2: ACTIVE GAMEPLAY ZONE */}
         {selectedWordObj && currentChallenge && (
           <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
             
-            {/* Header: Mode & Progress */}
-            <div className="flex justify-between items-center bg-black/40 rounded-xl p-3 border border-white/5 shadow-inner">
+            {/* Header */}
+            <div className="flex justify-between items-center bg-black/40 rounded-xl p-3 border border-white/5">
               <button 
-                onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); }}
+                onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); fetchAllData(); }}
                 className="text-xs text-slate-400 hover:text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
               >
                 ✕ Exit
               </button>
               <div className="text-center">
-                <span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">
-                  {isReviewMode ? "SRS REVIEW" : "FOCUS WORD"}
+                <span className="text-[8px] uppercase tracking-widest text-slate-500 block">
+                  {isReviewMode ? "MISTAKES/SRS TRAINING" : "NORMAL PRACTICE"}
                 </span>
-                <span className={`font-black uppercase tracking-wider text-sm ${isReviewMode ? "text-orange-400" : "text-cyan-400"}`}>
-                  {isReviewMode ? currentChallenge.word : selectedWordObj.word}
+                <span className={`font-black uppercase tracking-wider text-sm ${isReviewMode ? "text-rose-400" : "text-cyan-400"}`}>
+                  {selectedWordObj.word}
                 </span>
               </div>
-              <div className="text-[10px] font-black tracking-widest text-slate-400 bg-white/5 px-3 py-1 rounded-md">
-                {currentSentenceIndex + 1} / {practiceSentences.length}
+              <div className="text-[10px] font-black text-slate-400 bg-white/5 px-2.5 py-1 rounded-md">
+                {currentSentenceIndex + 1}/{practiceSentences.length}
               </div>
             </div>
 
-            {/* Hindi Challenge Card */}
-            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 text-center shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-1 bg-emerald-500/50 rounded-b-full blur-[2px]"></div>
-              <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 block mb-3 opacity-80">Translate This:</span>
-              <p className="text-xl md:text-2xl font-medium text-white leading-relaxed drop-shadow-md">
+            {/* Hindi Card */}
+            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-5 text-center shadow-lg">
+              <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 block mb-2">Translate This:</span>
+              <p className="text-lg md:text-xl font-medium text-white leading-relaxed">
                 "{currentChallenge.hindiSentence}"
               </p>
             </div>
 
-            {/* Answer Construction Zone */}
-            <div className="min-h-[100px] bg-black/20 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-wrap gap-2 items-start content-start transition-colors data-[filled=true]:border-cyan-500/30" data-filled={selectedWords.length > 0}>
+            {/* Construction Zone */}
+            <div className="min-h-[100px] bg-black/20 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedWords.length === 0 ? (
-                <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs font-medium uppercase tracking-widest pt-4 opacity-50">
-                  Tap words below to build sentence
+                <div className="w-full h-full flex items-center justify-center text-slate-600 text-[11px] font-bold uppercase tracking-widest pt-4 opacity-50">
+                  Build correct English syntax sequence
                 </div>
               ) : (
                 selectedWords.map((wordObj) => (
                   <button
                     key={wordObj.id}
                     onClick={() => handleWordDeselect(wordObj)}
-                    className="bg-cyan-950/40 border border-cyan-500/30 hover:bg-rose-950/40 hover:border-rose-500/30 px-4 py-2 rounded-xl text-cyan-50 font-bold text-sm transition-all active:scale-90 shadow-sm"
+                    className="bg-cyan-950/40 border border-cyan-500/30 hover:bg-rose-950/40 hover:border-rose-500/30 px-3.5 py-1.5 rounded-xl text-cyan-50 font-bold text-sm transition-all"
                   >
                     {wordObj.text}
                   </button>
@@ -345,14 +411,14 @@ export default function PracticePage() {
               )}
             </div>
 
-            {/* Jumbled Words Pool (Hide when checking answer) */}
+            {/* Word Pool */}
             {isCorrect === null && (
-              <div className="flex flex-wrap gap-2.5 justify-center pt-2">
+              <div className="flex flex-wrap gap-2 justify-center pt-1">
                 {availableWords.map((wordObj) => (
                   <button
                     key={wordObj.id}
                     onClick={() => handleWordSelect(wordObj)}
-                    className="bg-[#1a1a20] border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-300 px-5 py-3 rounded-xl text-slate-300 font-bold text-sm transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:scale-95"
+                    className="bg-[#141419] border border-white/5 hover:border-emerald-500/40 hover:bg-emerald-950/20 hover:text-emerald-300 px-4 py-2.5 rounded-xl text-slate-300 font-semibold text-sm transition-all"
                   >
                     {wordObj.text}
                   </button>
@@ -360,65 +426,70 @@ export default function PracticePage() {
               </div>
             )}
 
-            {/* Validation & SRS Action Buttons */}
-            <div className="pt-4 flex flex-col gap-4">
+            {/* Actions Dashboard */}
+            <div className="pt-2 flex flex-col gap-4">
               
-              {/* STATUS: Unanswered */}
               {isCorrect === null && (
                 <button
                   onClick={checkAnswer}
                   disabled={selectedWords.length === 0}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white disabled:opacity-30 disabled:grayscale py-4 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white disabled:opacity-30 py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
                 >
                   Verify Sentence
                 </button>
               )}
 
-              {/* STATUS: Incorrect */}
               {isCorrect === false && (
-                <div className="animate-in slide-in-from-bottom-2 duration-300 bg-rose-950/40 border border-rose-500/30 rounded-2xl p-5 text-center shadow-lg">
-                   <p className="text-rose-400 text-xs font-black uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
-                     <span className="text-lg">❌</span> Incorrect Structure
-                   </p>
-                   <p className="text-lg tracking-wide text-rose-50 mb-5 font-medium bg-black/30 py-3 px-2 rounded-xl">
-                     {currentChallenge.englishSentence}
-                   </p>
+                <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-4 text-center">
+                   <p className="text-rose-400 text-xs font-black uppercase tracking-widest mb-1.5">❌ Correction Strategy Required</p>
+                   <p className="text-base text-rose-50 font-medium bg-black/40 py-2.5 px-2 rounded-lg mb-4">{currentChallenge.englishSentence}</p>
                    <button 
                      onClick={handleNextSentence} 
-                     className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/50 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
+                     className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                    >
-                     Got it, Next ⏭️
+                     Continue ⏭️
                    </button>
                 </div>
               )}
 
-              {/* STATUS: Correct (Anki Options) */}
               {isCorrect === true && (
-                <div className="animate-in slide-in-from-bottom-2 duration-300 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-5 text-center shadow-lg space-y-4">
-                   <p className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                     <span className="text-lg">🎯</span> Perfect Translation!
-                   </p>
-                   <p className="text-slate-400 text-[10px] uppercase font-bold">When should we ask this again?</p>
-                   
-                   <div className="grid grid-cols-4 gap-2">
-                      <button onClick={() => handleAnkiReview('again')} className="flex flex-col items-center justify-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/50 py-3 rounded-xl transition-all active:scale-90">
-                        <span className="text-[11px] uppercase font-black">Again</span>
-                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">&lt;10 min</span>
+                <>
+                  {!isReviewMode ? (
+                    <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 text-center space-y-3">
+                      <p className="text-emerald-400 text-xs font-black uppercase tracking-widest">🎯 Perfect Structuring!</p>
+                      <button 
+                        onClick={handleNextSentence} 
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        Next Sentence ⏭️
                       </button>
-                      <button onClick={() => handleAnkiReview('hard')} className="flex flex-col items-center justify-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 hover:border-orange-500/50 py-3 rounded-xl transition-all active:scale-90">
-                        <span className="text-[11px] uppercase font-black">Hard</span>
-                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">1 Day</span>
-                      </button>
-                      <button onClick={() => handleAnkiReview('good')} className="flex flex-col items-center justify-center gap-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 hover:border-cyan-500/50 py-3 rounded-xl transition-all active:scale-90">
-                        <span className="text-[11px] uppercase font-black">Good</span>
-                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">3 Days</span>
-                      </button>
-                      <button onClick={() => handleAnkiReview('easy')} className="flex flex-col items-center justify-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/50 py-3 rounded-xl transition-all active:scale-90">
-                        <span className="text-[11px] uppercase font-black">Easy</span>
-                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">5+ Days</span>
-                      </button>
-                   </div>
-                </div>
+                    </div>
+                  ) : (
+                    <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 text-center space-y-3">
+                       <p className="text-emerald-400 text-xs font-black uppercase tracking-widest">🎯 Error Overruled Successfully!</p>
+                       <p className="text-slate-400 text-[9px] uppercase font-bold">Log execution pattern spacing interval:</p>
+                       
+                       <div className="grid grid-cols-4 gap-1.5">
+                          <button onClick={() => handleAnkiReview('again')} className="flex flex-col items-center py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl transition-all active:scale-95">
+                            <span className="text-[10px] uppercase font-black">Again</span>
+                            <span className="text-[7px] opacity-70 font-bold mt-0.5">&lt;10m</span>
+                          </button>
+                          <button onClick={() => handleAnkiReview('hard')} className="flex flex-col items-center py-2 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-xl transition-all active:scale-95">
+                            <span className="text-[10px] uppercase font-black">Hard</span>
+                            <span className="text-[7px] opacity-70 font-bold mt-0.5">1d</span>
+                          </button>
+                          <button onClick={() => handleAnkiReview('good')} className="flex flex-col items-center py-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 rounded-xl transition-all active:scale-95">
+                            <span className="text-[10px] uppercase font-black">Good</span>
+                            <span className="text-[7px] opacity-70 font-bold mt-0.5">3d</span>
+                          </button>
+                          <button onClick={() => handleAnkiReview('easy')} className="flex flex-col items-center py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl transition-all active:scale-95">
+                            <span className="text-[10px] uppercase font-black">Easy</span>
+                            <span className="text-[7px] opacity-70 font-bold mt-0.5">5d+</span>
+                          </button>
+                       </div>
+                    </div>
+                  )}
+                </>
               )}
 
             </div>

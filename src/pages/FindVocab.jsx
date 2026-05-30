@@ -7,9 +7,10 @@ export default function PracticePage() {
   const [activeTab, setActiveTab] = useState("words");
   
   const [dueReviews, setDueReviews] = useState([]); 
-  const [isReviewMode, setIsReviewMode] = useState(false); 
-  const [mistakeWords, setMistakeWords] = useState([]); // Will hold unique words from ALL mistakes
-  const [allMistakesRaw, setAllMistakesRaw] = useState([]); // Back up data for targeted practice
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [isClearMode, setIsClearMode] = useState(false); // 🔥 NEW: Track verification mode 
+  const [mistakeWords, setMistakeWords] = useState([]); 
+  const [allMistakesRaw, setAllMistakesRaw] = useState([]); 
 
   // Game Flow States
   const [selectedWordObj, setSelectedWordObj] = useState(null);
@@ -40,22 +41,18 @@ export default function PracticePage() {
   const fetchAllData = async () => {
     if (!userEmail || userEmail === "guest_user@gmail.com") return;
     try {
-      // 1. Fetch History Words
       const histRes = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
       const histData = await histRes.json();
       if (histRes.ok && histData.success) setHistoryWords(histData.data);
 
-      // 2. Fetch User Stats
       const statsRes = await fetch(`${API_URL}/api/words/stats/${encodeURIComponent(userEmail)}`);
       const statsData = await statsRes.json();
       if (statsRes.ok && statsData.success) setUserStats(statsData.data);
 
-      // 3. Fetch Due SRS Reviews
       const reviewRes = await fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`);
       const reviewData = await reviewRes.json();
       if (reviewRes.ok && reviewData.success) setDueReviews(reviewData.data);
 
-      // 4. Fetch All Mistakes (Fixed Logic using New Endpoint)
       const allMistakesRes = await fetch(`${API_URL}/api/words/srs/all-mistakes/${encodeURIComponent(userEmail)}`);
       const allMistakesData = await allMistakesRes.json();
       
@@ -69,7 +66,6 @@ export default function PracticePage() {
         });
         setMistakeWords(uniqueMistakeWords);
       }
-
     } catch (err) {
       console.error("Data sync error:", err);
     }
@@ -98,36 +94,51 @@ export default function PracticePage() {
     }));
   };
 
-  // Launch Today's Scheduled Queue
   const startSRSSession = () => {
     if (dueReviews.length === 0) return toast.success("Aaj ke scheduled reviews pure hain! 🎉");
     setIsReviewMode(true);
+    setIsClearMode(false);
     setSelectedWordObj({ word: "Scheduled SRS Review" });
     setPracticeSentences(dueReviews); 
     setCurrentSentenceIndex(0);
     loadSentenceGame(dueReviews[0]);
   };
 
-  // Target Mistakes Practice 
   const startMistakePracticeForWord = (wordName) => {
-    // Filter from ALL mistakes data, not just due queue
     const filteredMistakes = allMistakesRaw.filter(item => item.word.toLowerCase() === wordName.toLowerCase());
     if (filteredMistakes.length === 0) return toast.error("Is word ki abhi koi active mistakes nahi hain!");
 
     setIsReviewMode(true); 
+    setIsClearMode(false);
     setSelectedWordObj({ word: wordName });
     setPracticeSentences(filteredMistakes);
     setCurrentSentenceIndex(0);
     loadSentenceGame(filteredMistakes[0]);
   };
 
-  // Normal Word List Practice
+  // 🔥 NEW: Function to start verification mode for deleting mistakes
+  const startClearChallenge = (wordName) => {
+    const filteredMistakes = allMistakesRaw.filter(item => item.word.toLowerCase() === wordName.toLowerCase());
+    if (filteredMistakes.length === 0) return toast.error("Koi active mistake nahi mili!");
+
+    setIsReviewMode(false); 
+    setIsClearMode(true); 
+    setSelectedWordObj({ word: wordName });
+    
+    // Pick a random sentence for the verification test
+    const testSentence = filteredMistakes[Math.floor(Math.random() * filteredMistakes.length)];
+    setPracticeSentences([testSentence]); 
+    setCurrentSentenceIndex(0);
+    loadSentenceGame(testSentence);
+  };
+
   const startNormalPracticeForWord = (wordObj) => {
     if (!wordObj.sentences) return toast.error("Is word ke sentences save nahi hain.");
     const parsedSentences = parseSavedSentences(wordObj.sentences, wordObj.word);
     if (parsedSentences.length === 0) return toast.error("Sentences load nahi ho paye!");
     
     setIsReviewMode(false);
+    setIsClearMode(false);
     setSelectedWordObj(wordObj);
     setPracticeSentences(parsedSentences);
     setCurrentSentenceIndex(0);
@@ -157,7 +168,7 @@ export default function PracticePage() {
     setAvailableWords([...availableWords, wordObj]);
   };
 
-  // VERIFY ANSWER
+  // 🔥 UPDATED: VERIFY ANSWER LOGIC
   const checkAnswer = async () => {
     if (!currentChallenge) return;
     const userSentence = selectedWords.map(w => w.text).join(" ").trim().toLowerCase();
@@ -167,30 +178,63 @@ export default function PracticePage() {
 
     if (isAnswerCorrect) {
       setIsCorrect(true);
-      toast.success("Sahi Jawab! 🎯");
+      
+      // ✅ SUCCESS IN CLEAR MODE
+      if (isClearMode) {
+        toast.success("Verification Passed! 🎯");
+        try {
+          await fetch(`${API_URL}/api/words/srs/clear-word-mistakes`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: userEmail, word: selectedWordObj.word })
+          });
+          
+          toast.success(`'${selectedWordObj.word}' cleared from mistakes! 🗑️`);
+          
+          setTimeout(() => {
+            setSelectedWordObj(null);
+            setCurrentChallenge(null);
+            setIsClearMode(false);
+            fetchAllData(); 
+          }, 1500);
+          return; // Stop execution here
+        } catch (err) {
+          console.error("Clear mistake DB error", err);
+        }
+      } else {
+         toast.success("Sahi Jawab! 🎯");
+      }
+
     } else {
       setIsCorrect(false);
-      toast.error("Oops! Galat sequence.");
       
-      // Auto-flag as 'again' behind the scenes for normal mode mistakes
-      if (!isReviewMode) {
-        try {
-          await fetch(`${API_URL}/api/words/srs/review`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: userEmail,
-              word: currentChallenge.word || selectedWordObj.word, 
-              hindiSentence: currentChallenge.hindiSentence,
-              englishSentence: currentChallenge.englishSentence,
-              grade: 'again' 
-            })
-          });
-        } catch (err) { console.error("Silently saving to SentenceReview failed"); }
+      // ❌ FAILED IN CLEAR MODE
+      if (isClearMode) {
+        toast.error("Test Failed! Back to practice mode. 😅");
+        setIsClearMode(false);
+        setIsReviewMode(true); // Force them to review it properly
+      } else {
+        toast.error("Oops! Galat sequence.");
+        
+        if (!isReviewMode) {
+          try {
+            await fetch(`${API_URL}/api/words/srs/review`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: userEmail,
+                word: currentChallenge.word || selectedWordObj.word, 
+                hindiSentence: currentChallenge.hindiSentence,
+                englishSentence: currentChallenge.englishSentence,
+                grade: 'again' 
+              })
+            });
+          } catch (err) { console.error("Silently saving to SentenceReview failed"); }
+        }
       }
     }
 
-    // Global Stats Engine Trigger
+    // Global Stats Update
     try {
       await fetch(`${API_URL}/api/words/stats/update`, {
         method: "POST",
@@ -205,7 +249,6 @@ export default function PracticePage() {
     } catch (err) {}
   };
 
-  // Spaced Repetition Engine Logic Trigger
   const handleAnkiReview = async (grade) => {
     try {
       await fetch(`${API_URL}/api/words/srs/review`, {
@@ -220,7 +263,6 @@ export default function PracticePage() {
         })
       });
     } catch (err) { console.error("SRS database save error"); }
-
     handleNextSentence();
   };
 
@@ -234,6 +276,7 @@ export default function PracticePage() {
       setSelectedWordObj(null);
       setCurrentChallenge(null);
       setIsReviewMode(false);
+      setIsClearMode(false);
       fetchAllData(); 
     }
   };
@@ -317,7 +360,7 @@ export default function PracticePage() {
                 {historyWords.length === 0 ? (
                   <div className="text-center text-slate-500 py-8 text-xs italic bg-black/10 border border-white/5 rounded-xl">History is empty. Search words first!</div>
                 ) : (
-                  <div className="flex flex-wrap gap-2 justify-center max-h-[300px] overflow-y-auto pb-2 scrollbar-none">
+                  <div className="flex flex-wrap gap-2 justify-center max-h-[350px] overflow-y-auto pb-2 scrollbar-none">
                     {historyWords.map((wordObj, i) => (
                       <button
                         key={i}
@@ -332,7 +375,7 @@ export default function PracticePage() {
               </div>
             )}
 
-            {/* VIEW B: MISTAKES TAB */}
+            {/* 🔥 VIEW B: POLISHED MISTAKES TAB */}
             {activeTab === "mistakes" && (
               <div className="space-y-3">
                 <p className="text-center text-rose-400 font-bold uppercase tracking-widest text-[9px]">Words with recorded mistakes</p>
@@ -341,15 +384,28 @@ export default function PracticePage() {
                     🎉 Sab saaf hai! Koi pending mistakes wale words nahi mile.
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-2 justify-center max-h-[300px] overflow-y-auto pb-2 scrollbar-none">
+                  <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pb-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
                     {mistakeWords.map((item, i) => (
-                      <button
-                        key={i}
-                        onClick={() => startMistakePracticeForWord(item.word)}
-                        className="bg-rose-950/10 border border-rose-500/20 hover:border-rose-500 hover:bg-rose-950/30 px-4 py-3 rounded-xl text-rose-200 font-black text-sm transition-all shadow-sm flex items-center gap-2"
-                      >
-                        ⚠️ {item.word}
-                      </button>
+                      <div key={i} className="bg-[#121216]/80 border border-white/5 hover:border-rose-500/30 rounded-xl flex items-center justify-between p-3 transition-all shadow-sm">
+                        <div className="flex items-center gap-2">
+                           <span className="text-lg">⚠️</span>
+                           <span className="text-rose-200 font-black text-sm uppercase tracking-wide">{item.word}</span>
+                        </div>
+                        <div className="flex gap-2">
+                           <button 
+                             onClick={() => startMistakePracticeForWord(item.word)} 
+                             className="bg-white/5 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all"
+                           >
+                             Practice 🔄
+                           </button>
+                           <button 
+                             onClick={() => startClearChallenge(item.word)} 
+                             className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 px-3 py-2 rounded-lg text-[10px] font-black uppercase transition-all"
+                           >
+                             I Know It ✅
+                           </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -366,16 +422,16 @@ export default function PracticePage() {
             {/* Header */}
             <div className="flex justify-between items-center bg-black/40 rounded-xl p-3 border border-white/5">
               <button 
-                onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); fetchAllData(); }}
+                onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); setIsClearMode(false); fetchAllData(); }}
                 className="text-xs text-slate-400 hover:text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
               >
                 ✕ Exit
               </button>
               <div className="text-center">
                 <span className="text-[8px] uppercase tracking-widest text-slate-500 block">
-                  {isReviewMode ? "MISTAKES/SRS TRAINING" : "NORMAL PRACTICE"}
+                  {isClearMode ? "VERIFICATION MODE 🛡️" : isReviewMode ? "MISTAKES/SRS TRAINING" : "NORMAL PRACTICE"}
                 </span>
-                <span className={`font-black uppercase tracking-wider text-sm ${isReviewMode ? "text-rose-400" : "text-cyan-400"}`}>
+                <span className={`font-black uppercase tracking-wider text-sm ${isClearMode ? "text-amber-400" : isReviewMode ? "text-rose-400" : "text-cyan-400"}`}>
                   {selectedWordObj.word}
                 </span>
               </div>
@@ -452,7 +508,7 @@ export default function PracticePage() {
                 </div>
               )}
 
-              {isCorrect === true && (
+              {isCorrect === true && !isClearMode && (
                 <>
                   {!isReviewMode ? (
                     <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 text-center space-y-3">

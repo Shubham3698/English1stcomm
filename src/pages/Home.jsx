@@ -21,7 +21,7 @@ export default function VocabPage() {
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
 
-  // 🔥 NAYA STATE AUR REF: Custom Image Upload Ke Liye
+  // Custom Image Upload Ke Liye
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -70,8 +70,8 @@ export default function VocabPage() {
     }
   }, [userEmail]);
 
-  // Generate Image logic with Cloudinary support
-  const handleGenerateImage = async (actionType = "normal", wordToGenerate) => {
+  // 🔥 UPDATED: Generate Image logic with Custom Prompt support
+  const handleGenerateImage = async (actionType = "normal", wordToGenerate, customPrompt = "") => {
     if (!wordToGenerate || !userEmail) return;
     
     setIsImageLoading(true);
@@ -86,7 +86,12 @@ export default function VocabPage() {
       const response = await fetch(`${API_URL}/api/image/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase: wordToGenerate, actionType, userId: userEmail }),
+        body: JSON.stringify({ 
+            phrase: wordToGenerate, 
+            actionType, 
+            userId: userEmail,
+            customPrompt // User ka idea backend tak bhej rahe hain
+        }),
       });
 
       const data = await response.json();
@@ -94,6 +99,7 @@ export default function VocabPage() {
       if (response.ok && data.imageUrl) {
         setImageSrc(data.imageUrl);
         fetchHistoryFromDB(); 
+        setIsImageExpanded(true); // Image bante hi automatically open ho jayegi
       } else {
         toast.error("Visual generation failed behind the scenes");
       }
@@ -376,7 +382,6 @@ export default function VocabPage() {
                   <div className="pt-4 border-t border-white/5">
                     <p className="text-fuchsia-400 font-black text-[10px] uppercase tracking-wider mb-3">🎨 AI Visual Expression:</p>
                     
-                    {/* 🔥 UPDATED: Removed aspect-square, using dynamic height based on content */}
                     <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-8' : ''}`}>
                       
                       {isImageLoading || isUploading ? (
@@ -384,9 +389,9 @@ export default function VocabPage() {
                           <div className="w-6 h-6 border-2 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
                           <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
                             {isUploading ? 'Uploading Custom Visual...' : 
-                             imageAction === 'refine' ? 'Optimizing Details...' : 
+                             imageAction === 'refine' ? 'Crafting Your Scene...' : 
                              imageAction === 'regenerate' ? 'New Perspective...' : 
-                             'Saving to Cloudinary...'}
+                             'Generating AI Concept...'}
                           </p>
                         </div>
                       ) : null}
@@ -407,7 +412,6 @@ export default function VocabPage() {
                       ) : null}
 
                       {/* Step 2: Expanded Image */}
-                      {/* 🔥 UPDATED: Changed object-cover to object-contain, w-full h-auto to keep ratio */}
                       {imageSrc && isImageExpanded ? (
                         <img 
                           src={imageSrc} 
@@ -427,12 +431,18 @@ export default function VocabPage() {
                           <span>🔄</span> Regenerate
                         </button>
                         
+                        {/* 🔥 UPDATED: Refine With Idea Popup Button */}
                         <button
-                          onClick={() => handleGenerateImage('refine', activeWord)}
+                          onClick={() => {
+                            const userIdea = window.prompt("Apna scene idea likho (Jaise: 'A dark room with a single glowing computer screen'):");
+                            if (userIdea !== null && userIdea.trim() !== "") {
+                              handleGenerateImage('refine', activeWord, userIdea);
+                            }
+                          }}
                           disabled={isImageLoading || isUploading}
                           className="flex-1 py-2 px-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-fuchsia-500/20 flex justify-center items-center gap-1.5 uppercase"
                         >
-                          <span>✨</span> Refine
+                          <span>✨</span> Refine Idea
                         </button>
 
                         <button

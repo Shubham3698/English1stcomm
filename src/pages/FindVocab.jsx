@@ -5,21 +5,26 @@ export default function PracticePage() {
   const [userEmail, setUserEmail] = useState("");
   const [historyWords, setHistoryWords] = useState([]);
   
-  // Game States
-  const [isLoading, setIsLoading] = useState(false);
+  // 🔥 SRS Review States
+  const [dueReviews, setDueReviews] = useState([]);
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  
+  // Game Flow States
+  const [selectedWordObj, setSelectedWordObj] = useState(null);
+  const [practiceSentences, setPracticeSentences] = useState([]);
+  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
+  
   const [currentChallenge, setCurrentChallenge] = useState(null);
   const [availableWords, setAvailableWords] = useState([]);
   const [selectedWords, setSelectedWords] = useState([]);
-  const [isCorrect, setIsCorrect] = useState(null);
   
-  // Naye states
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [focusWord, setFocusWord] = useState(""); // <-- Naya state focus word ke liye
+  // Results & UI
+  const [isCorrect, setIsCorrect] = useState(null);
+  const [userStats, setUserStats] = useState({ totalSearched: 0, totalPracticed: 0, totalMistakes: 0 });
 
-  const API_URL =
-    window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://serdeptry1st.onrender.com";
+  const API_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:3000" 
+    : "https://serdeptry1st.onrender.com";
 
   useEffect(() => {
     const loggedInUserEmail = localStorage.getItem("eng_userEmail");
@@ -30,73 +35,88 @@ export default function PracticePage() {
     }
   }, []);
 
-  // 1. Pehle user ki history fetch karo
+  // 1. Fetch All Data (History, Stats, and Due SRS Reviews)
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchData = async () => {
       if (!userEmail || userEmail === "guest_user@gmail.com") return;
       try {
-        const response = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
-        const resData = await response.json();
-        if (response.ok && resData.success && resData.data.length > 0) {
-          const wordsOnly = resData.data.map(item => item.word);
-          setHistoryWords(wordsOnly);
-        }
+        // Fetch Words History
+        const histRes = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
+        const histData = await histRes.json();
+        if (histRes.ok && histData.success) setHistoryWords(histData.data);
+
+        // Fetch User Stats
+        const statsRes = await fetch(`${API_URL}/api/words/stats/${encodeURIComponent(userEmail)}`);
+        const statsData = await statsRes.json();
+        if (statsRes.ok && statsData.success) setUserStats(statsData.data);
+
+        // Fetch Due SRS Reviews
+        const reviewRes = await fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`);
+        const reviewData = await reviewRes.json();
+        if (reviewRes.ok && reviewData.success) setDueReviews(reviewData.data);
+
       } catch (err) {
-        console.error("History fetch error:", err);
+        console.error("Data fetch error:", err);
       }
     };
-    fetchHistory();
-  }, [userEmail]);
+    fetchData();
+  }, [userEmail, API_URL]);
 
-  // 2. Ek random word uthao aur Gemini se game generate karwao
-  const generateNewChallenge = async () => {
-    if (historyWords.length === 0) {
-      return toast.error("Pehle Vocab page pe jaake kuch words search karo! 📚");
-    }
-
-    setIsLoading(true);
-    setIsCorrect(null);
-    setSelectedWords([]);
-    setShowAnswer(false);
-
-    const randomTargetWord = historyWords[Math.floor(Math.random() * historyWords.length)];
-    setFocusWord(randomTargetWord); // <-- Yahan word ko state mein save kar liya
-
-    try {
-      const response = await fetch(`${API_URL}/api/words/generate-practice`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: randomTargetWord, userId: userEmail }),
-      });
-
-      const resData = await response.json();
-
-      if (response.ok && resData.success) {
-        const data = resData.data;
-        setCurrentChallenge(data);
-
-        const correctWordsArr = data.englishSentence.split(" ");
-        let combinedWords = [...correctWordsArr, ...data.distractors];
-        
-        combinedWords = combinedWords.sort(() => Math.random() - 0.5);
-        
-        const wordObjects = combinedWords.map((word, index) => ({
-          id: `word-${index}`,
-          text: word
-        }));
-
-        setAvailableWords(wordObjects);
-      } else {
-        toast.error("Challenge load nahi hua!");
+  // Saved sentences ko parse karna
+  const parseSavedSentences = (text) => {
+    if (!text) return [];
+    const lines = text.split('\n').filter(line => line.trim().length > 5);
+    const parsed = [];
+    lines.forEach(line => {
+      const match = line.match(/(.*?)\((.*?)\)/);
+      if (match) {
+        let eng = match[1].replace(/^[\d\.\*\-\s]+/, '').trim();
+        let hin = match[2].trim();
+        if (eng && hin) parsed.push({ englishSentence: eng, hindiSentence: hin });
       }
-    } catch (error) {
-      toast.error("Backend server error!");
-    } finally {
-      setIsLoading(false);
-    }
+    });
+    return parsed.length > 0 ? parsed : lines.map(line => ({ 
+        englishSentence: line.replace(/^[\d\.\*\-\s]+/, '').trim(), 
+        hindiSentence: "Translate this sentence:" 
+    }));
   };
 
-  // Word interactions
+  // 🔥 Start Review Mode (Anki Memory Flow)
+  const startReviewSession = () => {
+    if (dueReviews.length === 0) return toast.success("Aaj ke saare reviews complete hain! 🎉");
+    setIsReviewMode(true);
+    setSelectedWordObj({ word: "Review Mode" });
+    setPracticeSentences(dueReviews); // Backend se aaye huye object directly pass
+    setCurrentSentenceIndex(0);
+    loadSentenceGame(dueReviews[0]);
+  };
+
+  // Start Normal Practice
+  const startPracticeForWord = (wordObj) => {
+    if (!wordObj.sentences) return toast.error("Is word ke sentences save nahi hain.");
+    const parsedSentences = parseSavedSentences(wordObj.sentences);
+    if (parsedSentences.length === 0) return toast.error("Sentences load nahi ho paye!");
+    
+    setIsReviewMode(false);
+    setSelectedWordObj(wordObj);
+    setPracticeSentences(parsedSentences);
+    setCurrentSentenceIndex(0);
+    loadSentenceGame(parsedSentences[0]);
+  };
+
+  const loadSentenceGame = (sentenceObj) => {
+    setCurrentChallenge(sentenceObj);
+    setIsCorrect(null);
+    setSelectedWords([]);
+
+    const cleanSentence = sentenceObj.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+    const correctWordsArr = cleanSentence.split(" ").filter(w => w);
+    const dummyWords = ["is", "the", "not", "very", "a", "an", "to", "are", "was"].sort(() => Math.random() - 0.5).slice(0, 2);
+    
+    let combinedWords = [...correctWordsArr, ...dummyWords].sort(() => Math.random() - 0.5);
+    setAvailableWords(combinedWords.map((word, index) => ({ id: `word-${index}`, text: word })));
+  };
+
   const handleWordSelect = (wordObj) => {
     setAvailableWords(availableWords.filter(w => w.id !== wordObj.id));
     setSelectedWords([...selectedWords, wordObj]);
@@ -107,90 +127,217 @@ export default function PracticePage() {
     setAvailableWords([...availableWords, wordObj]);
   };
 
-  // Check the answer
-  const checkAnswer = () => {
+  // VERIFY ANSWER & TRIGGER SRS
+  const checkAnswer = async () => {
     if (!currentChallenge) return;
     const userSentence = selectedWords.map(w => w.text).join(" ").trim().toLowerCase();
-    const correctSentence = currentChallenge.englishSentence.trim().toLowerCase();
+    const correctSentenceClean = currentChallenge.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").trim().toLowerCase();
 
-    if (userSentence === correctSentence) {
+    const isAnswerCorrect = userSentence === correctSentenceClean;
+
+    if (isAnswerCorrect) {
       setIsCorrect(true);
-      toast.success("Bilkul Sahi! Sateek Jawab 🎉");
+      toast.success("Sahi Jawab! 🎯");
     } else {
       setIsCorrect(false);
-      setShowAnswer(false); // Result aate hi pehle hide rakho
-      toast.error("Thoda gadbad hai, wapas try karo! 😅");
+      toast.error("Oops! Galat sequence.");
+      // Silent 'Again' mark in DB if they failed
+      handleAnkiReview('again', false); 
+    }
+
+    // Update global Stats
+    try {
+      const res = await fetch(`${API_URL}/api/words/stats/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userEmail, isCorrect: isAnswerCorrect })
+      });
+      const resData = await res.json();
+      if (resData.success) {
+         setUserStats(prev => ({
+             ...prev,
+             totalPracticed: prev.totalPracticed + 1,
+             totalMistakes: isAnswerCorrect ? prev.totalMistakes : prev.totalMistakes + 1
+         }));
+      }
+    } catch (err) {}
+  };
+
+  // 🔥 Update Anki SRS Interval and move to next
+  const handleAnkiReview = async (grade, shouldMoveNext = true) => {
+    try {
+      await fetch(`${API_URL}/api/words/srs/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: userEmail,
+          // Agar review mode hai to current challenge me word milega, warna selected word me
+          word: currentChallenge.word || selectedWordObj.word, 
+          hindiSentence: currentChallenge.hindiSentence,
+          englishSentence: currentChallenge.englishSentence,
+          grade: grade // 'again', 'hard', 'good', 'easy'
+        })
+      });
+    } catch (err) { console.error("SRS update failed"); }
+
+    if (shouldMoveNext) handleNextSentence();
+  };
+
+  const handleNextSentence = () => {
+    if (currentSentenceIndex + 1 < practiceSentences.length) {
+      const nextIndex = currentSentenceIndex + 1;
+      setCurrentSentenceIndex(nextIndex);
+      loadSentenceGame(practiceSentences[nextIndex]);
+    } else {
+      toast.success(isReviewMode ? "Great! Review Session Complete! 🏆" : `'${selectedWordObj.word}' practice done! 👏`);
+      setSelectedWordObj(null);
+      setCurrentChallenge(null);
+      
+      // Refresh due reviews automatically if they were in review mode
+      if (isReviewMode) {
+          fetch(`${API_URL}/api/words/srs/due/${encodeURIComponent(userEmail)}`)
+            .then(res => res.json())
+            .then(data => { if(data.success) setDueReviews(data.data); });
+      }
     }
   };
 
-  // Popup close karne ka function
-  const closePopup = () => {
-    setIsCorrect(null);
-    setShowAnswer(false);
-  };
-
   return (
-    <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10">
-      <Toaster position="top-center" />
+    <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10 font-sans">
+      <Toaster position="top-center" toastOptions={{ style: { background: '#121216', color: '#fff', border: '1px solid #333' } }} />
 
-      {/* Title branding */}
-      <div className="text-center space-y-1 mb-8">
-        <h2 className="text-2xl font-black italic uppercase bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
+      {/* Title Header */}
+      <div className="text-center space-y-1 mb-6">
+        <h2 className="text-2xl md:text-3xl font-black italic uppercase bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent tracking-wide">
           🎮 Dameeto Syntax Builder
         </h2>
-        <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">
-          AI-Driven Structural Practice
+        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+          AI Spaced Repetition Engine
         </p>
       </div>
 
-      <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/[0.05] rounded-[2.5rem] p-6 shadow-2xl">
+      {/* Global Scoreboard */}
+      <div className="w-full max-w-xl flex justify-between items-center bg-[#0b0b0e]/80 backdrop-blur-md border border-white/5 rounded-2xl p-4 mb-6 shadow-2xl">
+        <div className="text-center flex-1 border-r border-white/5">
+            <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Total Words</p>
+            <p className="text-xl font-black text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.3)]">{userStats.totalSearched}</p>
+        </div>
+        <div className="text-center flex-1 border-r border-white/5">
+            <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Practiced</p>
+            <p className="text-xl font-black text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]">{userStats.totalPracticed}</p>
+        </div>
+        <div className="text-center flex-1">
+            <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-1">Mistakes</p>
+            <p className="text-xl font-black text-rose-400 drop-shadow-[0_0_8px_rgba(251,113,133,0.3)]">{userStats.totalMistakes}</p>
+        </div>
+      </div>
+
+      <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/[0.05] rounded-[2rem] p-5 md:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         
-        {!currentChallenge && !isLoading && (
-          <div className="text-center py-10 space-y-4">
-            <p className="text-slate-400 text-sm font-medium">
-              Tumhari saved vocabulary history se sentence building practice karo.
-            </p>
-            <button
-              onClick={generateNewChallenge}
-              className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:opacity-90 active:scale-95 px-8 py-4 rounded-2xl text-[12px] font-black uppercase tracking-wider transition-all shadow-lg shadow-cyan-950/20"
-            >
-              🚀 Start Practice
-            </button>
-          </div>
-        )}
-
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
-              Structuring New Challenge...
-            </p>
-          </div>
-        )}
-
-        {currentChallenge && !isLoading && (
-          <div className="space-y-8 animate-fade-in">
+        {/* ============================================================== */}
+        {/* SCREEN 1: DASHBOARD (Word Selection & SRS Banner) */}
+        {/* ============================================================== */}
+        {!selectedWordObj && (
+          <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
             
-            {/* Hindi Question */}
-            <div className="bg-black/40 border border-white/5 rounded-2xl p-5 text-center shadow-inner relative overflow-hidden">
-              <span className="text-[10px] uppercase font-black tracking-widest text-emerald-500 block mb-2">Translate This:</span>
-              <p className="text-lg md:text-xl font-medium text-white relative z-10">
+            {/* 🔥 SRS Banner */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-orange-900/30 to-rose-950/40 border border-orange-500/20 p-5 rounded-2xl flex justify-between items-center shadow-lg group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+               <div className="relative z-10">
+                  <h3 className="text-orange-400 font-black uppercase tracking-wider text-sm mb-1 flex items-center gap-2">
+                    🧠 Memory Review 
+                    {dueReviews.length > 0 && <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span></span>}
+                  </h3>
+                  <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                    Pending Fixes: <strong className="text-orange-300 text-xs ml-1">{dueReviews.length}</strong>
+                  </p>
+               </div>
+               <button 
+                  onClick={startReviewSession}
+                  disabled={dueReviews.length === 0}
+                  className="relative z-10 bg-orange-500/20 hover:bg-orange-500/40 text-orange-400 border border-orange-500/30 disabled:opacity-30 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-[11px] font-black uppercase transition-all shadow-[0_0_15px_rgba(249,115,22,0.15)] active:scale-95"
+               >
+                  Play Reviews ▶
+               </button>
+            </div>
+
+            {/* Word List */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-white/10"></div>
+                <h3 className="text-cyan-500 font-bold uppercase tracking-widest text-[10px]">Practice New Words</h3>
+                <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-white/10"></div>
+              </div>
+
+              {historyWords.length === 0 ? (
+                <div className="text-center text-slate-500 py-10 text-sm italic bg-black/20 rounded-xl border border-white/5">
+                  Tumhari history khali hai, pehle dictionary me words search karo!
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2.5 justify-center max-h-[350px] overflow-y-auto pr-1 pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  {historyWords.map((wordObj, i) => (
+                    <button
+                      key={i}
+                      onClick={() => startPracticeForWord(wordObj)}
+                      className="bg-black/40 border border-white/5 hover:border-cyan-500/50 hover:bg-cyan-900/20 px-4 py-2.5 rounded-xl text-slate-300 hover:text-cyan-50 font-bold tracking-wide text-sm transition-all active:scale-95 shadow-sm"
+                    >
+                      {wordObj.word}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* SCREEN 2: GAMEPLAY (Translate & Validate) */}
+        {/* ============================================================== */}
+        {selectedWordObj && currentChallenge && (
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            
+            {/* Header: Mode & Progress */}
+            <div className="flex justify-between items-center bg-black/40 rounded-xl p-3 border border-white/5 shadow-inner">
+              <button 
+                onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); }}
+                className="text-xs text-slate-400 hover:text-rose-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+              >
+                ✕ Exit
+              </button>
+              <div className="text-center">
+                <span className="text-[8px] uppercase tracking-widest text-slate-500 block mb-0.5">
+                  {isReviewMode ? "SRS REVIEW" : "FOCUS WORD"}
+                </span>
+                <span className={`font-black uppercase tracking-wider text-sm ${isReviewMode ? "text-orange-400" : "text-cyan-400"}`}>
+                  {isReviewMode ? currentChallenge.word : selectedWordObj.word}
+                </span>
+              </div>
+              <div className="text-[10px] font-black tracking-widest text-slate-400 bg-white/5 px-3 py-1 rounded-md">
+                {currentSentenceIndex + 1} / {practiceSentences.length}
+              </div>
+            </div>
+
+            {/* Hindi Challenge Card */}
+            <div className="bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-6 text-center shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-1 bg-emerald-500/50 rounded-b-full blur-[2px]"></div>
+              <span className="text-[9px] uppercase font-black tracking-widest text-emerald-400 block mb-3 opacity-80">Translate This:</span>
+              <p className="text-xl md:text-2xl font-medium text-white leading-relaxed drop-shadow-md">
                 "{currentChallenge.hindiSentence}"
               </p>
             </div>
 
-            {/* Answer Drop Zone (Selected Words) */}
-            <div className="min-h-[80px] border-b-2 border-white/10 pb-4 flex flex-wrap gap-2 items-start content-start">
+            {/* Answer Construction Zone */}
+            <div className="min-h-[100px] bg-black/20 border-2 border-dashed border-white/10 rounded-2xl p-4 flex flex-wrap gap-2 items-start content-start transition-colors data-[filled=true]:border-cyan-500/30" data-filled={selectedWords.length > 0}>
               {selectedWords.length === 0 ? (
-                <span className="text-slate-600 text-sm italic mt-2 w-full text-center">
-                  Words ko select karke yahan arrange karo...
-                </span>
+                <div className="w-full h-full flex items-center justify-center text-slate-600 text-xs font-medium uppercase tracking-widest pt-4 opacity-50">
+                  Tap words below to build sentence
+                </div>
               ) : (
                 selectedWords.map((wordObj) => (
                   <button
                     key={wordObj.id}
                     onClick={() => handleWordDeselect(wordObj)}
-                    className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-xl text-white font-medium text-sm transition-all shadow-sm active:scale-95"
+                    className="bg-cyan-950/40 border border-cyan-500/30 hover:bg-rose-950/40 hover:border-rose-500/30 px-4 py-2 rounded-xl text-cyan-50 font-bold text-sm transition-all active:scale-90 shadow-sm"
                   >
                     {wordObj.text}
                   </button>
@@ -198,98 +345,83 @@ export default function PracticePage() {
               )}
             </div>
 
-            {/* Jumbled Words Pool */}
-            <div className="flex flex-wrap gap-3 justify-center pt-2">
-              {availableWords.map((wordObj) => (
-                <button
-                  key={wordObj.id}
-                  onClick={() => handleWordSelect(wordObj)}
-                  className="bg-[#121216] hover:bg-cyan-900/40 border border-white/5 hover:border-cyan-500/50 px-5 py-3 rounded-xl text-slate-300 font-bold text-sm transition-all shadow-md active:scale-95"
-                >
-                  {wordObj.text}
-                </button>
-              ))}
-            </div>
-
-            {/* Result & Actions */}
-            <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
-              
-              {/* STATUS POPUP */}
-              {isCorrect !== null && (
-                <div className={`relative p-5 rounded-2xl flex flex-col items-center gap-3 text-center font-bold text-sm transition-all duration-300 ${isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
-                  
-                  {/* CLOSE BUTTON */}
-                  <button 
-                    onClick={closePopup}
-                    className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 text-current transition-all active:scale-90"
-                    title="Close"
+            {/* Jumbled Words Pool (Hide when checking answer) */}
+            {isCorrect === null && (
+              <div className="flex flex-wrap gap-2.5 justify-center pt-2">
+                {availableWords.map((wordObj) => (
+                  <button
+                    key={wordObj.id}
+                    onClick={() => handleWordSelect(wordObj)}
+                    className="bg-[#1a1a20] border border-white/5 hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-300 px-5 py-3 rounded-xl text-slate-300 font-bold text-sm transition-all shadow-[0_4px_10px_rgba(0,0,0,0.3)] active:scale-95"
                   >
-                    ✕
+                    {wordObj.text}
                   </button>
+                ))}
+              </div>
+            )}
 
-                  <div className="mt-1 flex flex-col items-center gap-2">
-                    <p className="text-base">{isCorrect ? '🏆 Correct Translation! You nailed it.' : '❌ Oops! Sequence galat hai.'}</p>
-                    
-                    {/* YAHAN HUM FOCUS WORD DIKHA RAHE HAIN AGAR ANSWER SAHI HAI */}
-                    {isCorrect && focusWord && (
-                      <div className="mt-2 bg-emerald-950/50 border border-emerald-500/30 px-4 py-2 rounded-xl shadow-inner">
-                        <p className="text-emerald-200 text-xs">
-                          🎯 Your Focus Word: <span className="text-emerald-400 font-black uppercase tracking-widest text-sm ml-1">{focusWord}</span>
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* EXPANDABLE CORRECT ANSWER SECTION */}
-                  {!isCorrect && (
-                    <div className="mt-1 w-full flex flex-col items-center">
-                      <button
-                        onClick={() => setShowAnswer(!showAnswer)}
-                        className="text-[10px] uppercase font-black tracking-widest text-rose-300 hover:text-rose-100 underline decoration-dashed underline-offset-4 transition-all duration-200"
-                      >
-                        {showAnswer ? "Hide Answer ⬆️" : "👀 Show Correct Answer"}
-                      </button>
-                      
-                      {/* CAROUSEL / SLIDE-IN ANIMATION FOR ANSWER */}
-                      <div 
-                        className={`w-full overflow-hidden transition-all duration-500 ease-in-out transform ${
-                          showAnswer 
-                            ? "max-h-[200px] opacity-100 translate-y-0 scale-100 mt-4" 
-                            : "max-h-0 opacity-0 -translate-y-4 scale-95 mt-0"
-                        }`}
-                      >
-                        <div className="p-4 bg-gradient-to-r from-rose-950/40 to-black/60 border border-rose-500/30 rounded-xl w-full text-white font-medium shadow-2xl relative">
-                          <span className="text-rose-400 text-[9px] uppercase tracking-widest block mb-2 opacity-80">
-                            Exact Translation:
-                          </span>
-                          <p className="text-lg tracking-wider text-rose-50">
-                            {currentChallenge.englishSentence}
-                          </p>
-                        </div>
-                      </div>
-
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex gap-3">
+            {/* Validation & SRS Action Buttons */}
+            <div className="pt-4 flex flex-col gap-4">
+              
+              {/* STATUS: Unanswered */}
+              {isCorrect === null && (
                 <button
                   onClick={checkAnswer}
                   disabled={selectedWords.length === 0}
-                  className="flex-1 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 border border-cyan-500/30 disabled:opacity-30 disabled:cursor-not-allowed py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all"
+                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white disabled:opacity-30 disabled:grayscale py-4 rounded-xl text-[12px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95"
                 >
-                  Verify Answer
+                  Verify Sentence
                 </button>
-                <button
-                  onClick={generateNewChallenge}
-                  className="flex-1 bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all"
-                >
-                  Next Challenge ⏭️
-                </button>
-              </div>
-            </div>
+              )}
 
+              {/* STATUS: Incorrect */}
+              {isCorrect === false && (
+                <div className="animate-in slide-in-from-bottom-2 duration-300 bg-rose-950/40 border border-rose-500/30 rounded-2xl p-5 text-center shadow-lg">
+                   <p className="text-rose-400 text-xs font-black uppercase tracking-widest mb-2 flex items-center justify-center gap-2">
+                     <span className="text-lg">❌</span> Incorrect Structure
+                   </p>
+                   <p className="text-lg tracking-wide text-rose-50 mb-5 font-medium bg-black/30 py-3 px-2 rounded-xl">
+                     {currentChallenge.englishSentence}
+                   </p>
+                   <button 
+                     onClick={handleNextSentence} 
+                     className="w-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/50 py-4 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
+                   >
+                     Got it, Next ⏭️
+                   </button>
+                </div>
+              )}
+
+              {/* STATUS: Correct (Anki Options) */}
+              {isCorrect === true && (
+                <div className="animate-in slide-in-from-bottom-2 duration-300 bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-5 text-center shadow-lg space-y-4">
+                   <p className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                     <span className="text-lg">🎯</span> Perfect Translation!
+                   </p>
+                   <p className="text-slate-400 text-[10px] uppercase font-bold">When should we ask this again?</p>
+                   
+                   <div className="grid grid-cols-4 gap-2">
+                      <button onClick={() => handleAnkiReview('again')} className="flex flex-col items-center justify-center gap-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 hover:border-rose-500/50 py-3 rounded-xl transition-all active:scale-90">
+                        <span className="text-[11px] uppercase font-black">Again</span>
+                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">&lt;10 min</span>
+                      </button>
+                      <button onClick={() => handleAnkiReview('hard')} className="flex flex-col items-center justify-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/20 hover:border-orange-500/50 py-3 rounded-xl transition-all active:scale-90">
+                        <span className="text-[11px] uppercase font-black">Hard</span>
+                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">1 Day</span>
+                      </button>
+                      <button onClick={() => handleAnkiReview('good')} className="flex flex-col items-center justify-center gap-1 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 hover:border-cyan-500/50 py-3 rounded-xl transition-all active:scale-90">
+                        <span className="text-[11px] uppercase font-black">Good</span>
+                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">3 Days</span>
+                      </button>
+                      <button onClick={() => handleAnkiReview('easy')} className="flex flex-col items-center justify-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/50 py-3 rounded-xl transition-all active:scale-90">
+                        <span className="text-[11px] uppercase font-black">Easy</span>
+                        <span className="text-[8px] opacity-70 font-bold bg-black/40 px-2 py-0.5 rounded-full">5+ Days</span>
+                      </button>
+                   </div>
+                </div>
+              )}
+
+            </div>
           </div>
         )}
       </div>

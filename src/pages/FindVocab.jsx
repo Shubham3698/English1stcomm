@@ -10,7 +10,7 @@ const AnimatedNumber = ({ value }) => {
     const end = value;
     if (start === end) return;
 
-    const duration = 800; // Animation speed in milliseconds
+    const duration = 1000; // Animation speed in milliseconds
     let startTime = null;
 
     const step = (timestamp) => {
@@ -242,11 +242,24 @@ export default function PracticePage() {
     loadSentenceGame(parsedSentences[0]);
   };
 
-  const triggerRandomChallenge = () => {
+const triggerRandomChallenge = () => {
     if (historyWords.length === 0) return toast.error("Bhai, pehle kuch words search toh kar lo!");
     
-    const randomIndex = Math.floor(Math.random() * historyWords.length);
-    const selectedRandom = historyWords[randomIndex];
+    let randomIndex;
+    let selectedRandom;
+
+    // 🔥 FIX: Check if we have more than 1 word to avoid infinite loops
+    if (historyWords.length > 1) {
+      do {
+        randomIndex = Math.floor(Math.random() * historyWords.length);
+        selectedRandom = historyWords[randomIndex];
+      } while (randomWordInfo && selectedRandom.word === randomWordInfo.word); 
+      // Upar wala loop tab tak chalega jab tak naya word pichle word se alag na ho
+    } else {
+      // Agar list me word hi ek hai, toh majboori me wahi dikhana padega
+      selectedRandom = historyWords[0];
+      toast("Arsenal mein ek hi word hai bhai! Aur words add karo.", { icon: "😅" });
+    }
     
     setRandomWordInfo(selectedRandom);
     setShowRandomAnswer(false);
@@ -259,6 +272,7 @@ export default function PracticePage() {
     setCurrentChallenge(null);
   };
 
+  
   const loadSentenceGame = (sentenceObj) => {
     setCurrentChallenge(sentenceObj);
     setIsCorrect(null);

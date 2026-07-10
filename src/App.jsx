@@ -1,13 +1,13 @@
 import { Toaster } from 'react-hot-toast';
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import toast from "react-hot-toast"; // ✅ Import toast for foreground notifications
+import toast from "react-hot-toast"; 
 
 // ✅ Firebase functions import karo
 import { requestForToken, onMessageListener } from "./firebase"; 
 
 import Navbar from "./components/Navbar";
-import BottomNav from "./components/BottomNav"; // ✅ Naya Bottom Navbar Import Kiya
+import BottomNav from "./components/BottomNav"; 
 import Home from "./pages/Home";
 import CommunityPost from "./pages/CommunityPost";
 import User from "./pages/User"; 
@@ -19,11 +19,14 @@ import EbookStore from "./pages/EbookStore";
 import InteractiveQuizPage from "./pages/InteractiveQuizPage";
 import VocabDeckPage from "./pages/VocabDeckPage";
 
+// ✅ 1. Apna naya Lessons page import karo (path apne folder structure ke hisaab se check kar lena)
+import LessonsPage from "./pages/LessonsPage"; 
+
 export default function App() {
   const userEmail = localStorage.getItem("eng_userEmail");
 
   useEffect(() => {
-    // 1. 🛡️ Security: Disable Right Click & F12 (Tera purana logic)
+    // 1. 🛡️ Security: Disable Right Click & F12
     const handleKey = (e) => {
       if (e.ctrlKey && (e.key === "u" || e.key === "i")) {
         e.preventDefault();
@@ -36,10 +39,7 @@ export default function App() {
 
     // 2. 🔔 Notification System Initializer
     if (userEmail) {
-      // 🚀 Token mangne ka function call (Browser permission mangega)
       requestForToken(userEmail);
-
-      // 📡 Foreground Message Listener (Jab app khuli ho tab toast dikhayega)
       onMessageListener()
         .then((payload) => {
           console.log("Foreground Message:", payload);
@@ -80,19 +80,20 @@ export default function App() {
         toastOptions={{
           duration: 2000,
           style: {
-            background: '#333',
+            background: '#121c2d', // ✅ Toast ko bhi dark theme diya
             color: '#fff',
             fontSize: '14px',
             fontWeight: 'bold',
-            borderRadius: '10px'
+            borderRadius: '10px',
+            border: '1px solid #1e293b'
           }
         }}
       />
 
       <div
         onContextMenu={(e) => e.preventDefault()}
-        // ✅ paddingBottom add kiya taaki navbar content cover na kare
-        style={{ background: "#f1f2f6", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}
+        // ✅ 2. Background color update kiya dark theme (#0b101a) ke liye
+        style={{ background: "#0b101a", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}
       >
         <Navbar />
 
@@ -108,9 +109,12 @@ export default function App() {
           <Route path="/ebook-store" element={<EbookStore />} />
           <Route path="/vocab-deck" element={<VocabDeckPage />} />
           <Route path="/interactive-quiz" element={<InteractiveQuizPage />} />
+          
+          {/* ✅ 3. Yahan par naya route add kar diya */}
+          <Route path="/lessons" element={<LessonsPage />} />
         </Routes>
 
-        {/* ✅ Bottom Navbar Hamesha Dikhne ke liye Routes ke bahar laga diya */}
+        {/* ✅ Bottom Navbar */}
         <BottomNav />
       </div>
     </BrowserRouter>

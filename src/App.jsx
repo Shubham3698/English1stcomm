@@ -7,6 +7,7 @@ import toast from "react-hot-toast"; // ✅ Import toast for foreground notifica
 import { requestForToken, onMessageListener } from "./firebase"; 
 
 import Navbar from "./components/Navbar";
+import BottomNav from "./components/BottomNav"; // ✅ Naya Bottom Navbar Import Kiya
 import Home from "./pages/Home";
 import CommunityPost from "./pages/CommunityPost";
 import User from "./pages/User"; 
@@ -90,7 +91,8 @@ export default function App() {
 
       <div
         onContextMenu={(e) => e.preventDefault()}
-        style={{ background: "#f1f2f6", minHeight: "100vh" }}
+        // ✅ paddingBottom add kiya taaki navbar content cover na kare
+        style={{ background: "#f1f2f6", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}
       >
         <Navbar />
 
@@ -107,8 +109,10 @@ export default function App() {
           <Route path="/vocab-deck" element={<VocabDeckPage />} />
           <Route path="/interactive-quiz" element={<InteractiveQuizPage />} />
         </Routes>
+
+        {/* ✅ Bottom Navbar Hamesha Dikhne ke liye Routes ke bahar laga diya */}
+        <BottomNav />
       </div>
     </BrowserRouter>
   );
 }
-

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import PostCard from "../components/PostCard"; 
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { Search, Loader2 } from "lucide-react"; // Icons for premium look
 
 export default function CommunityPost() {
   const [dbPosts, setDbPosts] = useState([]);
@@ -32,7 +33,6 @@ export default function CommunityPost() {
     try {
       const res = await fetch(`${API_URL}/api/english-posts/all`);
       const data = await res.json();
-      console.log("Fetched Data Sample:", data[0]); // Debugging ke liye
       setDbPosts(data);
     } catch (err) { 
       console.error("Fetch Error:", err); 
@@ -47,82 +47,79 @@ export default function CommunityPost() {
     return () => clearInterval(interval);
   }, [fetchPosts]);
 
-// CommunityPost.jsx
-const filteredPosts = useMemo(() => {
-  if (!dbPosts || !Array.isArray(dbPosts)) return [];
+  const filteredPosts = useMemo(() => {
+    if (!dbPosts || !Array.isArray(dbPosts)) return [];
 
-  // 1. User email ko normalize karo taaki matching 100% accurate ho
-  const currentUser = userEmail?.trim().toLowerCase();
+    const currentUser = userEmail?.trim().toLowerCase();
 
-  return dbPosts.filter((post) => {
-    // --- SECTION 1: GLOBAL SEARCH (Title + Main Word) ---
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = 
-      post.title?.toLowerCase().includes(query) || 
-      post.word?.toLowerCase().includes(query);
-    
-    if (!matchesSearch) return false;
+    return dbPosts.filter((post) => {
+      // --- SECTION 1: GLOBAL SEARCH ---
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch = 
+        post.title?.toLowerCase().includes(query) || 
+        post.word?.toLowerCase().includes(query);
+      
+      if (!matchesSearch) return false;
 
-    // --- SECTION 2: FILTER TAB LOGIC ---
-    // Agar "all" selected hai toh aage check karne ki zaroorat nahi
-    if (activeFilter === "all") return true;
+      // --- SECTION 2: FILTER TAB LOGIC ---
+      if (activeFilter === "all") return true;
 
-    // 🔥 SINGLE SOURCE OF TRUTH: Sirf post level check
-    // Backend Middleware ne ensure kiya hai ki card-level vote yahan sync hoga
-    const isVoted = Array.isArray(post.votedBy) && 
-                    post.votedBy.some(email => email.toLowerCase().trim() === currentUser);
+      const isVoted = Array.isArray(post.votedBy) && 
+                      post.votedBy.some(email => email.toLowerCase().trim() === currentUser);
 
-    const isLiked = Array.isArray(post.savedBy) && 
-                    post.savedBy.some(email => email.toLowerCase().trim() === currentUser);
+      const isLiked = Array.isArray(post.savedBy) && 
+                      post.savedBy.some(email => email.toLowerCase().trim() === currentUser);
 
-    switch (activeFilter) {
-      case "voted":
-        return isVoted;
-      case "unvoted":
-        // Jo voted nahi hai, wahi unvoted hai
-        return !isVoted;
-      case "liked":
-        return isLiked;
-      default:
-        return true;
-    }
-  });
-}, [dbPosts, searchQuery, activeFilter, userEmail]);
+      switch (activeFilter) {
+        case "voted":
+          return isVoted;
+        case "unvoted":
+          return !isVoted;
+        case "liked":
+          return isLiked;
+        default:
+          return true;
+      }
+    });
+  }, [dbPosts, searchQuery, activeFilter, userEmail]);
+
   return (
-    <div className="flex justify-center bg-white min-h-screen font-sans overflow-x-hidden">
+    // Background updated to dark navy theme
+    <div className="flex justify-center bg-[#0b101a] min-h-screen font-sans overflow-x-hidden pb-24">
       <div className="w-full max-w-[450px] relative">
         
-        {/* COMPACT ELITE HEADER */}
+        {/* COMPACT ELITE HEADER - Dark Frosted Glass Effect */}
         <motion.div 
           initial={{ y: 0, opacity: 1 }}
           animate={{ y: showHeader ? 0 : -100, opacity: showHeader ? 1 : 0 }} 
           transition={{ type: "spring", stiffness: 140, damping: 20 }} 
           style={{ top: "64px" }} 
-          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-white via-white/80 to-transparent backdrop-blur-[2px] pointer-events-none"
+          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#0b101a] via-[#0b101a]/90 to-transparent backdrop-blur-md pointer-events-none"
         >
-          <div className="bg-white rounded-2xl shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-gray-100 p-2.5 space-y-2 pointer-events-auto">
+          <div className="bg-[#121c2d] rounded-2xl shadow-xl border border-blue-900/40 p-3 space-y-3 pointer-events-auto">
+            
+            {/* Search Input */}
             <div className="relative">
               <input 
                 type="text"
-                placeholder="Search hub..."
+                placeholder="Search community hub..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-gray-50 border-none rounded-xl py-2 px-9 text-[11px] font-black uppercase tracking-widest outline-none focus:ring-1 focus:ring-yellow-400/40 transition-all text-gray-600"
+                className="w-full bg-[#0b101a] border border-gray-800 rounded-xl py-2.5 px-10 text-xs font-bold tracking-wide outline-none focus:border-[#41ffd1]/50 focus:ring-1 focus:ring-[#41ffd1]/20 transition-all text-white placeholder-gray-500"
               />
-              <svg className="absolute left-3 top-2 w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+            {/* Filter Tabs */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {["all", "voted", "unvoted", "liked"].map((id) => (
                 <button
                   key={id}
                   onClick={() => setActiveFilter(id)}
-                  className={`flex-shrink-0 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95
                     ${activeFilter === id 
-                      ? "bg-yellow-400 text-black shadow-sm" 
-                      : "bg-gray-50 text-gray-400"}`}
+                      ? "bg-[#41ffd1] text-black shadow-[0_0_10px_rgba(65,255,209,0.2)]" 
+                      : "bg-[#1a2538] text-gray-400 border border-gray-800 hover:text-gray-200"}`}
                 >
                   {id}
                 </button>
@@ -132,7 +129,7 @@ const filteredPosts = useMemo(() => {
         </motion.div>
 
         {/* LIST CONTENT */}
-        <div className="mt-[150px] px-2 space-y-4"> 
+        <div className="mt-[160px] px-3 space-y-4"> 
           {!loading && filteredPosts.map((post) => (
             <PostCard 
               key={post._id}
@@ -146,15 +143,26 @@ const filteredPosts = useMemo(() => {
             />
           ))}
 
+          {/* Empty State */}
           {filteredPosts.length === 0 && !loading && (
-            <div className="py-20 text-center opacity-20 font-black uppercase italic tracking-[0.2em] text-[10px]">
-              No Signals Found 📡
+            <div className="py-24 flex flex-col items-center justify-center text-center opacity-40">
+              <div className="bg-gray-800/50 p-4 rounded-full mb-3">
+                <Search className="w-8 h-8 text-gray-400" />
+              </div>
+              <span className="font-black uppercase tracking-[0.15em] text-xs text-gray-300">
+                No Signals Found
+              </span>
+              <p className="text-[10px] text-gray-500 mt-1">Try adjusting your filters</p>
             </div>
           )}
 
+          {/* Loading State */}
           {loading && (
-             <div className="py-20 text-center animate-pulse font-black uppercase text-[10px] text-gray-300">
-               Syncing Signals...
+             <div className="py-24 flex flex-col items-center justify-center text-center">
+               <Loader2 className="w-8 h-8 text-[#41ffd1] animate-spin mb-3 opacity-80" />
+               <span className="animate-pulse font-black uppercase tracking-widest text-xs text-gray-400">
+                 Syncing Signals...
+               </span>
              </div>
           )}
         </div>

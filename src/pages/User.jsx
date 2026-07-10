@@ -1,10 +1,22 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast"; // ✅ Fixed Toaster import
 import PremiumSoundFeature from "../components/PremiumSoundFeature";
 import WordMatchGame from "../components/WordMatchGame";
+import { 
+  Play, 
+  Volume2, 
+  Trophy, 
+  BrainCircuit, 
+  ChevronRight, 
+  X, 
+  Plus, 
+  Crown, 
+  FolderOpen,
+  ArrowRightLeft
+} from "lucide-react";
 
-export default function EnglishAppUser() {
+export default function EnglishAppUser() { 
   const navigate = useNavigate();
   const [user, setUser] = useState({ name: "", email: "" });
   const [vaultData, setVaultData] = useState(null);
@@ -55,19 +67,16 @@ export default function EnglishAppUser() {
       .map(item => ({
         ...item,
         _id: item.wordId || item._id,
-        // Ensure sortTime and reviewDate exist for the engine
         sortTime: item.nextReview || item.addedAt || item.createdAt
       }))
       .sort((a, b) => new Date(b.sortTime) - new Date(a.sortTime));
   }, [vaultData, filter]);
 
-  // 🔥 SRS LOGIC: Wahi card dikhao jo "Due" hain
+  // 🔥 SRS LOGIC: Due cards
   const practiceDueList = useMemo(() => {
     const now = new Date().getTime();
     return allFilteredWords.filter(item => {
-      // Agar nextReview nahi hai toh matlab naya word hai, practice mein dikhao
       if (!item.nextReview) return true;
-      // Agar nextReview time nikal gaya hai (Due ho gaya hai) toh dikhao
       return new Date(item.nextReview).getTime() <= now;
     });
   }, [allFilteredWords]);
@@ -81,7 +90,6 @@ export default function EnglishAppUser() {
     nextReviewDate.setMinutes(nextReviewDate.getMinutes() + intervals[intervalType]);
 
     try {
-      // Update Hub and Vault simultaneously via backend
       const res = await fetch(`${API_URL}/api/english-posts/update-word-stat/${currentItem.parentPostId}/${currentItem.wordId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,9 +160,14 @@ export default function EnglishAppUser() {
   [vaultData]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 font-sans pb-24 text-black">
+    <div className="min-h-screen bg-[#0b101a] flex flex-col items-center p-4 font-sans pb-24 text-white">
+      <Toaster 
+        position="top-center" 
+        toastOptions={{ style: { background: '#121c2d', color: '#fff', border: '1px solid #1e293b' } }} 
+      />
+
       {isPracticeMode ? (
-        <div className="w-full max-w-md flex flex-col items-center mt-10 animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md flex flex-col items-center mt-10 animate-fade-in">
           {practiceType === "matching" ? (
             <WordMatchGame 
               data={allFilteredWords.slice(0, 8)} 
@@ -162,32 +175,78 @@ export default function EnglishAppUser() {
             />
           ) : (
             <>
-              <div className="text-center mb-10">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">SRS ACTIVE RECALL</span>
-                <div className="mt-2 px-4 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-black">{currentIndex + 1} / {practiceDueList.length}</div>
+              {/* Header Status */}
+              <div className="text-center mb-10 w-full flex flex-col items-center">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <BrainCircuit size={14} /> SRS Active Recall
+                </span>
+                <div className="mt-3 px-4 py-1 bg-[#41ffd1]/10 text-[#41ffd1] border border-[#41ffd1]/20 rounded-full text-xs font-bold tracking-widest shadow-[0_0_10px_rgba(65,255,209,0.1)]">
+                  {currentIndex + 1} / {practiceDueList.length}
+                </div>
               </div>
-              <div className="w-full relative" onClick={() => setShowMeaning(!showMeaning)}>
-                <div className="w-full aspect-[4/5] bg-white rounded-[4rem] shadow-2xl flex flex-col items-center justify-center p-12 cursor-pointer border-2 border-gray-50 active:scale-95 transition-all">
-                  <h2 className="text-5xl font-black text-gray-900 uppercase italic text-center leading-tight tracking-tighter">{practiceDueList[currentIndex]?.word}</h2>
+
+              {/* Flashcard */}
+              <div className="w-full relative group perspective-1000" onClick={() => setShowMeaning(!showMeaning)}>
+                <div className={`w-full aspect-[4/5] bg-[#121c2d] border border-blue-900/40 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center p-12 cursor-pointer active:scale-[0.98] transition-all duration-300 relative overflow-hidden ${showMeaning ? 'border-[#41ffd1]/50 shadow-[0_0_30px_rgba(65,255,209,0.15)]' : ''}`}>
+                  
+                  {/* Subtle Background Glow */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-600/10 blur-[60px] rounded-full pointer-events-none"></div>
+
+                  <h2 className="text-4xl md:text-5xl font-bold text-white capitalize text-center leading-tight tracking-wide z-10">
+                    {practiceDueList[currentIndex]?.word}
+                  </h2>
+                  
                   {showMeaning ? (
-                    <p className="mt-10 text-2xl font-black text-red-500 italic uppercase animate-in slide-in-from-top-4 text-center">{practiceDueList[currentIndex]?.meaning}</p>
+                    <div className="mt-8 animate-fade-in z-10 text-center w-full">
+                      <div className="w-12 h-[1px] bg-gray-700 mx-auto mb-6"></div>
+                      <p className="text-xl md:text-2xl font-bold text-[#41ffd1] capitalize leading-relaxed break-words">
+                        {practiceDueList[currentIndex]?.meaning}
+                      </p>
+                    </div>
                   ) : (
-                    <p className="mt-10 text-[9px] font-black text-gray-300 uppercase tracking-widest animate-pulse">Tap to reveal</p>
+                    <p className="mt-12 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] animate-pulse z-10">
+                      Tap to reveal
+                    </p>
                   )}
                 </div>
-                <div className="absolute top-8 right-8">
+
+                {/* Audio Button */}
+                <div className="absolute top-6 right-6 z-20">
                   <PremiumSoundFeature isPremiumUser={isPremiumUser}>
-                    <button onClick={(e) => { e.stopPropagation(); speakWord(practiceDueList[currentIndex]?.word); }} className="w-14 h-14 bg-red-500 text-white rounded-full shadow-lg flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z" /></svg>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); speakWord(practiceDueList[currentIndex]?.word); }} 
+                      className="w-12 h-12 bg-[#1a2538] hover:bg-gray-700 border border-gray-600 text-gray-300 hover:text-[#41ffd1] rounded-full shadow-lg flex items-center justify-center transition-all"
+                    >
+                      <Volume2 size={20} />
                     </button>
                   </PremiumSoundFeature>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-12 w-full px-2">
-                {showMeaning ? ['again', 'hard', 'good', 'easy'].map(lvl => (
-                  <button key={lvl} onClick={() => handleReview(lvl)} className={`p-5 rounded-3xl font-black uppercase text-[10px] text-white shadow-lg active:scale-95 transition-all ${lvl === 'again' ? 'bg-black' : lvl === 'hard' ? 'bg-orange-500' : lvl === 'good' ? 'bg-blue-500' : 'bg-green-500'}`}>{lvl}</button>
-                )) : (
-                  <button onClick={() => { setIsPracticeMode(false); setShowMeaning(false); }} className="col-span-2 text-gray-300 text-[10px] font-black uppercase tracking-widest underline underline-offset-8">End Session</button>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 mt-10 w-full px-1">
+                {showMeaning ? (
+                  <>
+                    <button onClick={() => handleReview('again')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                      <span>Again</span><span className="text-[8px] opacity-70">&lt;10m</span>
+                    </button>
+                    <button onClick={() => handleReview('hard')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                      <span>Hard</span><span className="text-[8px] opacity-70">1d</span>
+                    </button>
+                    <button onClick={() => handleReview('good')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                      <span>Good</span><span className="text-[8px] opacity-70">3d</span>
+                    </button>
+                    <button onClick={() => handleReview('easy')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#41ffd1]/10 border border-[#41ffd1]/30 text-[#41ffd1] hover:bg-[#41ffd1]/20 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-[0_0_10px_rgba(65,255,209,0.1)]">
+                      <span>Easy</span><span className="text-[8px] opacity-70">5d+</span>
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => { setIsPracticeMode(false); setShowMeaning(false); }} 
+                    className="col-span-2 text-gray-500 hover:text-gray-300 text-[10px] font-bold uppercase tracking-[0.2em] py-4 transition-colors"
+                  >
+                    Abort Session
+                  </button>
                 )}
               </div>
             </>
@@ -195,102 +254,190 @@ export default function EnglishAppUser() {
         </div>
       ) : (
         <>
-          <div className="w-full max-w-md bg-white rounded-[3rem] shadow-sm p-10 border border-gray-100 text-center mt-4">
-            <div className="relative w-24 h-24 mx-auto mb-6">
-               <div className="w-full h-full bg-gradient-to-tr from-red-600 to-orange-400 text-white rounded-full flex items-center justify-center text-4xl font-black shadow-xl">
+          {/* Dashboard Profile Card */}
+          <div className="w-full max-w-md bg-[#121c2d] rounded-[2.5rem] shadow-xl p-8 border border-blue-900/40 text-center mt-6 relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-blue-900 via-[#41ffd1] to-blue-900 opacity-30"></div>
+
+            <div className="relative w-20 h-20 mx-auto mb-5">
+               <div className="w-full h-full bg-[#1a2538] border-2 border-gray-700 text-[#41ffd1] rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">
                  {user.name.charAt(0).toUpperCase()}
                </div>
-               {isPremiumUser && <span className="absolute -bottom-1 -right-1 bg-yellow-400 text-[8px] font-black px-2 py-1 rounded-full border-2 border-white shadow-sm">PRO</span>}
+               {isPremiumUser && (
+                 <span className="absolute -bottom-1 -right-2 bg-yellow-500 text-black text-[9px] font-bold px-2 py-0.5 rounded border border-yellow-300 shadow-md flex items-center gap-1">
+                   <Crown size={10} /> PRO
+                 </span>
+               )}
             </div>
-            <h1 className="text-3xl font-black text-gray-800 italic tracking-tighter">Hey, {user.name.split(' ')[0]}!</h1>
-            <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 mb-8">{user.email}</p>
-            <div className="flex gap-2 mb-6">
-              <button onClick={() => navigate("/community")} className="flex-1 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 shadow-md">Explore Hub</button>
-              <button onClick={() => navigate("/my-posts")} className="flex-1 py-4 border-2 border-black rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95">My Uploads</button>
+            
+            <h1 className="text-2xl font-bold text-white tracking-wide">Hey, {user.name.split(' ')[0]}!</h1>
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em] mt-1.5 mb-6">{user.email}</p>
+            
+            <div className="flex gap-3 mb-6">
+              <button 
+                onClick={() => navigate("/community")} 
+                className="flex-1 py-3.5 bg-[#0b101a] hover:bg-gray-800 border border-gray-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                Explore Hub
+              </button>
+              <button 
+                onClick={() => navigate("/my-posts")} 
+                className="flex-1 py-3.5 bg-[#0b101a] hover:bg-gray-800 border border-gray-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+              >
+                My Uploads
+              </button>
             </div>
-            <div className="flex flex-col gap-2">
+
+            <div className="flex flex-col gap-3">
               <button 
                 onClick={() => {
                    if (practiceDueList.length > 0) { setPracticeType("cards"); setIsPracticeMode(true); } 
-                   else toast.error("All caught up! 🏆");
+                   else toast.success("All caught up! 🏆", { icon: '✨' });
                 }}
-                className="w-full p-5 bg-red-50 text-red-600 rounded-[2rem] font-black uppercase tracking-widest text-[10px] border border-red-100 active:scale-95"
+                className="w-full p-4 bg-[#41ffd1] hover:bg-[#34e5b9] text-black rounded-xl font-bold uppercase tracking-wider text-[11px] transition-all active:scale-95 shadow-[0_0_15px_rgba(65,255,209,0.2)] flex items-center justify-center gap-2"
               >
-                🎓 START PRACTICE ({practiceDueList.length})
+                <Play size={14} /> Start Practice ({practiceDueList.length})
               </button>
               <button 
                 onClick={() => {
                    if (allFilteredWords.length >= 3) { setPracticeType("matching"); setIsPracticeMode(true); } 
                    else toast.error("Add more words! 🧩");
                 }}
-                className="w-full p-4 bg-gray-50 text-gray-500 rounded-[2rem] font-black uppercase tracking-widest text-[9px] border border-gray-100 active:scale-95"
+                className="w-full p-4 bg-[#1a2538] hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                🧩 MATCHING GAME ({allFilteredWords.length})
+                <BrainCircuit size={14} /> Matching Game ({allFilteredWords.length})
               </button>
             </div>
           </div>
 
-          <div className="w-full max-w-md mt-12 px-2">
-            <div className="flex items-center gap-2 mb-8 overflow-x-auto no-scrollbar pb-2">
-              <div className="flex bg-gray-200/50 p-1.5 rounded-[2rem] shadow-inner">
-                {categories.map((lvl) => (
-                  <button key={lvl} onClick={() => { setFilter(lvl); setCurrentIndex(0); }} className={`px-5 py-3 rounded-[1.5rem] text-[9px] font-black uppercase transition-all whitespace-nowrap ${filter.toLowerCase() === lvl.toLowerCase() ? 'bg-white shadow-md text-red-500 scale-105' : 'text-gray-400'}`}>
-                    {lvl === 'dailyUse' ? 'Daily' : lvl}
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => setShowAddModal(true)} className="w-10 h-10 bg-black text-white rounded-full flex-shrink-0 flex items-center justify-center shadow-lg active:scale-90 font-bold">+</button>
+          {/* Vault Section */}
+          <div className="w-full max-w-md mt-10 px-1">
+            <div className="flex items-center justify-between mb-2 px-1">
+               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <FolderOpen size={14} /> My Vault
+               </h3>
+               <button 
+                 onClick={() => setShowAddModal(true)} 
+                 className="text-[10px] bg-[#1a2538] hover:bg-gray-700 border border-gray-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+               >
+                 <Plus size={12} /> Add
+               </button>
             </div>
 
+            {/* Filter Categories */}
+            <div className="flex gap-2 mb-6 overflow-x-auto custom-scrollbar pb-2 pt-2">
+              {categories.map((lvl) => (
+                <button 
+                  key={lvl} 
+                  onClick={() => { setFilter(lvl); setCurrentIndex(0); }} 
+                  className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border
+                    ${filter.toLowerCase() === lvl.toLowerCase() 
+                      ? 'bg-[#41ffd1]/10 border-[#41ffd1]/50 text-[#41ffd1]' 
+                      : 'bg-[#121c2d] border-gray-800 text-gray-500 hover:text-gray-300'}`}
+                >
+                  {lvl === 'dailyUse' ? 'Daily' : lvl}
+                </button>
+              ))}
+            </div>
+
+            {/* Word List */}
             {loading ? (
-              <div className="py-20 text-center text-[10px] font-black text-gray-300 animate-pulse uppercase tracking-widest">Syncing Vault...</div>
+              <div className="py-16 flex flex-col items-center justify-center gap-3">
+                <div className="w-6 h-6 border-2 border-[#41ffd1] border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Syncing Vault...</div>
+              </div>
             ) : allFilteredWords.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {allFilteredWords.map((item) => (
                   <div key={item.wordId} className="relative group">
-                    <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex items-center justify-between active:scale-95 transition-all">
-                      <div onClick={() => navigate(`/community?postId=${item.parentPostId}`)} className="flex flex-col cursor-pointer">
-                        <h4 className="text-2xl font-black text-gray-800 uppercase italic tracking-tighter leading-none mb-1">{item.word}</h4>
-                        <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest italic">{filter}</span>
+                    <div className="bg-[#121c2d] p-5 rounded-2xl border border-gray-800 hover:border-[#41ffd1]/30 flex items-center justify-between transition-all">
+                      <div onClick={() => navigate(`/community?postId=${item.parentPostId}`)} className="flex flex-col cursor-pointer max-w-[60%]">
+                        <h4 className="text-lg font-bold text-white capitalize tracking-wide truncate">{item.word}</h4>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">{filter}</span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <p className="text-sm font-black italic uppercase text-red-500">{item.meaning}</p>
-                        <button onClick={(e) => { e.stopPropagation(); setMovingId(movingId === item.wordId ? null : item.wordId); }} className="p-2 bg-gray-50 rounded-full">
-                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeWidth="3" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                      
+                      <div className="flex items-center gap-3">
+                        <p className="text-xs font-semibold text-[#41ffd1] truncate max-w-[80px] text-right">{item.meaning}</p>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setMovingId(movingId === item.wordId ? null : item.wordId); }} 
+                          className="p-2 bg-[#1a2538] hover:bg-gray-700 text-gray-400 rounded-lg transition-colors border border-gray-700"
+                        >
+                          <ArrowRightLeft size={14} />
                         </button>
                       </div>
                     </div>
+
+                    {/* Move Category Overlay */}
                     {movingId === item.wordId && (
-                      <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-[2.5rem] z-10 flex flex-wrap items-center justify-center gap-2 p-4 animate-in fade-in zoom-in duration-200">
-                         {categories.map(cat => (
-                           <button key={cat} onClick={() => handleMoveWord(item, cat)} className={`px-3 py-2 text-[8px] font-black rounded-xl uppercase ${filter.toLowerCase() === cat.toLowerCase() ? 'hidden' : 'bg-black text-white'}`}>{cat}</button>
-                         ))}
-                         <button onClick={() => setMovingId(null)} className="absolute top-4 right-6 text-gray-300 font-black text-[10px]">X</button>
+                      <div className="absolute inset-0 bg-[#121c2d]/95 backdrop-blur-md rounded-2xl border border-blue-900/50 z-10 flex items-center justify-center p-3 animate-fade-in shadow-xl">
+                        <div className="flex gap-2 flex-wrap justify-center w-full pr-8">
+                           {categories.map(cat => (
+                             <button 
+                               key={cat} 
+                               onClick={() => handleMoveWord(item, cat)} 
+                               className={`px-3 py-1.5 text-[9px] font-bold rounded-lg uppercase tracking-wider transition-colors
+                                 ${filter.toLowerCase() === cat.toLowerCase() ? 'hidden' : 'bg-[#1a2538] text-gray-300 border border-gray-700 hover:border-[#41ffd1]/50'}`}
+                             >
+                               {cat}
+                             </button>
+                           ))}
+                        </div>
+                        <button 
+                          onClick={() => setMovingId(null)} 
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-white bg-[#0b101a] rounded-lg border border-gray-800"
+                        >
+                          <X size={14} />
+                        </button>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-16 flex flex-col items-center"><p className="text-gray-400 font-black text-[10px] uppercase tracking-widest italic">Vault Empty</p></div>
+              <div className="py-16 bg-[#121c2d] border border-gray-800 rounded-2xl flex flex-col items-center justify-center gap-2">
+                <FolderOpen size={24} className="text-gray-600 mb-1" />
+                <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.1em]">Category is Empty</p>
+              </div>
             )}
           </div>
         </>
       )}
 
+      {/* Add Category Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-          <div className="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl">
-            <h3 className="text-xl font-black italic uppercase mb-4 tracking-tighter">New Collection</h3>
-            <input autoFocus className="w-full p-4 bg-gray-100 rounded-2xl mb-4 font-black uppercase text-[10px] outline-none" value={newCat} onChange={(e) => setNewCat(e.target.value)} placeholder="e.g. SLANGS..." />
-            <div className="flex gap-2">
-              <button onClick={() => setShowAddModal(false)} className="flex-1 py-3 text-[10px] font-black uppercase text-gray-400">Cancel</button>
-              <button onClick={handleAddCategory} className="flex-1 py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase shadow-lg">Create</button>
+        <div className="fixed inset-0 bg-[#0b101a]/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-[#121c2d] w-full max-w-xs rounded-3xl p-6 border border-blue-900/50 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+               <Plus size={18} className="text-[#41ffd1]" /> New Collection
+            </h3>
+            <input 
+              autoFocus 
+              className="w-full p-4 bg-[#0b101a] text-white border border-gray-800 rounded-xl mb-6 font-bold text-sm outline-none focus:border-[#41ffd1]/50 focus:ring-1 focus:ring-[#41ffd1]/20 transition-all placeholder-gray-600" 
+              value={newCat} 
+              onChange={(e) => setNewCat(e.target.value)} 
+              placeholder="e.g. Slangs, Exams..." 
+            />
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowAddModal(false)} 
+                className="flex-1 py-3 text-xs font-bold bg-[#1a2538] text-gray-400 rounded-xl hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddCategory} 
+                className="flex-1 py-3 bg-[#41ffd1] hover:bg-[#34e5b9] text-black rounded-xl text-xs font-bold tracking-wide shadow-lg transition-all"
+              >
+                Create
+              </button>
             </div>
           </div>
         </div>
       )}
-      <p className="mt-20 text-gray-300 text-[8px] font-black uppercase tracking-[0.4em] opacity-50">Dameeto Engine v3.0 • Hybrid SRS</p>
+      
+      <p className="mt-16 text-gray-600 text-[9px] font-bold uppercase tracking-[0.2em] opacity-50 flex items-center gap-2">
+        Dameeto Node <span className="w-1 h-1 bg-gray-600 rounded-full"></span> Hybrid SRS
+      </p>
     </div>
   );
 }

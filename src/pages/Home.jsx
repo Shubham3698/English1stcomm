@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { 
+  Search, 
+  History, 
+  Volume2, 
+  RefreshCw, 
+  Sparkles, 
+  Image as ImageIcon, 
+  Upload, 
+  ChevronDown 
+} from "lucide-react";
 
 export default function VocabPage() {
   const [word, setWord] = useState("");
@@ -70,7 +80,6 @@ export default function VocabPage() {
     }
   }, [userEmail]);
 
-  // 🔥 UPDATED: Generate Image logic with Custom Prompt support
   const handleGenerateImage = async (actionType = "normal", wordToGenerate, customPrompt = "") => {
     if (!wordToGenerate || !userEmail) return;
     
@@ -90,7 +99,7 @@ export default function VocabPage() {
             phrase: wordToGenerate, 
             actionType, 
             userId: userEmail,
-            customPrompt // User ka idea backend tak bhej rahe hain
+            customPrompt
         }),
       });
 
@@ -99,7 +108,7 @@ export default function VocabPage() {
       if (response.ok && data.imageUrl) {
         setImageSrc(data.imageUrl);
         fetchHistoryFromDB(); 
-        setIsImageExpanded(true); // Image bante hi automatically open ho jayegi
+        setIsImageExpanded(true); 
       } else {
         toast.error("Visual generation failed behind the scenes");
       }
@@ -111,7 +120,6 @@ export default function VocabPage() {
     }
   };
 
-  // Custom Image replace handle karne ke liye
   const handleCustomImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !userEmail || !activeWord) return;
@@ -131,15 +139,15 @@ export default function VocabPage() {
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
-        toast.success("Image successfully replace ho gayi! 🎉");
+        toast.success("Image successfully replaced! 🎉");
         setImageSrc(data.imageUrl); 
         fetchHistoryFromDB(); 
       } else {
-        toast.error(data.error || "Custom image upload fail ho gaya.");
+        toast.error(data.error || "Custom image upload failed.");
       }
     } catch (err) {
       console.error("Custom Image Upload error:", err);
-      toast.error("Upload karte waqt error aa gaya!");
+      toast.error("Upload error!");
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = ""; 
@@ -148,8 +156,8 @@ export default function VocabPage() {
 
   const handleSearchWord = async (wordToSearch = word, isAlternative = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
-    if (!searchTarget) return toast.error("Pehle word likho ✍️");
-    if (!userEmail || userEmail === "guest_user@gmail.com") return toast.error("Bhai pehle Login karo! 🚫");
+    if (!searchTarget) return toast.error("Please enter a word first ✍️");
+    if (!userEmail || userEmail === "guest_user@gmail.com") return toast.error("Please login first! 🚫");
 
     setLoading(true);
     setShowHistory(false);
@@ -172,7 +180,7 @@ export default function VocabPage() {
         setAntonyms(resData.data.antonyms);
         setSentences(resData.data.sentences);
 
-        if (isAlternative) toast.success("Nayi meaning generated! 🔄");
+        if (isAlternative) toast.success("New context generated! 🔄");
         else toast.success("Word analyzed 🚀");
 
         handlePronounce(resData.data.word);
@@ -187,10 +195,10 @@ export default function VocabPage() {
         }
 
       } else {
-        toast.error(resData.message || "Server ne data push nahi kiya!");
+        toast.error(resData.message || "Server did not return data!");
       }
     } catch (err) {
-      toast.error("Backend connect nahi ho raha!");
+      toast.error("Failed to connect to backend!");
     } finally {
       setLoading(false);
     }
@@ -218,67 +226,83 @@ export default function VocabPage() {
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
 
   return (
-    <div className="min-h-screen bg-[#050507] text-slate-100 flex flex-col items-center p-4 py-10">
-      <Toaster position="top-center" />
+    // Background matches the reference image deep navy
+    <div className="min-h-screen bg-[#0b101a] text-white flex flex-col items-center p-4 py-8 font-sans">
+      <Toaster 
+        position="top-center" 
+        toastOptions={{
+          style: {
+            background: '#121c2d',
+            color: '#fff',
+            border: '1px solid #1e293b'
+          }
+        }}
+      />
 
-      {/* DASHBOARD USER PROFILE SUMMARY STRIP */}
-      <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/5 rounded-2xl p-4 mb-4 flex items-center justify-between shadow-lg">
-        <div className="flex flex-col min-w-0 flex-1 pr-4">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Logged In As</span>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-cyan-400 font-mono font-medium truncate">
-              {userEmail === "guest_user@gmail.com" ? "Guest Mode (Not Logged In)" : userEmail}
-            </span>
+      {/* TOP STATUS BAR - Styled like progress card */}
+      <div className="w-full max-w-2xl bg-[#121c2d] rounded-2xl p-4 mb-6 flex items-center justify-between border border-blue-900/50 shadow-lg">
+        <div className="flex items-center space-x-4">
+          <div className="bg-blue-900/50 p-2.5 rounded-full text-blue-400">
+            <History size={20} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-white text-sm">Dameeto Profile</h3>
+            <p className="text-gray-400 text-xs truncate max-w-[150px] sm:max-w-xs">
+              {userEmail === "guest_user@gmail.com" ? "Guest Mode" : userEmail}
+            </p>
           </div>
         </div>
-        
-        <div className="flex gap-4 items-center flex-shrink-0">
-          <div className="text-right">
-            <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Total Queries</span>
-            <span className="text-sm font-black text-white">{history.length}</span>
+        <div className="flex gap-4 text-right">
+          <div>
+            <span className="text-[10px] text-gray-500 font-bold uppercase block">Queries</span>
+            <span className="text-sm font-bold text-white">{history.length}</span>
           </div>
-          <div className="text-right border-l border-white/10 pl-4">
-            <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-tight">Unique Words</span>
-            <span className="text-sm font-black text-emerald-400">{totalUniqueWords}</span>
+          <div className="border-l border-gray-700 pl-4">
+            <span className="text-[10px] text-gray-500 font-bold uppercase block">Unique</span>
+            <span className="text-sm font-bold text-[#41ffd1]">{totalUniqueWords}</span>
           </div>
         </div>
       </div>
 
-      {/* Header Utilities */}
-      <div className="w-full max-w-xl flex justify-between items-center mb-4">
-        <button
-          onClick={() => setShowHistory(!showHistory)}
-          className="bg-[#0b0b0e] border border-white/10 px-4 py-2 rounded-xl text-[11px] font-black tracking-wider uppercase text-slate-300 transition-all hover:bg-white/5"
-        >
-          {showHistory ? "Close History ✕" : "View Complete Stack"}
-        </button>
-        <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Cloud Connected</span>
-      </div>
-
-      <div className="w-full max-w-xl bg-[#0b0b0e] border border-white/[0.05] rounded-[2.5rem] p-6 space-y-6 shadow-2xl">
-        
-        {/* History Panel */}
-        {showHistory && (
-          <div className="space-y-2">
-            <div className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1 px-1">
-              Your Personal Search History ({history.length} logs):
+      <div className="w-full max-w-2xl w-full">
+        {/* BRANDING HEADER */}
+        <div className="px-2 mb-6 flex justify-between items-end">
+          <div>
+            <div className="flex items-center space-x-2 mb-1">
+              <span className="text-yellow-500 text-[10px] border border-yellow-500 px-1.5 py-0.5 rounded font-bold tracking-wider">
+                PREMIUM NODE
+              </span>
             </div>
+            <h1 className="text-2xl font-bold text-white tracking-wide">Vocab Mastery</h1>
+            <p className="text-gray-400 text-xs mt-1">AI-Driven Structural Lexicon</p>
+          </div>
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors bg-[#121c2d] px-3 py-1.5 rounded-lg border border-gray-800"
+          >
+            {showHistory ? "Close Stack" : "View Stack"}
+            <ChevronDown size={14} className={`transform transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {/* HISTORY DROPDOWN PANEL */}
+        {showHistory && (
+          <div className="bg-[#121c2d] border border-blue-900/50 rounded-2xl p-4 mb-6 shadow-xl animate-fade-in">
+            <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Your Word Arsenal</h4>
             {history.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-600 uppercase font-bold bg-black/20 rounded-2xl border border-white/5">
-                No history data linked to {userEmail} yet 🔍
-              </div>
+              <p className="text-center text-sm text-gray-500 py-4">No words discovered yet.</p>
             ) : (
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-black/30 rounded-2xl border border-white/5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {history.map((item) => (
                   <button
                     key={item._id}
                     onClick={() => loadFromHistoryCard(item)}
-                    className="bg-black/40 border border-white/[0.05] hover:border-cyan-500/30 rounded-xl p-3 text-left transition-all"
+                    className="bg-[#0b101a] border border-gray-800 hover:border-[#41ffd1]/50 rounded-xl p-3 text-left transition-all group"
                   >
-                    <div className="text-cyan-400 text-[11px] uppercase font-black truncate">
+                    <div className="text-white text-sm font-bold truncate group-hover:text-[#41ffd1]">
                       {item.word} {item.imageUrl && "🖼️"}
                     </div>
-                    <div className="text-[9px] text-slate-500 truncate mt-0.5">
+                    <div className="text-[10px] text-gray-500 truncate mt-1">
                       {item.meaning}
                     </div>
                   </button>
@@ -288,198 +312,200 @@ export default function VocabPage() {
           </div>
         )}
 
-        {/* Title branding */}
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl font-black italic uppercase bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent tracking-wide">
-            🤖 Dameeto Vocab Node
-          </h2>
-          <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">
-            AI-Driven Structural Lexicon & Vision
-          </p>
-        </div>
-
-        {/* Action input strip */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="TYPE ANY WORD..."
-            value={word}
-            onChange={(e) => setWord(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearchWord()}
-            className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-5 py-4 outline-none text-white font-medium placeholder-slate-600 focus:border-cyan-500/50 transition-all text-sm tracking-wide"
-          />
+        {/* SEARCH BAR - Sleek & Modern */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+            <input
+              type="text"
+              placeholder="Enter a word to analyze..."
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchWord()}
+              className="w-full bg-[#121c2d] border border-gray-800 rounded-2xl pl-12 pr-4 py-4 outline-none text-white font-medium placeholder-gray-500 focus:border-[#41ffd1]/50 transition-all text-sm"
+            />
+          </div>
           <button
             onClick={() => handleSearchWord()}
             disabled={loading}
-            className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:opacity-90 active:scale-95 px-7 py-4 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all shadow-lg shadow-cyan-950/20"
+            className="bg-[#41ffd1] hover:bg-[#34e5b9] text-black px-8 py-4 rounded-2xl text-sm font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(65,255,209,0.2)] disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
           >
-            {loading ? "Analyzing..." : "⚡ Analyze"}
+            {loading ? "Analyzing..." : "Analyze"}
           </button>
         </div>
 
-        {/* --- CONVERSATIONAL CHAT UI REPLACEMENT --- */}
+        {/* RESULT CARD - Chat/Content Hybrid */}
         {activeWord && (
-          <div className="border-t border-white/5 pt-6 space-y-4">
-            
-            <div className="flex flex-col items-end space-y-1 pl-12">
-              <div className="bg-gradient-to-br from-cyan-600 to-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-xs font-semibold leading-relaxed shadow-md">
-                Mujhe <span className="underline uppercase font-black text-yellow-300">{activeWord}</span> ka exact Hindi meaning, simple setup explanation aur practical examples ke sath samjhao! 🙌
+          <div className="space-y-4 animate-fade-in">
+            {/* User Query Bubble */}
+            <div className="flex justify-end pr-2">
+              <div className="bg-[#1a2538] border border-gray-700 text-gray-200 rounded-2xl rounded-tr-sm px-4 py-3 text-xs leading-relaxed max-w-[85%] shadow-md">
+                Explain the exact Hindi meaning, context, and examples for <span className="font-bold text-[#41ffd1] uppercase">{activeWord}</span>.
               </div>
-              <span className="text-[9px] uppercase font-bold text-slate-600 mr-1">You</span>
             </div>
 
-            <div className="flex flex-col items-start space-y-1 pr-8">
-              <div className="w-full bg-black/40 border border-white/[0.05] rounded-2xl rounded-tl-sm p-5 space-y-5 shadow-inner">
-                
-                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                  <div>
-                    <h3 className="text-xl font-black italic uppercase text-cyan-400 tracking-wide flex items-center gap-2">
-                      {activeWord}
-                      <span className="bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded text-[9px] text-indigo-300 font-black normal-case">
-                        {partOfSpeech}
-                      </span>
-                    </h3>
+            {/* AI Response Card */}
+            <div className="bg-[#121c2d] border border-blue-900/40 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+              {/* Decorative top border glow */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-[#41ffd1] to-blue-600 opacity-50"></div>
+
+              {/* Word Header */}
+              <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-white capitalize">{activeWord}</h2>
+                    <span className="bg-blue-900/40 border border-blue-800 text-blue-300 text-[10px] px-2 py-1 rounded-md font-semibold uppercase tracking-wider">
+                      {partOfSpeech}
+                    </span>
                   </div>
-                  <button
-                    onClick={() => handlePronounce(activeWord)}
-                    className="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 px-3 py-1.5 rounded-xl text-cyan-400 text-[11px] font-bold transition-all flex items-center gap-1"
-                  >
-                    🔊 Listen
-                  </button>
+                </div>
+                <button
+                  onClick={() => handlePronounce(activeWord)}
+                  className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl text-gray-300 transition-all border border-gray-700"
+                  title="Listen to pronunciation"
+                >
+                  <Volume2 size={18} />
+                </button>
+              </div>
+
+              {/* Content Grid */}
+              <div className="space-y-5 text-sm">
+                {/* Meaning & Explanation */}
+                <div className="space-y-3">
+                  <div className="bg-[#0b101a] rounded-xl p-4 border border-gray-800">
+                    <span className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1 block">Meaning</span>
+                    <p className="text-[#41ffd1] font-semibold text-lg">{meaning}</p>
+                  </div>
+                  
+                  <div className="pl-4 border-l-2 border-gray-700">
+                    <p className="text-gray-300 leading-relaxed text-sm italic">{explanation}</p>
+                  </div>
                 </div>
 
-                <div className="space-y-4 text-[13px] leading-relaxed">
-                  <div>
-                    <p className="text-slate-400 font-medium">
-                      👉 <span className="text-emerald-400 font-bold">Hindi Meaning:</span> Iska seedha matlab hota hai — <span className="text-emerald-300 font-extrabold text-base">{meaning}</span>.
-                    </p>
+                {/* Examples */}
+                <div>
+                  <span className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2 block flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-yellow-500" /> Examples
+                  </span>
+                  <div className="bg-[#1a2538] rounded-xl p-4 border border-gray-800 text-gray-200 whitespace-pre-line font-mono text-xs leading-loose">
+                    {sentences}
                   </div>
+                </div>
 
-                  <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
-                    <p className="text-amber-400 font-black text-[10px] uppercase tracking-wider mb-1">💡 Simple Explanation:</p>
-                    <p className="text-slate-300 italic">{explanation}</p>
+                {/* Synonyms & Antonyms */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <div className="bg-[#0b101a] border border-gray-800 rounded-xl p-3.5">
+                    <span className="text-gray-500 font-bold text-[10px] uppercase block mb-1">Similar Words</span>
+                    <span className="text-gray-200 font-medium">{synonyms || "N/A"}</span>
                   </div>
-
-                  <div>
-                    <p className="text-cyan-400 font-black text-[10px] uppercase tracking-wider mb-1">📝 Practical Sentences:</p>
-                    <div className="text-slate-300 whitespace-pre-line pl-2 border-l-2 border-cyan-500/30 space-y-1 font-mono text-xs">
-                      {sentences}
-                    </div>
+                  <div className="bg-[#0b101a] border border-gray-800 rounded-xl p-3.5">
+                    <span className="text-gray-500 font-bold text-[10px] uppercase block mb-1">Opposite Words</span>
+                    <span className="text-gray-200 font-medium">{antonyms || "N/A"}</span>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-[12px]">
-                    <div className="bg-indigo-500/[0.03] border border-indigo-500/10 rounded-xl p-3">
-                      <span className="text-indigo-400 font-black text-[9px] uppercase block mb-1">✨ Similar Words</span>
-                      <span className="text-slate-300 font-medium">{synonyms || "N/A"}</span>
-                    </div>
-                    <div className="bg-rose-500/[0.03] border border-rose-500/10 rounded-xl p-3">
-                      <span className="text-rose-400 font-black text-[9px] uppercase block mb-1">⚡ Opposite Words</span>
-                      <span className="text-slate-300 font-medium">{antonyms || "N/A"}</span>
-                    </div>
+                {/* VISUAL EXPRESSION */}
+                <div className="pt-6 mt-4 border-t border-gray-800">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-gray-400 text-xs uppercase font-bold tracking-wider flex items-center gap-1.5">
+                      <ImageIcon size={14} className="text-fuchsia-400" /> Visual Context
+                    </span>
                   </div>
-
-                  {/* VISUAL EXPRESSION */}
-                  <div className="pt-4 border-t border-white/5">
-                    <p className="text-fuchsia-400 font-black text-[10px] uppercase tracking-wider mb-3">🎨 AI Visual Expression:</p>
+                  
+                  <div className={`w-full rounded-2xl bg-[#0b101a] border border-gray-800 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10' : ''}`}>
                     
-                    <div className={`w-full rounded-xl bg-black/50 border border-white/10 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-8' : ''}`}>
-                      
-                      {isImageLoading || isUploading ? (
-                        <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-black/60 backdrop-blur-sm z-10 min-h-[200px]">
-                          <div className="w-6 h-6 border-2 border-fuchsia-500 border-t-transparent rounded-full animate-spin"></div>
-                          <p className="text-slate-400 text-[10px] uppercase tracking-widest animate-pulse">
-                            {isUploading ? 'Uploading Custom Visual...' : 
-                             imageAction === 'refine' ? 'Crafting Your Scene...' : 
-                             imageAction === 'regenerate' ? 'New Perspective...' : 
-                             'Generating AI Concept...'}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {/* Step 1: Image Ready but hidden */}
-                      {imageSrc && !isImageExpanded && !isImageLoading && !isUploading ? (
-                        <div className="flex flex-col items-center text-center px-4 animate-fade-in">
-                          <span className="text-3xl mb-2">🎁</span>
-                          <h3 className="text-sm font-bold text-white mb-1">Visual Ready!</h3>
-                          <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-4">Click below to reveal "{activeWord}"</p>
-                          <button 
-                            onClick={() => setIsImageExpanded(true)}
-                            className="px-6 py-2 bg-gradient-to-r from-fuchsia-600 to-indigo-600 hover:opacity-90 text-white text-[11px] font-black uppercase rounded-lg transition-all shadow-[0_0_15px_rgba(192,38,211,0.3)] hover:scale-105"
-                          >
-                            Reveal Visual
-                          </button>
-                        </div>
-                      ) : null}
-
-                      {/* Step 2: Expanded Image */}
-                      {imageSrc && isImageExpanded ? (
-                        <img 
-                          src={imageSrc} 
-                          alt={activeWord} 
-                          className="w-full h-auto max-h-[500px] object-contain transition-opacity duration-700 bg-black/20"
-                        />
-                      ) : null}
-                    </div>
-
-                    {imageSrc && isImageExpanded && (
-                      <div className="flex gap-2 mt-3 justify-center animate-fade-in flex-wrap">
-                        <button
-                          onClick={() => handleGenerateImage('regenerate', activeWord)}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 py-2 px-3 bg-white/5 hover:bg-white/10 text-slate-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-white/10 flex justify-center items-center gap-1.5 uppercase"
-                        >
-                          <span>🔄</span> Regenerate
-                        </button>
-                        
-                        {/* 🔥 UPDATED: Refine With Idea Popup Button */}
-                        <button
-                          onClick={() => {
-                            const userIdea = window.prompt("Apna scene idea likho (Jaise: 'A dark room with a single glowing computer screen'):");
-                            if (userIdea !== null && userIdea.trim() !== "") {
-                              handleGenerateImage('refine', activeWord, userIdea);
-                            }
-                          }}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 py-2 px-3 bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-fuchsia-500/20 flex justify-center items-center gap-1.5 uppercase"
-                        >
-                          <span>✨</span> Refine Idea
-                        </button>
-
-                        <button
-                          onClick={() => fileInputRef.current.click()}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 py-2 px-3 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[10px] font-bold rounded-lg disabled:opacity-50 transition-all border border-emerald-500/20 flex justify-center items-center gap-1.5 uppercase"
-                        >
-                          <span>📂</span> {isUploading ? "Uploading..." : "Replace"}
-                        </button>
-
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          ref={fileInputRef} 
-                          onChange={handleCustomImageUpload} 
-                          className="hidden" 
-                        />
+                    {(isImageLoading || isUploading) && (
+                      <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-[#0b101a]/80 backdrop-blur-sm z-10 min-h-[150px]">
+                        <div className="w-6 h-6 border-2 border-[#41ffd1] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-gray-400 text-[10px] uppercase tracking-widest animate-pulse">
+                          {isUploading ? 'Uploading Image...' : 'Rendering Visual...'}
+                        </p>
                       </div>
+                    )}
+
+                    {/* Step 1: Image Ready but hidden */}
+                    {imageSrc && !isImageExpanded && !isImageLoading && !isUploading && (
+                      <div className="flex flex-col items-center text-center px-4 animate-fade-in">
+                        <div className="bg-blue-900/30 p-3 rounded-full mb-3 text-blue-400">
+                          <ImageIcon size={24} />
+                        </div>
+                        <h3 className="text-sm font-bold text-white mb-1">Visual Concept Ready</h3>
+                        <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-4">Tap to reveal visualization for "{activeWord}"</p>
+                        <button 
+                          onClick={() => setIsImageExpanded(true)}
+                          className="px-6 py-2 bg-[#1a2538] hover:bg-gray-700 text-white border border-gray-600 text-xs font-bold rounded-lg transition-all"
+                        >
+                          Reveal Image
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step 2: Expanded Image */}
+                    {imageSrc && isImageExpanded && (
+                      <img 
+                        src={imageSrc} 
+                        alt={activeWord} 
+                        className="w-full h-auto max-h-[400px] object-cover transition-opacity duration-700"
+                      />
                     )}
                   </div>
 
-                </div>
+                  {/* Image Action Buttons */}
+                  {imageSrc && isImageExpanded && (
+                    <div className="flex gap-2 mt-3 justify-center animate-fade-in">
+                      <button
+                        onClick={() => handleGenerateImage('regenerate', activeWord)}
+                        disabled={isImageLoading || isUploading}
+                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                      >
+                        <RefreshCw size={12} /> Regenerate
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          const userIdea = window.prompt("Custom visual prompt (e.g., 'A modern neon city'):");
+                          if (userIdea !== null && userIdea.trim() !== "") {
+                            handleGenerateImage('refine', activeWord, userIdea);
+                          }
+                        }}
+                        disabled={isImageLoading || isUploading}
+                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                      >
+                        <Sparkles size={12} /> Custom Prompt
+                      </button>
 
-                <div className="flex justify-end border-t border-white/5 pt-3">
-                  <button
-                    onClick={() => handleSearchWord(activeWord, true)}
-                    disabled={loading}
-                    className="text-[9px] bg-white/5 border border-white/10 hover:bg-white/10 text-slate-400 px-3 py-1.5 rounded-lg font-black transition-all uppercase tracking-wider"
-                  >
-                    {loading ? "Regenerating Text..." : "🔄 Change Context / New Meaning"}
-                  </button>
-                </div>
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        disabled={isImageLoading || isUploading}
+                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                      >
+                        <Upload size={12} /> Upload
+                      </button>
 
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        ref={fileInputRef} 
+                        onChange={handleCustomImageUpload} 
+                        className="hidden" 
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="text-[9px] uppercase font-bold text-emerald-500 ml-1">Dameeto Node Bot</span>
-            </div>
 
+              {/* Bottom Actions */}
+              <div className="flex justify-end border-t border-gray-800 mt-6 pt-4">
+                <button
+                  onClick={() => handleSearchWord(activeWord, true)}
+                  disabled={loading}
+                  className="text-[10px] text-gray-400 hover:text-white flex items-center gap-1.5 font-bold transition-all uppercase tracking-wider"
+                >
+                  <RefreshCw size={12} /> Alternative Context
+                </button>
+              </div>
+
+            </div>
           </div>
         )}
       </div>

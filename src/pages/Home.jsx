@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { 
   Search, 
@@ -8,10 +9,13 @@ import {
   Sparkles, 
   Image as ImageIcon, 
   Upload, 
-  ChevronDown 
+  ChevronDown,
+  Compass,
+  Swords
 } from "lucide-react";
 
 export default function VocabPage() {
+  const navigate = useNavigate();
   const [word, setWord] = useState("");
   const [meaning, setMeaning] = useState("");
   const [sentences, setSentences] = useState("");
@@ -24,6 +28,9 @@ export default function VocabPage() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  
+  // UX State for context badge
+  const [contextBadge, setContextBadge] = useState("Active Target");
 
   // --- IMAGE STATES ---
   const [imageSrc, setImageSrc] = useState(null);
@@ -31,11 +38,54 @@ export default function VocabPage() {
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
 
-  // Custom Image Upload Ke Liye
+  // Custom Image Upload
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const [userEmail, setUserEmail] = useState("");
+  const isInitialized = useRef(false);
+
+  // 🔥 PLACEHOLDER TYPING ANIMATION STATES
+  const [placeholderText, setPlaceholderText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const typingSpeed = isDeleting ? 60 : 120;
+  
+  const classicWords = [
+  "Strategy...", 
+  "Objective...", 
+  "Efficiency...", 
+  "Collaboration...", 
+  "Innovation...", 
+  "Optimization...", 
+  "Productivity...", 
+  "Leadership...", 
+  "Execution...", 
+  "Development..."
+];
+
+  useEffect(() => {
+    let timer = setTimeout(() => {
+      const i = loopNum % classicWords.length;
+      const fullText = classicWords[i];
+
+      setPlaceholderText(
+        isDeleting
+          ? fullText.substring(0, placeholderText.length - 1)
+          : fullText.substring(0, placeholderText.length + 1)
+      );
+
+      if (!isDeleting && placeholderText === fullText) {
+        setTimeout(() => setIsDeleting(true), 1500); // Pause when word completes
+      } else if (isDeleting && placeholderText === "") {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timer);
+  }, [placeholderText, isDeleting, loopNum]);
+
 
   const API_URL =
     window.location.hostname === "localhost"
@@ -61,13 +111,24 @@ export default function VocabPage() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const fetchHistoryFromDB = async () => {
+  const fetchHistoryFromDB = async (isFirstLoad = false) => {
     if (!userEmail) return;
     try {
       const response = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
       const resData = await response.json();
       if (response.ok && resData.success) {
-        setHistory(resData.data);
+        const fetchedHistory = resData.data;
+        setHistory(fetchedHistory);
+
+        if (isFirstLoad) {
+          if (fetchedHistory.length > 0) {
+            loadFromHistoryCard(fetchedHistory[0], true);
+            setContextBadge("Latest Resumed Target");
+          } else {
+            handleSearchWord("dog", false, true);
+            setContextBadge("Default Example Target");
+          }
+        }
       }
     } catch (err) {
       console.error("History fetch error:", err);
@@ -76,7 +137,7 @@ export default function VocabPage() {
 
   useEffect(() => {
     if (userEmail) {
-      fetchHistoryFromDB();
+      fetchHistoryFromDB(true);
     }
   }, [userEmail]);
 
@@ -154,13 +215,16 @@ export default function VocabPage() {
     }
   };
 
-  const handleSearchWord = async (wordToSearch = word, isAlternative = false) => {
+  const handleSearchWord = async (wordToSearch = word, isAlternative = false, isSilent = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
-    if (!searchTarget) return toast.error("Please enter a word first ✍️");
-    if (!userEmail || userEmail === "guest_user@gmail.com") return toast.error("Please login first! 🚫");
+    if (!searchTarget && !isSilent) return toast.error("Please enter a word first ✍️");
+    if (!userEmail || userEmail === "guest_user@gmail.com") {
+        if (!isSilent) return toast.error("Please login first! 🚫");
+    }
 
     setLoading(true);
     setShowHistory(false);
+    if (!isSilent) setContextBadge("Analyzed Target");
 
     try {
       const response = await fetch(`${API_URL}/api/words/define`, {
@@ -180,12 +244,14 @@ export default function VocabPage() {
         setAntonyms(resData.data.antonyms);
         setSentences(resData.data.sentences);
 
-        if (isAlternative) toast.success("New context generated! 🔄");
-        else toast.success("Word analyzed 🚀");
-
-        handlePronounce(resData.data.word);
+        if (!isSilent) {
+          if (isAlternative) toast.success("New context generated! 🔄");
+          else toast.success("Word analyzed 🚀");
+          handlePronounce(resData.data.word);
+        }
+        
         setWord("");
-        fetchHistoryFromDB(); 
+        fetchHistoryFromDB();
 
         if (resData.data.imageUrl) {
             setImageSrc(resData.data.imageUrl);
@@ -195,16 +261,16 @@ export default function VocabPage() {
         }
 
       } else {
-        toast.error(resData.message || "Server did not return data!");
+        if (!isSilent) toast.error(resData.message || "Server did not return data!");
       }
     } catch (err) {
-      toast.error("Failed to connect to backend!");
+      if (!isSilent) toast.error("Failed to connect to backend!");
     } finally {
       setLoading(false);
     }
   };
 
-  const loadFromHistoryCard = (item) => {
+  const loadFromHistoryCard = (item, isSilent = false) => {
     setActiveWord(item.word);
     setPartOfSpeech(item.partOfSpeech || "Vocabulary");
     setMeaning(item.meaning);
@@ -213,7 +279,11 @@ export default function VocabPage() {
     setAntonyms(item.antonyms);
     setSentences(item.sentences);
     setShowHistory(false);
-    handlePronounce(item.word);
+    
+    if (!isSilent) {
+      setContextBadge("Historical Target");
+      handlePronounce(item.word);
+    }
     
     if (item.imageUrl) {
         setImageSrc(item.imageUrl);
@@ -226,239 +296,272 @@ export default function VocabPage() {
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
 
   return (
-    // Background matches the reference image deep navy
-    <div className="min-h-screen bg-[#0b101a] text-white flex flex-col items-center p-4 py-8 font-sans">
+    <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-sans transition-colors duration-500 pb-28 overflow-x-hidden w-full">
       <Toaster 
         position="top-center" 
         toastOptions={{
           style: {
-            background: '#121c2d',
-            color: '#fff',
-            border: '1px solid #1e293b'
+            background: '#8B004A',
+            color: '#F2EFE7',
+            border: 'none',
+            fontWeight: 'bold'
           }
         }}
       />
 
-      {/* TOP STATUS BAR - Styled like progress card */}
-      <div className="w-full max-w-2xl bg-[#121c2d] rounded-2xl p-4 mb-6 flex items-center justify-between border border-blue-900/50 shadow-lg">
-        <div className="flex items-center space-x-4">
-          <div className="bg-blue-900/50 p-2.5 rounded-full text-blue-400">
-            <History size={20} />
+      {/* TOP STATUS BAR */}
+      <div className="w-full max-w-2xl bg-white rounded-[2rem] p-4 sm:p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-[3px] border-[#8B004A]/10 shadow-xl shadow-[#8B004A]/5">
+        <div className="flex items-center space-x-4 w-full sm:w-auto">
+          <div className="bg-[#8B004A]/10 p-3 rounded-2xl text-[#8B004A] flex-shrink-0">
+            <History size={24} strokeWidth={2.5} />
           </div>
-          <div>
-            <h3 className="font-semibold text-white text-sm">Dameeto Profile</h3>
-            <p className="text-gray-400 text-xs truncate max-w-[150px] sm:max-w-xs">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-black text-gray-900 text-sm tracking-wide truncate">Dameeto Profile</h3>
+            <p className="text-gray-500 font-bold text-xs truncate uppercase tracking-widest mt-0.5">
               {userEmail === "guest_user@gmail.com" ? "Guest Mode" : userEmail}
             </p>
           </div>
         </div>
-        <div className="flex gap-4 text-right">
+        <div className="flex gap-4 sm:gap-5 text-right bg-[#F2EFE7] px-4 sm:px-5 py-3 rounded-2xl border border-gray-200 w-full sm:w-auto justify-between sm:justify-end">
           <div>
-            <span className="text-[10px] text-gray-500 font-bold uppercase block">Queries</span>
-            <span className="text-sm font-bold text-white">{history.length}</span>
+            <span className="text-[9px] text-gray-400 font-black uppercase block tracking-[0.2em]">Queries</span>
+            <span className="text-base font-black text-gray-800">{history.length}</span>
           </div>
-          <div className="border-l border-gray-700 pl-4">
-            <span className="text-[10px] text-gray-500 font-bold uppercase block">Unique</span>
-            <span className="text-sm font-bold text-[#41ffd1]">{totalUniqueWords}</span>
+          <div className="border-l-2 border-gray-300 pl-4 sm:pl-5">
+            <span className="text-[9px] text-gray-400 font-black uppercase block tracking-[0.2em]">Unique</span>
+            <span className="text-base font-black text-[#E01A76]">{totalUniqueWords}</span>
           </div>
         </div>
       </div>
 
-      <div className="w-full max-w-2xl w-full">
-        {/* BRANDING HEADER */}
-        <div className="px-2 mb-6 flex justify-between items-end">
+      <div className="w-full max-w-2xl">
+        {/* BRANDING HEADER WITH ACTION BUTTONS */}
+        <div className="px-2 mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between sm:items-end gap-5">
           <div>
-            <div className="flex items-center space-x-2 mb-1">
-              <span className="text-yellow-500 text-[10px] border border-yellow-500 px-1.5 py-0.5 rounded font-bold tracking-wider">
-                PREMIUM NODE
+            <div className="flex items-center space-x-2 mb-2">
+              <span className="bg-[#FFB800] text-[#4A0027] text-[10px] px-3 py-1 rounded-md font-black tracking-widest uppercase shadow-sm flex items-center gap-1.5 w-max">
+                <Compass size={12} strokeWidth={3} /> PREMIUM NODE
               </span>
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">Vocab Mastery</h1>
-            <p className="text-gray-400 text-xs mt-1">AI-Driven Structural Lexicon</p>
+            <h1 className="text-3xl sm:text-4xl font-black text-[#8B004A] tracking-wide drop-shadow-sm break-words">Vocab Mastery</h1>
+            <p className="text-gray-500 font-black text-xs mt-1.5 uppercase tracking-[0.2em] opacity-80 break-words">AI-Driven Structural Lexicon</p>
           </div>
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors bg-[#121c2d] px-3 py-1.5 rounded-lg border border-gray-800"
-          >
-            {showHistory ? "Close Stack" : "View Stack"}
-            <ChevronDown size={14} className={`transform transition-transform ${showHistory ? 'rotate-180' : ''}`} />
-          </button>
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => navigate('/find-vocab')}
+              className="flex items-center justify-center gap-2 text-xs font-black text-white hover:text-white bg-[#8B004A] hover:bg-[#E01A76] transition-all px-5 py-3.5 rounded-xl border-2 border-transparent hover:border-[#8B004A] shadow-md active:scale-95 uppercase tracking-widest w-full sm:w-auto"
+            >
+              <Swords size={16} strokeWidth={2.5} className="flex-shrink-0" /> Practice Stack
+            </button>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center justify-center gap-2 text-xs font-black text-[#8B004A] hover:text-white hover:bg-[#8B004A] transition-all bg-white px-5 py-3.5 rounded-xl border-2 border-[#8B004A]/20 shadow-sm active:scale-95 uppercase tracking-widest w-full sm:w-auto"
+            >
+              {showHistory ? "Close Stack" : "View Stack"}
+              <ChevronDown size={16} className={`transform transition-transform duration-500 flex-shrink-0 ${showHistory ? 'rotate-180' : ''}`} strokeWidth={3} />
+            </button>
+          </div>
         </div>
 
         {/* HISTORY DROPDOWN PANEL */}
-        {showHistory && (
-          <div className="bg-[#121c2d] border border-blue-900/50 rounded-2xl p-4 mb-6 shadow-xl animate-fade-in">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase mb-3">Your Word Arsenal</h4>
-            {history.length === 0 ? (
-              <p className="text-center text-sm text-gray-500 py-4">No words discovered yet.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                {history.map((item) => (
-                  <button
-                    key={item._id}
-                    onClick={() => loadFromHistoryCard(item)}
-                    className="bg-[#0b101a] border border-gray-800 hover:border-[#41ffd1]/50 rounded-xl p-3 text-left transition-all group"
-                  >
-                    <div className="text-white text-sm font-bold truncate group-hover:text-[#41ffd1]">
-                      {item.word} {item.imageUrl && "🖼️"}
-                    </div>
-                    <div className="text-[10px] text-gray-500 truncate mt-1">
-                      {item.meaning}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className={`w-full grid transition-all duration-500 ease-in-out ${showHistory ? 'grid-rows-[1fr] opacity-100 mb-8 mt-2' : 'grid-rows-[0fr] opacity-0 mb-0 mt-0'}`}>
+          <div className="overflow-hidden">
+            <div className="bg-white border-[3px] border-[#8B004A]/20 rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#8B004A]/10 relative w-full mt-1">
+              <div className="absolute top-0 left-0 w-full h-1.5 bg-[#8B004A]"></div>
+              <h4 className="text-xs font-black text-gray-400 uppercase mb-4 tracking-[0.2em] break-words">Your Word Arsenal</h4>
+              {history.length === 0 ? (
+                <p className="text-center text-sm font-black text-gray-400 py-6 uppercase tracking-wider">No words discovered yet.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                  {history.map((item) => (
+                    <div
+                      key={item._id}
+                      className="bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 text-left transition-all group shadow-sm hover:shadow-md w-full flex flex-col overflow-hidden"
+                    >
+                      <div 
+                        className="flex-1 cursor-pointer mb-3" 
+                        onClick={() => loadFromHistoryCard(item)}
+                      >
+                        <div className="text-gray-900 text-sm font-black truncate group-hover:text-[#E01A76] tracking-wide w-full">
+                          {item.word} {item.imageUrl && "🖼️"}
+                        </div>
+                        <div className="text-[10px] font-bold text-gray-500 truncate mt-1.5 tracking-wider w-full">
+                          {item.meaning}
+                        </div>
+                      </div>
 
-        {/* SEARCH BAR - Sleek & Modern */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                      <div className="flex items-center gap-2 mt-auto pt-3 border-t-2 border-gray-200">
+                         <button
+                           onClick={(e) => { 
+                             e.stopPropagation(); 
+                             loadFromHistoryCard(item); 
+                           }}
+                           className="flex-1 bg-white hover:bg-[#8B004A] text-[#8B004A] hover:text-white border border-gray-200 hover:border-transparent py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                         >
+                           <Search size={12} strokeWidth={3} /> Analyze
+                         </button>
+                         <button
+                           onClick={(e) => { 
+                             e.stopPropagation(); 
+                             navigate('/find-vocab'); 
+                           }}
+                           className="flex-1 bg-gray-900 hover:bg-[#E01A76] text-white py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                         >
+                           <Swords size={12} strokeWidth={3} /> Practice
+                         </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 🔥 SINGLE LINE SEARCH BAR WITH ANIMATION 🔥 */}
+        <div className="w-full mb-10 group">
+          <div className="relative flex items-center bg-white border-[3px] border-[#8B004A]/20 hover:border-[#8B004A]/40 focus-within:border-[#E01A76] rounded-full p-1.5 sm:p-2 shadow-sm transition-all duration-300 w-full">
+            <Search className="absolute left-6 text-[#8B004A] transition-transform group-focus-within:scale-110 flex-shrink-0" size={22} strokeWidth={2.5} />
             <input
               type="text"
-              placeholder="Enter a word to analyze..."
+              placeholder={`Analyze: ${placeholderText}`}
               value={word}
               onChange={(e) => setWord(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearchWord()}
-              className="w-full bg-[#121c2d] border border-gray-800 rounded-2xl pl-12 pr-4 py-4 outline-none text-white font-medium placeholder-gray-500 focus:border-[#41ffd1]/50 transition-all text-sm"
+              className="flex-1 bg-transparent pl-14 sm:pl-16 pr-4 py-3 sm:py-4 outline-none text-gray-900 font-black placeholder-gray-400 text-sm sm:text-base w-full"
             />
+            <button
+              onClick={() => handleSearchWord()}
+              disabled={loading}
+              className="bg-[#8B004A] hover:bg-[#6a0038] text-white px-6 sm:px-10 py-3 sm:py-4 rounded-full text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-[#8B004A]/30 disabled:opacity-70 disabled:cursor-not-allowed border-none active:scale-95 flex items-center justify-center gap-2 flex-shrink-0"
+            >
+              {loading ? (
+                <RefreshCw size={18} className="animate-spin flex-shrink-0" />
+              ) : "GO"}
+            </button>
           </div>
-          <button
-            onClick={() => handleSearchWord()}
-            disabled={loading}
-            className="bg-[#41ffd1] hover:bg-[#34e5b9] text-black px-8 py-4 rounded-2xl text-sm font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(65,255,209,0.2)] disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {loading ? "Analyzing..." : "Analyze"}
-          </button>
         </div>
 
-        {/* RESULT CARD - Chat/Content Hybrid */}
+        {/* RESULT CARD - Deep Engaging View */}
         {activeWord && (
-          <div className="space-y-4 animate-fade-in">
-            {/* User Query Bubble */}
-            <div className="flex justify-end pr-2">
-              <div className="bg-[#1a2538] border border-gray-700 text-gray-200 rounded-2xl rounded-tr-sm px-4 py-3 text-xs leading-relaxed max-w-[85%] shadow-md">
-                Explain the exact Hindi meaning, context, and examples for <span className="font-bold text-[#41ffd1] uppercase">{activeWord}</span>.
+          <div className="space-y-4 animate-fade-in relative w-full">
+            
+            <div className="flex justify-end pr-2 w-full">
+              <div className="bg-[#E01A76] text-white rounded-3xl rounded-tr-sm px-5 sm:px-6 py-4 text-xs font-black leading-relaxed max-w-[95%] sm:max-w-[85%] shadow-lg shadow-[#E01A76]/20 break-words">
+                Explain the exact Hindi meaning, context, and examples for <span className="text-[#FFB800] uppercase tracking-wider text-sm mx-1 break-all">"{activeWord}"</span>.
               </div>
             </div>
 
-            {/* AI Response Card */}
-            <div className="bg-[#121c2d] border border-blue-900/40 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-              {/* Decorative top border glow */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-[#41ffd1] to-blue-600 opacity-50"></div>
+            <div className="bg-white border-[4px] border-[#8B004A]/10 rounded-[2.5rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden mt-2 w-full">
+              
+              <div className="absolute top-0 right-0 bg-[#F2EFE7] text-[#8B004A] px-3 sm:px-4 py-1.5 rounded-bl-2xl font-black text-[8px] sm:text-[9px] uppercase tracking-[0.2em] border-b-2 border-l-2 border-[#8B004A]/10 max-w-[60%] truncate text-right">
+                {contextBadge}
+              </div>
 
-              {/* Word Header */}
-              <div className="flex items-center justify-between border-b border-gray-800 pb-4 mb-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white capitalize">{activeWord}</h2>
-                    <span className="bg-blue-900/40 border border-blue-800 text-blue-300 text-[10px] px-2 py-1 rounded-md font-semibold uppercase tracking-wider">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-gray-100 pb-5 mb-5 mt-6 sm:mt-2 gap-4">
+                <div className="w-full sm:w-auto min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-3xl sm:text-5xl font-black text-[#8B004A] capitalize drop-shadow-sm tracking-tight break-all">
+                      {activeWord}
+                    </h2>
+                    <span className="bg-[#8B004A] text-[#F2EFE7] text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm flex-shrink-0">
                       {partOfSpeech}
                     </span>
                   </div>
                 </div>
                 <button
                   onClick={() => handlePronounce(activeWord)}
-                  className="bg-white/5 hover:bg-white/10 p-2.5 rounded-xl text-gray-300 transition-all border border-gray-700"
+                  className="bg-[#F2EFE7] hover:bg-[#8B004A] p-4 rounded-full text-[#8B004A] hover:text-white transition-all border-2 border-transparent hover:border-white shadow-sm active:scale-90 flex-shrink-0 self-end sm:self-auto"
                   title="Listen to pronunciation"
                 >
-                  <Volume2 size={18} />
+                  <Volume2 size={24} strokeWidth={2.5} />
                 </button>
               </div>
 
-              {/* Content Grid */}
-              <div className="space-y-5 text-sm">
-                {/* Meaning & Explanation */}
-                <div className="space-y-3">
-                  <div className="bg-[#0b101a] rounded-xl p-4 border border-gray-800">
-                    <span className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1 block">Meaning</span>
-                    <p className="text-[#41ffd1] font-semibold text-lg">{meaning}</p>
+              <div className="space-y-6 text-sm w-full">
+                <div className="space-y-4">
+                  <div className="bg-[#F2EFE7] rounded-2xl p-5 sm:p-6 border-l-[6px] border-[#E01A76] shadow-inner w-full">
+                    <span className="text-[#8B004A]/70 text-[10px] uppercase font-black tracking-[0.2em] mb-2 block">Meaning</span>
+                    <p className="text-[#8B004A] font-black text-xl sm:text-2xl leading-snug break-words">{meaning}</p>
                   </div>
                   
-                  <div className="pl-4 border-l-2 border-gray-700">
-                    <p className="text-gray-300 leading-relaxed text-sm italic">{explanation}</p>
+                  <div className="pl-4 sm:pl-5 border-l-[3px] border-[#FFB800] w-full">
+                    <p className="text-gray-700 font-bold leading-relaxed text-sm break-words">{explanation}</p>
                   </div>
                 </div>
 
-                {/* Examples */}
-                <div>
-                  <span className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-2 block flex items-center gap-1.5">
-                    <Sparkles size={14} className="text-yellow-500" /> Examples
+                <div className="pt-2 w-full">
+                  <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-3 flex items-center gap-2">
+                    <Sparkles size={16} className="text-[#FFB800] flex-shrink-0" strokeWidth={2.5} /> Practical Application
                   </span>
-                  <div className="bg-[#1a2538] rounded-xl p-4 border border-gray-800 text-gray-200 whitespace-pre-line font-mono text-xs leading-loose">
+                  <div className="bg-gray-50 rounded-2xl p-5 sm:p-6 border-2 border-dashed border-gray-200 text-gray-800 whitespace-pre-line font-bold text-sm leading-loose shadow-sm break-words w-full overflow-hidden">
                     {sentences}
                   </div>
                 </div>
 
-                {/* Synonyms & Antonyms */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="bg-[#0b101a] border border-gray-800 rounded-xl p-3.5">
-                    <span className="text-gray-500 font-bold text-[10px] uppercase block mb-1">Similar Words</span>
-                    <span className="text-gray-200 font-medium">{synonyms || "N/A"}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full">
+                  <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
+                    <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Similar Words</span>
+                    <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{synonyms || "N/A"}</span>
                   </div>
-                  <div className="bg-[#0b101a] border border-gray-800 rounded-xl p-3.5">
-                    <span className="text-gray-500 font-bold text-[10px] uppercase block mb-1">Opposite Words</span>
-                    <span className="text-gray-200 font-medium">{antonyms || "N/A"}</span>
+                  <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
+                    <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Opposite Words</span>
+                    <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{antonyms || "N/A"}</span>
                   </div>
                 </div>
 
-                {/* VISUAL EXPRESSION */}
-                <div className="pt-6 mt-4 border-t border-gray-800">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-gray-400 text-xs uppercase font-bold tracking-wider flex items-center gap-1.5">
-                      <ImageIcon size={14} className="text-fuchsia-400" /> Visual Context
+                <div className="pt-8 mt-6 border-t-2 border-gray-100 w-full">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
+                      <ImageIcon size={18} className="text-[#E01A76] flex-shrink-0" strokeWidth={2.5} /> Memory Anchor
                     </span>
                   </div>
                   
-                  <div className={`w-full rounded-2xl bg-[#0b101a] border border-gray-800 flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10' : ''}`}>
+                  <div className={`w-full rounded-[2rem] bg-[#F2EFE7] border-[3px] border-gray-200 shadow-inner flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10 sm:py-12' : ''}`}>
                     
                     {(isImageLoading || isUploading) && (
-                      <div className="flex flex-col items-center justify-center gap-3 absolute inset-0 bg-[#0b101a]/80 backdrop-blur-sm z-10 min-h-[150px]">
-                        <div className="w-6 h-6 border-2 border-[#41ffd1] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-400 text-[10px] uppercase tracking-widest animate-pulse">
-                          {isUploading ? 'Uploading Image...' : 'Rendering Visual...'}
+                      <div className="flex flex-col items-center justify-center gap-4 absolute inset-0 bg-[#F2EFE7]/90 backdrop-blur-sm z-10 min-h-[150px]">
+                        <div className="w-10 h-10 border-[4px] border-[#E01A76] border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-[#8B004A] font-black text-[10px] uppercase tracking-[0.2em] animate-pulse text-center px-4">
+                          {isUploading ? 'Uploading Data...' : 'Rendering Visual...'}
                         </p>
                       </div>
                     )}
 
-                    {/* Step 1: Image Ready but hidden */}
                     {imageSrc && !isImageExpanded && !isImageLoading && !isUploading && (
-                      <div className="flex flex-col items-center text-center px-4 animate-fade-in">
-                        <div className="bg-blue-900/30 p-3 rounded-full mb-3 text-blue-400">
-                          <ImageIcon size={24} />
+                      <div className="flex flex-col items-center text-center px-4 animate-fade-in w-full">
+                        <div className="bg-white p-4 sm:p-5 rounded-full mb-4 text-[#8B004A] shadow-md border-2 border-gray-100 flex-shrink-0">
+                          <ImageIcon size={32} strokeWidth={2} />
                         </div>
-                        <h3 className="text-sm font-bold text-white mb-1">Visual Concept Ready</h3>
-                        <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-4">Tap to reveal visualization for "{activeWord}"</p>
+                        <h3 className="text-lg font-black text-gray-900 mb-1 break-words">Visual Concept Ready</h3>
+                        <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-6 break-words px-2">Tap to burn "{activeWord}" into memory</p>
                         <button 
                           onClick={() => setIsImageExpanded(true)}
-                          className="px-6 py-2 bg-[#1a2538] hover:bg-gray-700 text-white border border-gray-600 text-xs font-bold rounded-lg transition-all"
+                          className="px-8 sm:px-10 py-4 bg-[#8B004A] hover:bg-[#E01A76] text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-[#8B004A]/20 active:scale-95 border-none w-full sm:w-auto"
                         >
-                          Reveal Image
+                          Reveal Imagery
                         </button>
                       </div>
                     )}
 
-                    {/* Step 2: Expanded Image */}
                     {imageSrc && isImageExpanded && (
                       <img 
                         src={imageSrc} 
                         alt={activeWord} 
-                        className="w-full h-auto max-h-[400px] object-cover transition-opacity duration-700"
+                        className="w-full h-auto max-h-[450px] object-cover transition-opacity duration-700 block"
                       />
                     )}
                   </div>
 
-                  {/* Image Action Buttons */}
                   {imageSrc && isImageExpanded && (
-                    <div className="flex gap-2 mt-3 justify-center animate-fade-in">
+                    <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 mt-4 justify-center animate-fade-in w-full">
                       <button
                         onClick={() => handleGenerateImage('regenerate', activeWord)}
                         disabled={isImageLoading || isUploading}
-                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                        className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
                       >
-                        <RefreshCw size={12} /> Regenerate
+                        <RefreshCw size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Regenerate</span>
                       </button>
                       
                       <button
@@ -469,17 +572,17 @@ export default function VocabPage() {
                           }
                         }}
                         disabled={isImageLoading || isUploading}
-                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                        className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
                       >
-                        <Sparkles size={12} /> Custom Prompt
+                        <Sparkles size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Custom</span>
                       </button>
 
                       <button
                         onClick={() => fileInputRef.current.click()}
                         disabled={isImageLoading || isUploading}
-                        className="flex-1 py-2.5 bg-[#1a2538] hover:bg-gray-700 text-gray-300 text-[10px] font-bold rounded-xl disabled:opacity-50 transition-all border border-gray-700 flex justify-center items-center gap-1.5 uppercase tracking-wide"
+                        className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
                       >
-                        <Upload size={12} /> Upload
+                        <Upload size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Upload</span>
                       </button>
 
                       <input 
@@ -494,14 +597,13 @@ export default function VocabPage() {
                 </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="flex justify-end border-t border-gray-800 mt-6 pt-4">
+              <div className="flex justify-center sm:justify-end border-t-2 border-gray-100 mt-8 pt-5 w-full">
                 <button
                   onClick={() => handleSearchWord(activeWord, true)}
                   disabled={loading}
-                  className="text-[10px] text-gray-400 hover:text-white flex items-center gap-1.5 font-bold transition-all uppercase tracking-wider"
+                  className="text-[10px] bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-sm active:scale-95 w-full sm:w-auto"
                 >
-                  <RefreshCw size={12} /> Alternative Context
+                  <RefreshCw size={14} strokeWidth={2.5} className="flex-shrink-0" /> Alternative Context
                 </button>
               </div>
 

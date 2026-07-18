@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast"; // ✅ Fixed Toaster import
+import toast, { Toaster } from "react-hot-toast"; 
 import PremiumSoundFeature from "../components/PremiumSoundFeature";
 import WordMatchGame from "../components/WordMatchGame";
 import { 
@@ -160,14 +160,15 @@ export default function EnglishAppUser() {
   [vaultData]);
 
   return (
-    <div className="min-h-screen bg-[#0b101a] flex flex-col items-center p-4 font-sans pb-24 text-white">
+    // 🔥 NEW THEME: Murrey (#F2EFE7) Light Base with Alabaster (#8B004A)
+    <div className="min-h-screen bg-[#F2EFE7] flex flex-col items-center p-4 font-sans pb-24 text-gray-900 transition-colors duration-500">
       <Toaster 
         position="top-center" 
-        toastOptions={{ style: { background: '#121c2d', color: '#fff', border: '1px solid #1e293b' } }} 
+        toastOptions={{ style: { background: '#8B004A', color: '#F2EFE7', border: '1px solid #E01A76', fontWeight: 'bold' } }} 
       />
 
       {isPracticeMode ? (
-        <div className="w-full max-w-md flex flex-col items-center mt-10 animate-fade-in">
+        <div className="w-full max-w-md flex flex-col items-center mt-6 md:mt-10 animate-fade-in">
           {practiceType === "matching" ? (
             <WordMatchGame 
               data={allFilteredWords.slice(0, 8)} 
@@ -176,35 +177,35 @@ export default function EnglishAppUser() {
           ) : (
             <>
               {/* Header Status */}
-              <div className="text-center mb-10 w-full flex flex-col items-center">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <BrainCircuit size={14} /> SRS Active Recall
+              <div className="text-center mb-8 w-full flex flex-col items-center">
+                <span className="text-[10px] font-black text-[#8B004A]/60 uppercase tracking-[0.2em] flex items-center gap-2">
+                  <BrainCircuit size={16} /> SRS Active Recall
                 </span>
-                <div className="mt-3 px-4 py-1 bg-[#41ffd1]/10 text-[#41ffd1] border border-[#41ffd1]/20 rounded-full text-xs font-bold tracking-widest shadow-[0_0_10px_rgba(65,255,209,0.1)]">
+                <div className="mt-3 px-4 py-1.5 bg-[#E01A76]/10 text-[#E01A76] border border-[#E01A76]/20 rounded-full text-xs font-black tracking-widest shadow-sm">
                   {currentIndex + 1} / {practiceDueList.length}
                 </div>
               </div>
 
               {/* Flashcard */}
               <div className="w-full relative group perspective-1000" onClick={() => setShowMeaning(!showMeaning)}>
-                <div className={`w-full aspect-[4/5] bg-[#121c2d] border border-blue-900/40 rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center p-12 cursor-pointer active:scale-[0.98] transition-all duration-300 relative overflow-hidden ${showMeaning ? 'border-[#41ffd1]/50 shadow-[0_0_30px_rgba(65,255,209,0.15)]' : ''}`}>
+                <div className={`w-full aspect-[4/5] bg-white border-2 border-[#8B004A]/10 rounded-[2.5rem] shadow-xl flex flex-col items-center justify-center p-12 cursor-pointer active:scale-[0.98] transition-all duration-300 relative overflow-hidden ${showMeaning ? 'border-[#E01A76]/40 shadow-[0_10px_30px_rgba(224,26,118,0.1)]' : ''}`}>
                   
                   {/* Subtle Background Glow */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-blue-600/10 blur-[60px] rounded-full pointer-events-none"></div>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-[#E01A76]/5 blur-[60px] rounded-full pointer-events-none transition-opacity"></div>
 
-                  <h2 className="text-4xl md:text-5xl font-bold text-white capitalize text-center leading-tight tracking-wide z-10">
+                  <h2 className="text-4xl md:text-5xl font-black text-[#8B004A] capitalize text-center leading-tight tracking-wide z-10 drop-shadow-sm">
                     {practiceDueList[currentIndex]?.word}
                   </h2>
                   
                   {showMeaning ? (
                     <div className="mt-8 animate-fade-in z-10 text-center w-full">
-                      <div className="w-12 h-[1px] bg-gray-700 mx-auto mb-6"></div>
-                      <p className="text-xl md:text-2xl font-bold text-[#41ffd1] capitalize leading-relaxed break-words">
+                      <div className="w-12 h-[2px] bg-gray-200 mx-auto mb-6 rounded-full"></div>
+                      <p className="text-xl md:text-2xl font-extrabold text-[#E01A76] capitalize leading-relaxed break-words">
                         {practiceDueList[currentIndex]?.meaning}
                       </p>
                     </div>
                   ) : (
-                    <p className="mt-12 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] animate-pulse z-10">
+                    <p className="mt-12 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] animate-pulse z-10">
                       Tap to reveal
                     </p>
                   )}
@@ -215,35 +216,35 @@ export default function EnglishAppUser() {
                   <PremiumSoundFeature isPremiumUser={isPremiumUser}>
                     <button 
                       onClick={(e) => { e.stopPropagation(); speakWord(practiceDueList[currentIndex]?.word); }} 
-                      className="w-12 h-12 bg-[#1a2538] hover:bg-gray-700 border border-gray-600 text-gray-300 hover:text-[#41ffd1] rounded-full shadow-lg flex items-center justify-center transition-all"
+                      className="w-12 h-12 bg-white hover:bg-[#F2EFE7] border-2 border-gray-100 text-gray-400 hover:text-[#8B004A] hover:border-[#8B004A]/20 rounded-full shadow-sm flex items-center justify-center transition-all active:scale-95"
                     >
-                      <Volume2 size={20} />
+                      <Volume2 size={20} strokeWidth={2.5} />
                     </button>
                   </PremiumSoundFeature>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 mt-10 w-full px-1">
+              <div className="grid grid-cols-2 gap-3 mt-8 w-full px-1">
                 {showMeaning ? (
                   <>
-                    <button onClick={() => handleReview('again')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                    <button onClick={() => handleReview('again')} className="p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-red-50 border-2 border-red-100 text-red-500 hover:bg-red-100 hover:border-red-200 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
                       <span>Again</span><span className="text-[8px] opacity-70">&lt;10m</span>
                     </button>
-                    <button onClick={() => handleReview('hard')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-orange-500/30 text-orange-400 hover:bg-orange-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                    <button onClick={() => handleReview('hard')} className="p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-orange-50 border-2 border-orange-100 text-orange-500 hover:bg-orange-100 hover:border-orange-200 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
                       <span>Hard</span><span className="text-[8px] opacity-70">1d</span>
                     </button>
-                    <button onClick={() => handleReview('good')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#1a2538] border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 transition-all active:scale-95 flex flex-col items-center gap-1">
+                    <button onClick={() => handleReview('good')} className="p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-blue-50 border-2 border-blue-100 text-blue-500 hover:bg-blue-100 hover:border-blue-200 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
                       <span>Good</span><span className="text-[8px] opacity-70">3d</span>
                     </button>
-                    <button onClick={() => handleReview('easy')} className="p-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest bg-[#41ffd1]/10 border border-[#41ffd1]/30 text-[#41ffd1] hover:bg-[#41ffd1]/20 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-[0_0_10px_rgba(65,255,209,0.1)]">
+                    <button onClick={() => handleReview('easy')} className="p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest bg-[#E01A76]/10 border-2 border-[#E01A76]/20 text-[#E01A76] hover:bg-[#E01A76]/20 transition-all active:scale-95 flex flex-col items-center gap-1 shadow-sm">
                       <span>Easy</span><span className="text-[8px] opacity-70">5d+</span>
                     </button>
                   </>
                 ) : (
                   <button 
                     onClick={() => { setIsPracticeMode(false); setShowMeaning(false); }} 
-                    className="col-span-2 text-gray-500 hover:text-gray-300 text-[10px] font-bold uppercase tracking-[0.2em] py-4 transition-colors"
+                    className="col-span-2 bg-white border-2 border-gray-200 text-gray-500 hover:text-[#8B004A] hover:bg-gray-50 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] py-4 transition-all shadow-sm active:scale-95"
                   >
                     Abort Session
                   </button>
@@ -255,34 +256,34 @@ export default function EnglishAppUser() {
       ) : (
         <>
           {/* Dashboard Profile Card */}
-          <div className="w-full max-w-md bg-[#121c2d] rounded-[2.5rem] shadow-xl p-8 border border-blue-900/40 text-center mt-6 relative overflow-hidden">
+          <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-xl shadow-[#8B004A]/5 p-8 border-2 border-[#8B004A]/10 text-center mt-6 relative overflow-hidden">
             {/* Background Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-blue-900 via-[#41ffd1] to-blue-900 opacity-30"></div>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1.5 bg-gradient-to-r from-[#FFB800] via-[#E01A76] to-[#8B004A]"></div>
 
-            <div className="relative w-20 h-20 mx-auto mb-5">
-               <div className="w-full h-full bg-[#1a2538] border-2 border-gray-700 text-[#41ffd1] rounded-full flex items-center justify-center text-3xl font-bold shadow-lg">
+            <div className="relative w-24 h-24 mx-auto mb-5">
+               <div className="w-full h-full bg-[#F2EFE7] border-[3px] border-[#8B004A]/20 text-[#8B004A] rounded-full flex items-center justify-center text-4xl font-black shadow-inner">
                  {user.name.charAt(0).toUpperCase()}
                </div>
                {isPremiumUser && (
-                 <span className="absolute -bottom-1 -right-2 bg-yellow-500 text-black text-[9px] font-bold px-2 py-0.5 rounded border border-yellow-300 shadow-md flex items-center gap-1">
-                   <Crown size={10} /> PRO
+                 <span className="absolute -bottom-1 -right-2 bg-[#FFB800] text-[#4A0027] text-[9px] font-black px-2.5 py-0.5 rounded border border-[#E6A600] shadow-md flex items-center gap-1 uppercase tracking-wider">
+                   <Crown size={12} /> PRO
                  </span>
                )}
             </div>
             
-            <h1 className="text-2xl font-bold text-white tracking-wide">Hey, {user.name.split(' ')[0]}!</h1>
-            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.1em] mt-1.5 mb-6">{user.email}</p>
+            <h1 className="text-3xl font-black text-[#8B004A] tracking-wide capitalize drop-shadow-sm">Hey, {user.name.split(' ')[0]}!</h1>
+            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.1em] mt-1.5 mb-8">{user.email}</p>
             
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3 mb-8">
               <button 
                 onClick={() => navigate("/community")} 
-                className="flex-1 py-3.5 bg-[#0b101a] hover:bg-gray-800 border border-gray-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                className="flex-1 py-3.5 bg-white hover:bg-[#F2EFE7] border-2 border-gray-200 hover:border-[#8B004A]/30 hover:text-[#8B004A] text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
               >
                 Explore Hub
               </button>
               <button 
                 onClick={() => navigate("/my-posts")} 
-                className="flex-1 py-3.5 bg-[#0b101a] hover:bg-gray-800 border border-gray-700 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all"
+                className="flex-1 py-3.5 bg-white hover:bg-[#F2EFE7] border-2 border-gray-200 hover:border-[#8B004A]/30 hover:text-[#8B004A] text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm"
               >
                 My Uploads
               </button>
@@ -294,46 +295,46 @@ export default function EnglishAppUser() {
                    if (practiceDueList.length > 0) { setPracticeType("cards"); setIsPracticeMode(true); } 
                    else toast.success("All caught up! 🏆", { icon: '✨' });
                 }}
-                className="w-full p-4 bg-[#41ffd1] hover:bg-[#34e5b9] text-black rounded-xl font-bold uppercase tracking-wider text-[11px] transition-all active:scale-95 shadow-[0_0_15px_rgba(65,255,209,0.2)] flex items-center justify-center gap-2"
+                className="w-full p-4.5 bg-gradient-to-r from-[#8B004A] to-[#E01A76] hover:scale-[1.02] text-white rounded-2xl font-black uppercase tracking-wider text-[11px] transition-all active:scale-95 shadow-lg shadow-[#8B004A]/20 flex items-center justify-center gap-2 border-none"
               >
-                <Play size={14} /> Start Practice ({practiceDueList.length})
+                <Play size={16} fill="currentColor" /> Start Practice ({practiceDueList.length})
               </button>
               <button 
                 onClick={() => {
                    if (allFilteredWords.length >= 3) { setPracticeType("matching"); setIsPracticeMode(true); } 
                    else toast.error("Add more words! 🧩");
                 }}
-                className="w-full p-4 bg-[#1a2538] hover:bg-gray-700 text-gray-300 border border-gray-700 rounded-xl font-bold uppercase tracking-wider text-[10px] transition-all active:scale-95 flex items-center justify-center gap-2"
+                className="w-full p-4.5 bg-white hover:bg-[#F2EFE7] text-[#8B004A] border-2 border-[#8B004A]/20 rounded-2xl font-black uppercase tracking-wider text-[11px] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm"
               >
-                <BrainCircuit size={14} /> Matching Game ({allFilteredWords.length})
+                <BrainCircuit size={16} /> Matching Game ({allFilteredWords.length})
               </button>
             </div>
           </div>
 
           {/* Vault Section */}
           <div className="w-full max-w-md mt-10 px-1">
-            <div className="flex items-center justify-between mb-2 px-1">
-               <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                 <FolderOpen size={14} /> My Vault
+            <div className="flex items-center justify-between mb-4 px-1">
+               <h3 className="text-xs font-black text-[#8B004A]/70 uppercase tracking-[0.2em] flex items-center gap-2">
+                 <FolderOpen size={16} /> My Vault
                </h3>
                <button 
                  onClick={() => setShowAddModal(true)} 
-                 className="text-[10px] bg-[#1a2538] hover:bg-gray-700 border border-gray-700 text-white px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+                 className="text-[10px] bg-white hover:bg-[#F2EFE7] border-2 border-gray-200 hover:border-[#8B004A]/30 text-gray-600 hover:text-[#8B004A] px-3.5 py-2 rounded-lg font-black flex items-center gap-1 transition-all shadow-sm uppercase tracking-wider"
                >
-                 <Plus size={12} /> Add
+                 <Plus size={14} strokeWidth={3} /> Add
                </button>
             </div>
 
             {/* Filter Categories */}
-            <div className="flex gap-2 mb-6 overflow-x-auto custom-scrollbar pb-2 pt-2">
+            <div className="flex gap-2 mb-6 overflow-x-auto custom-scrollbar pb-2 pt-1">
               {categories.map((lvl) => (
                 <button 
                   key={lvl} 
                   onClick={() => { setFilter(lvl); setCurrentIndex(0); }} 
-                  className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap border
+                  className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shadow-sm
                     ${filter.toLowerCase() === lvl.toLowerCase() 
-                      ? 'bg-[#41ffd1]/10 border-[#41ffd1]/50 text-[#41ffd1]' 
-                      : 'bg-[#121c2d] border-gray-800 text-gray-500 hover:text-gray-300'}`}
+                      ? 'bg-[#8B004A] border-2 border-[#8B004A] text-white' 
+                      : 'bg-white border-2 border-gray-200 text-gray-500 hover:text-[#8B004A] hover:border-[#8B004A]/30 hover:bg-gray-50'}`}
                 >
                   {lvl === 'dailyUse' ? 'Daily' : lvl}
                 </button>
@@ -342,41 +343,41 @@ export default function EnglishAppUser() {
 
             {/* Word List */}
             {loading ? (
-              <div className="py-16 flex flex-col items-center justify-center gap-3">
-                <div className="w-6 h-6 border-2 border-[#41ffd1] border-t-transparent rounded-full animate-spin"></div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Syncing Vault...</div>
+              <div className="py-20 flex flex-col items-center justify-center gap-4 bg-white rounded-3xl border-2 border-gray-100 shadow-sm">
+                <div className="w-8 h-8 border-4 border-[#E01A76] border-t-transparent rounded-full animate-spin"></div>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Syncing Vault...</div>
               </div>
             ) : allFilteredWords.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 pb-8">
                 {allFilteredWords.map((item) => (
                   <div key={item.wordId} className="relative group">
-                    <div className="bg-[#121c2d] p-5 rounded-2xl border border-gray-800 hover:border-[#41ffd1]/30 flex items-center justify-between transition-all">
+                    <div className="bg-white p-5 rounded-2xl border-2 border-gray-100 hover:border-[#E01A76]/30 flex items-center justify-between transition-all shadow-sm hover:shadow-md">
                       <div onClick={() => navigate(`/community?postId=${item.parentPostId}`)} className="flex flex-col cursor-pointer max-w-[60%]">
-                        <h4 className="text-lg font-bold text-white capitalize tracking-wide truncate">{item.word}</h4>
-                        <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider mt-0.5">{filter}</span>
+                        <h4 className="text-lg font-black text-[#8B004A] capitalize tracking-wide truncate">{item.word}</h4>
+                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mt-1">{filter}</span>
                       </div>
                       
                       <div className="flex items-center gap-3">
-                        <p className="text-xs font-semibold text-[#41ffd1] truncate max-w-[80px] text-right">{item.meaning}</p>
+                        <p className="text-xs font-bold text-[#E01A76] truncate max-w-[90px] text-right">{item.meaning}</p>
                         <button 
                           onClick={(e) => { e.stopPropagation(); setMovingId(movingId === item.wordId ? null : item.wordId); }} 
-                          className="p-2 bg-[#1a2538] hover:bg-gray-700 text-gray-400 rounded-lg transition-colors border border-gray-700"
+                          className="p-2.5 bg-[#F2EFE7] hover:bg-[#8B004A]/10 text-gray-500 hover:text-[#8B004A] rounded-xl transition-colors border-none"
                         >
-                          <ArrowRightLeft size={14} />
+                          <ArrowRightLeft size={16} strokeWidth={2.5} />
                         </button>
                       </div>
                     </div>
 
                     {/* Move Category Overlay */}
                     {movingId === item.wordId && (
-                      <div className="absolute inset-0 bg-[#121c2d]/95 backdrop-blur-md rounded-2xl border border-blue-900/50 z-10 flex items-center justify-center p-3 animate-fade-in shadow-xl">
+                      <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-2xl border-2 border-[#8B004A]/20 z-10 flex items-center justify-center p-3 animate-fade-in shadow-lg">
                         <div className="flex gap-2 flex-wrap justify-center w-full pr-8">
                            {categories.map(cat => (
                              <button 
                                key={cat} 
                                onClick={() => handleMoveWord(item, cat)} 
-                               className={`px-3 py-1.5 text-[9px] font-bold rounded-lg uppercase tracking-wider transition-colors
-                                 ${filter.toLowerCase() === cat.toLowerCase() ? 'hidden' : 'bg-[#1a2538] text-gray-300 border border-gray-700 hover:border-[#41ffd1]/50'}`}
+                               className={`px-3.5 py-2 text-[9px] font-black rounded-lg uppercase tracking-widest transition-all
+                                 ${filter.toLowerCase() === cat.toLowerCase() ? 'hidden' : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-[#E01A76] hover:text-[#E01A76] shadow-sm'}`}
                              >
                                {cat}
                              </button>
@@ -384,9 +385,9 @@ export default function EnglishAppUser() {
                         </div>
                         <button 
                           onClick={() => setMovingId(null)} 
-                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-white bg-[#0b101a] rounded-lg border border-gray-800"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 text-gray-400 hover:text-white hover:bg-gray-800 bg-gray-100 rounded-xl transition-all"
                         >
-                          <X size={14} />
+                          <X size={16} strokeWidth={3} />
                         </button>
                       </div>
                     )}
@@ -394,9 +395,9 @@ export default function EnglishAppUser() {
                 ))}
               </div>
             ) : (
-              <div className="py-16 bg-[#121c2d] border border-gray-800 rounded-2xl flex flex-col items-center justify-center gap-2">
-                <FolderOpen size={24} className="text-gray-600 mb-1" />
-                <p className="text-gray-500 font-bold text-[10px] uppercase tracking-[0.1em]">Category is Empty</p>
+              <div className="py-20 bg-white border-2 border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-3 shadow-sm">
+                <FolderOpen size={32} className="text-gray-300 mb-1" strokeWidth={1.5} />
+                <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest">Category is Empty</p>
               </div>
             )}
           </div>
@@ -405,14 +406,14 @@ export default function EnglishAppUser() {
 
       {/* Add Category Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-[#0b101a]/80 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
-          <div className="bg-[#121c2d] w-full max-w-xs rounded-3xl p-6 border border-blue-900/50 shadow-2xl">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-               <Plus size={18} className="text-[#41ffd1]" /> New Collection
+        <div className="fixed inset-0 bg-[#4A0027]/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6 animate-fade-in">
+          <div className="bg-white w-full max-w-xs rounded-[2rem] p-7 shadow-2xl">
+            <h3 className="text-xl font-black text-[#8B004A] mb-5 flex items-center gap-2">
+               <Plus size={20} className="text-[#E01A76]" strokeWidth={3} /> New Collection
             </h3>
             <input 
               autoFocus 
-              className="w-full p-4 bg-[#0b101a] text-white border border-gray-800 rounded-xl mb-6 font-bold text-sm outline-none focus:border-[#41ffd1]/50 focus:ring-1 focus:ring-[#41ffd1]/20 transition-all placeholder-gray-600" 
+              className="w-full p-4 bg-[#F2EFE7] text-gray-900 border-2 border-transparent rounded-xl mb-6 font-bold text-sm outline-none focus:border-[#E01A76] focus:bg-white transition-all placeholder-gray-400" 
               value={newCat} 
               onChange={(e) => setNewCat(e.target.value)} 
               placeholder="e.g. Slangs, Exams..." 
@@ -420,13 +421,13 @@ export default function EnglishAppUser() {
             <div className="flex gap-3">
               <button 
                 onClick={() => setShowAddModal(false)} 
-                className="flex-1 py-3 text-xs font-bold bg-[#1a2538] text-gray-400 rounded-xl hover:text-white transition-colors"
+                className="flex-1 py-3.5 text-xs font-black bg-gray-100 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors uppercase tracking-wider"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleAddCategory} 
-                className="flex-1 py-3 bg-[#41ffd1] hover:bg-[#34e5b9] text-black rounded-xl text-xs font-bold tracking-wide shadow-lg transition-all"
+                className="flex-1 py-3.5 bg-[#8B004A] hover:bg-[#E01A76] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg transition-all"
               >
                 Create
               </button>
@@ -435,9 +436,11 @@ export default function EnglishAppUser() {
         </div>
       )}
       
-      <p className="mt-16 text-gray-600 text-[9px] font-bold uppercase tracking-[0.2em] opacity-50 flex items-center gap-2">
-        Dameeto Node <span className="w-1 h-1 bg-gray-600 rounded-full"></span> Hybrid SRS
-      </p>
+      {!isPracticeMode && (
+        <p className="mt-8 text-gray-400 text-[9px] font-black uppercase tracking-[0.2em] opacity-80 flex items-center gap-2">
+          Dameeto Node <span className="w-1 h-1 bg-[#8B004A]/30 rounded-full"></span> Hybrid SRS
+        </p>
+      )}
     </div>
   );
 }

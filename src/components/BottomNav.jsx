@@ -42,10 +42,10 @@ const BottomNav = () => {
     // Fixed wrapper for entire navigation area
     <div className="fixed bottom-0 w-full z-50 pointer-events-none" ref={menuRef}>
       
-      {/* 🔼 MORE MENU POPUP */}
+      {/* 🔼 MORE MENU POPUP - Vibrant Light Theme */}
       <div 
-        className={`absolute bottom-[75px] right-4 bg-[#121c2d] border border-gray-800 rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.5)] p-2 w-48 transition-all duration-200 origin-bottom-right pointer-events-auto ${
-          isMoreOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+        className={`absolute bottom-[75px] right-4 bg-white border-2 border-[#8B004A]/10 rounded-2xl shadow-xl shadow-[#8B004A]/10 p-2 w-48 transition-all duration-300 origin-bottom-right pointer-events-auto ${
+          isMoreOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
         }`}
       >
         {moreNavItems.map((item) => {
@@ -55,19 +55,19 @@ const BottomNav = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-                isActive ? 'bg-[#41ffd1]/10 text-[#41ffd1]' : 'text-gray-400 hover:bg-[#1a2538] hover:text-white'
+              className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold ${
+                isActive ? 'bg-[#E01A76]/10 text-[#E01A76]' : 'text-gray-500 hover:bg-[#F2EFE7] hover:text-[#8B004A]'
               }`}
             >
-              <Icon size={18} />
-              <span className="text-xs font-bold uppercase tracking-wider">{item.name}</span>
+              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-xs uppercase tracking-wider">{item.name}</span>
             </Link>
           );
         })}
       </div>
 
-      {/* 🔽 MAIN BOTTOM NAVIGATION BAR */}
-      <div className="w-full bg-[#0b101a]/95 backdrop-blur-md border-t border-gray-800 flex justify-between px-6 py-3 pb-4 pointer-events-auto">
+      {/* 🔽 MAIN BOTTOM NAVIGATION BAR - Premium Murrey/Glassmorphism Base */}
+      <div className="w-full bg-[#F2EFE7]/95 backdrop-blur-md border-t-2 border-[#8B004A]/10 shadow-[0_-5px_20px_rgba(139,0,74,0.05)] flex justify-between px-6 py-3 pb-4 pointer-events-auto transition-colors duration-500">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path || (item.path === '/community' && location.pathname === '/');
@@ -76,12 +76,16 @@ const BottomNav = () => {
             <Link 
               key={item.name} 
               to={item.path} 
-              className={`flex flex-col items-center justify-center w-12 transition duration-200 ${
-                isActive ? 'text-yellow-500' : 'text-gray-500 hover:text-gray-300'
+              className={`flex flex-col items-center justify-center w-12 transition-all duration-300 group ${
+                isActive ? 'text-[#E01A76]' : 'text-gray-400 hover:text-[#8B004A]'
               }`}
             >
-              <Icon size={24} />
-              <span className="text-[10px] mt-1 font-bold">{item.name}</span>
+              <div className={`p-1.5 rounded-full transition-all duration-300 ${isActive ? 'bg-[#E01A76]/10 scale-110' : 'group-hover:scale-110'}`}>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+              </div>
+              <span className={`text-[10px] mt-1 uppercase tracking-wider font-extrabold transition-all duration-300 ${isActive ? 'opacity-100 translate-y-0' : 'opacity-70 translate-y-0.5 group-hover:opacity-100'}`}>
+                {item.name}
+              </span>
             </Link>
           );
         })}
@@ -89,12 +93,16 @@ const BottomNav = () => {
         {/* MORE BUTTON */}
         <button
           onClick={() => setIsMoreOpen(!isMoreOpen)}
-          className={`flex flex-col items-center justify-center w-12 transition duration-200 outline-none ${
-            isMoreOpen ? 'text-[#41ffd1]' : 'text-gray-500 hover:text-gray-300'
+          className={`flex flex-col items-center justify-center w-12 transition-all duration-300 outline-none group ${
+            isMoreOpen ? 'text-[#E01A76]' : 'text-gray-400 hover:text-[#8B004A]'
           }`}
         >
-          <MoreHorizontal size={24} />
-          <span className="text-[10px] mt-1 font-bold">More</span>
+          <div className={`p-1.5 rounded-full transition-all duration-300 ${isMoreOpen ? 'bg-[#E01A76]/10 scale-110' : 'group-hover:scale-110'}`}>
+            <MoreHorizontal size={24} strokeWidth={isMoreOpen ? 2.5 : 2} />
+          </div>
+          <span className={`text-[10px] mt-1 uppercase tracking-wider font-extrabold transition-all duration-300 ${isMoreOpen ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
+            More
+          </span>
         </button>
       </div>
     </div>

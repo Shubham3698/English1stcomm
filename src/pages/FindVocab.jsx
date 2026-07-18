@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
 import toast, { Toaster } from "react-hot-toast";
 import { 
   Swords, 
@@ -11,7 +12,8 @@ import {
   Trophy,
   Flame,
   BrainCircuit,
-  Eye
+  Eye,
+  Search 
 } from "lucide-react";
 
 // 🔥 NAYA COMPONENT 1: Cash Count / Rolling Number Animation
@@ -76,6 +78,8 @@ const ScrambleText = ({ text }) => {
 };
 
 export default function PracticePage() {
+  const navigate = useNavigate(); 
+
   const [userEmail, setUserEmail] = useState("");
   const [historyWords, setHistoryWords] = useState([]);
   const [activeTab, setActiveTab] = useState("words");
@@ -402,47 +406,47 @@ export default function PracticePage() {
     : 0;
 
   return (
-    // Deep Navy Background matching UI
-    <div className="min-h-screen bg-[#0b101a] text-white flex flex-col items-center p-4 py-8 font-sans overflow-x-hidden">
-      <Toaster position="top-center" toastOptions={{ style: { background: '#121c2d', color: '#fff', border: '1px solid #1e293b' } }} />
+    // 🔥 PREMIUM THEME: Murrey (#F2EFE7) Light Base with Bold Alabaster (#8B004A) Design
+    <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-sans overflow-x-hidden transition-colors duration-500">
+      <Toaster position="top-center" toastOptions={{ style: { background: '#8B004A', color: '#F2EFE7', border: 'none', fontWeight: 'bold' } }} />
 
       {!isRandomMode && (
         <div className="w-full max-w-2xl flex flex-col items-center animate-fade-in duration-300">
           
-          <div className="text-center space-y-1 mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">
+          <div className="text-center space-y-1 mb-8">
+            <h2 className="text-3xl md:text-4xl font-black text-[#8B004A] tracking-wide uppercase">
               Training Arena
             </h2>
-            <p className="text-xs text-gray-400 uppercase tracking-widest">
+            <p className="text-xs text-gray-500 uppercase tracking-widest font-black opacity-80">
               Syntax & Recall Engine
             </p>
           </div>
 
-          {/* 🔥 SCOREBOARD - Premium Card Styling */}
-          <div className="w-full bg-[#121c2d] border border-blue-900/50 rounded-2xl p-4 mb-6 shadow-lg">
+          {/* 🔥 SCOREBOARD - Premium Solid White Card */}
+          <div className="w-full bg-white border-2 border-gray-100 rounded-[2rem] p-6 mb-8 shadow-xl shadow-gray-200/50">
             <div className="flex justify-between items-center gap-2">
-              <div className="text-center flex-1 border-r border-gray-800">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Accuracy</p>
-                  <p className={`text-lg font-bold ${accuracy >= 80 ? 'text-[#41ffd1]' : accuracy >= 50 ? 'text-yellow-500' : 'text-red-400'}`}>
+              <div className="text-center flex-1 border-r-2 border-gray-100">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1.5">Accuracy</p>
+                  <p className={`text-2xl font-black ${accuracy >= 80 ? 'text-[#8B004A]' : accuracy >= 50 ? 'text-yellow-600' : 'text-red-500'}`}>
                     <AnimatedNumber value={accuracy} />%
                   </p>
               </div>
-              <div className="text-center flex-1 border-r border-gray-800">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">XP Practiced</p>
-                  <p className="text-lg font-bold text-white">
+              <div className="text-center flex-1 border-r-2 border-gray-100">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1.5">Practiced</p>
+                  <p className="text-2xl font-black text-gray-800">
                     <AnimatedNumber value={userStats.totalPracticed} />
                   </p>
               </div>
-              <div className="text-center flex-1 border-r border-gray-800">
-                  <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">Errors</p>
-                  <p className="text-lg font-bold text-gray-400">
+              <div className="text-center flex-1 border-r-2 border-gray-100">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black mb-1.5">Errors</p>
+                  <p className="text-2xl font-black text-gray-400">
                     <AnimatedNumber value={userStats.totalMistakes} />
                   </p>
               </div>
               <div className="text-center flex-1">
-                  <p className="text-[9px] text-yellow-500/80 uppercase tracking-widest font-bold mb-1">Streak</p>
-                  <p className="text-lg font-bold text-yellow-500 flex items-center justify-center gap-1">
-                    <AnimatedNumber value={comboStreak} /> <Flame size={14} />
+                  <p className="text-[10px] text-orange-400 uppercase tracking-widest font-black mb-1.5">Streak</p>
+                  <p className="text-2xl font-black text-orange-500 flex items-center justify-center gap-1.5">
+                    <AnimatedNumber value={comboStreak} /> <Flame size={18} strokeWidth={3} />
                   </p>
               </div>
             </div>
@@ -457,112 +461,159 @@ export default function PracticePage() {
         {!selectedWordObj && !isRandomMode && (
           <div className="space-y-6 animate-fade-in">
             
-            {/* SRS Active Banner - Cyan styled */}
-            <div className="bg-[#121c2d] border border-[#41ffd1]/30 p-4 rounded-2xl flex justify-between items-center shadow-lg">
+            {/* SRS Active Banner - Premium Alabaster Box */}
+            <div className="bg-[#8B004A] border-4 border-white/40 p-5 rounded-3xl flex justify-between items-center shadow-lg shadow-[#8B004A]/20">
                <div className="flex-1 mr-2">
-                  <h3 className="text-[#41ffd1] font-bold text-sm mb-1 flex items-center gap-2">
-                    <BrainCircuit size={16} /> Daily Quests (SRS)
+                  <h3 className="text-white font-black text-base mb-1 flex items-center gap-2 tracking-wide">
+                    <BrainCircuit size={18} strokeWidth={2.5} /> Daily Quests
                   </h3>
-                  <p className="text-gray-400 text-xs">
-                    Pending Reviews: <strong className="text-white ml-1 bg-[#41ffd1]/10 border border-[#41ffd1]/20 px-2 py-0.5 rounded">{dueReviews.length}</strong>
+                  <p className="text-[#F2EFE7]/80 text-xs font-bold uppercase tracking-widest mt-1.5">
+                    Pending: <strong className="text-[#8B004A] ml-1 bg-white px-2 py-0.5 rounded shadow-sm">{dueReviews.length}</strong>
                   </p>
                </div>
                <button 
                  onClick={startSRSSession}
                  disabled={dueReviews.length === 0}
-                 className="bg-[#41ffd1] hover:bg-[#34e5b9] text-black disabled:opacity-30 disabled:cursor-not-allowed px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(65,255,209,0.2)] disabled:shadow-none whitespace-nowrap active:scale-95"
+                 className="bg-white hover:bg-[#F2EFE7] text-[#8B004A] disabled:opacity-50 disabled:cursor-not-allowed px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95 whitespace-nowrap"
                >
-                 Start
+                 Execute
                </button>
             </div>
 
-            {/* TAB NAVIGATION - Sleek Minimalist */}
-            <div className="flex bg-[#121c2d] p-1 rounded-xl border border-gray-800">
+            {/* TAB NAVIGATION - Clean & Minimal */}
+            <div className="flex bg-white p-1.5 rounded-2xl border-2 border-gray-100 shadow-sm mt-4">
               <button 
                 onClick={() => setActiveTab("words")}
-                className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all ${activeTab === 'words' ? 'bg-[#1a2538] text-white shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'words' ? 'bg-[#8B004A] text-white shadow-md' : 'text-gray-500 hover:text-[#8B004A] hover:bg-gray-50'}`}
               >
                 Arsenal
               </button>
               <button 
                 onClick={() => setActiveTab("mistakes")}
-                className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'mistakes' ? 'bg-[#1a2538] text-red-400 shadow-sm' : 'text-gray-500 hover:text-gray-300'}`}
+                className={`flex-1 py-3.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'mistakes' ? 'bg-red-50 text-red-600 border border-red-100 shadow-sm' : 'text-gray-500 hover:text-red-500 hover:bg-red-50'}`}
               >
                 Hitlist 
-                {mistakeWords.length > 0 && <span className="bg-red-500/20 border border-red-500/50 text-red-400 font-bold px-2 py-0.5 rounded-full text-[9px]">{mistakeWords.length}</span>}
+                {mistakeWords.length > 0 && <span className="bg-red-500 text-white font-black px-2 py-0.5 rounded-md text-[9px] shadow-sm">{mistakeWords.length}</span>}
               </button>
             </div>
 
-            {/* VIEW A: WORDS LIST */}
+            {/* VIEW A: WORDS LIST (🔥 ALWAYS OPEN PREMIUM TARGET STACK) */}
             {activeTab === "words" && (
-              <div className="space-y-4">
+              <div className="space-y-5 pt-2">
                 <button 
                   onClick={triggerRandomChallenge}
-                  className="w-full bg-[#1a2538] border border-[#41ffd1]/30 hover:border-[#41ffd1] text-[#41ffd1] py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all active:scale-95 flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(65,255,209,0.1)]"
+                  className="w-full bg-[#8B004A] hover:bg-[#6a0038] text-white py-4.5 rounded-2xl text-sm font-black uppercase tracking-widest transition-all active:scale-[0.98] flex justify-center items-center gap-2 shadow-lg shadow-[#8B004A]/20 border-none"
                 >
-                  <Zap size={16} /> Random Deathmatch
+                  <Zap size={18} strokeWidth={2.5} /> Random Deathmatch
                 </button>
 
-                <div className="flex items-center gap-3 py-2">
-                  <div className="h-[1px] flex-1 bg-gray-800"></div>
-                  <p className="text-center text-gray-500 font-bold uppercase tracking-widest text-[9px]">Select Target</p>
-                  <div className="h-[1px] flex-1 bg-gray-800"></div>
+                {/* 🔥 ALWAYS OPEN TARGET STACK BOX */}
+                <div className="w-full mt-4">
+                  <div className="bg-white border-[3px] border-[#8B004A]/20 rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#8B004A]/10 relative w-full overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-[#8B004A]"></div>
+                    
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="bg-[#8B004A]/10 p-2.5 rounded-xl text-[#8B004A]">
+                         <Target size={20} strokeWidth={3} />
+                      </div>
+                      <h4 className="text-[11px] font-black text-gray-800 uppercase tracking-[0.2em]">Select Specific Target</h4>
+                    </div>
+                    
+                    {historyWords.length === 0 ? (
+                      <p className="text-center text-sm font-black text-gray-400 py-8 uppercase tracking-wider">Arsenal is empty. Search to add weapons!</p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+                        {historyWords.map((item, i) => (
+                          <div
+                            key={i}
+                            className="bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 text-left transition-all group shadow-sm hover:shadow-md w-full flex flex-col overflow-hidden"
+                          >
+                            {/* Top Part (Clicking it can also start practice) */}
+                            <div 
+                              className="flex-1 cursor-pointer mb-3"
+                              onClick={() => {
+                                startNormalPracticeForWord(item);
+                              }}
+                            >
+                              <div className="text-gray-900 text-sm font-black truncate group-hover:text-[#E01A76] tracking-wide w-full flex justify-between items-center">
+                                <span className="truncate">{item.word}</span>
+                                {item.imageUrl && <span className="text-[10px] ml-2 flex-shrink-0">🖼️</span>}
+                              </div>
+                              <div className="text-[10px] font-bold text-gray-500 truncate mt-1.5 tracking-wider w-full">
+                                {item.meaning || "Ready for training"}
+                              </div>
+                            </div>
+
+                            {/* Action Buttons (Analyze & Practice) */}
+                            <div className="flex items-center gap-2 mt-auto pt-3 border-t-2 border-gray-200">
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  // 🔥 Redirects straight to /home with the word state
+                                  navigate('/home', { state: { targetWord: item.word } }); 
+                                }}
+                                className="flex-1 bg-white hover:bg-[#8B004A] text-[#8B004A] hover:text-white border border-gray-200 hover:border-transparent py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                              >
+                                <Search size={12} strokeWidth={3} /> Analyze
+                              </button>
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  startNormalPracticeForWord(item);
+                                }}
+                                className="flex-1 bg-gray-900 hover:bg-[#E01A76] text-white py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                              >
+                                <Swords size={12} strokeWidth={3} /> Practice
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {historyWords.length === 0 ? (
-                  <div className="text-center text-gray-500 py-10 text-xs bg-[#121c2d] border border-gray-800 rounded-xl px-4">Arsenal is empty. Search to add weapons!</div>
-                ) : (
-                  <div className="flex flex-wrap gap-2.5 justify-center max-h-[350px] overflow-y-auto pb-2 custom-scrollbar">
-                    {historyWords.map((wordObj, i) => (
-                      <button
-                        key={i}
-                        onClick={() => startNormalPracticeForWord(wordObj)}
-                        className="bg-[#121c2d] border border-gray-800 hover:border-[#41ffd1]/50 hover:bg-[#1a2538] px-4 py-2.5 rounded-xl text-gray-300 hover:text-white font-bold text-sm transition-all transform active:scale-95"
-                      >
-                        {wordObj.word}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 
             {/* VIEW B: MISTAKES TAB */}
             {activeTab === "mistakes" && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 py-1">
-                  <div className="h-[1px] flex-1 bg-gray-800"></div>
-                  <p className="text-center text-red-500/70 font-bold uppercase tracking-widest text-[9px]">Revenge Targets</p>
-                  <div className="h-[1px] flex-1 bg-gray-800"></div>
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center gap-3 py-2 opacity-60">
+                  <div className="h-[2px] flex-1 bg-red-200 rounded-full"></div>
+                  <p className="text-center text-red-500 font-black uppercase tracking-[0.2em] text-[10px]">Revenge Targets</p>
+                  <div className="h-[2px] flex-1 bg-red-200 rounded-full"></div>
                 </div>
 
                 {mistakeWords.length === 0 ? (
-                  <div className="text-center text-[#41ffd1] py-12 text-sm bg-[#121c2d] border border-blue-900/30 rounded-xl px-4 flex flex-col items-center gap-3">
-                    <Trophy size={32} className="text-yellow-500" />
-                    Hitlist cleared! You are unstoppable.
+                  <div className="text-center text-[#8B004A] py-14 text-sm bg-white border-2 border-gray-100 rounded-3xl px-4 flex flex-col items-center gap-4 shadow-sm font-black tracking-wider">
+                    <div className="bg-yellow-50 p-4 rounded-full">
+                      <Trophy size={40} className="text-yellow-500" strokeWidth={2} />
+                    </div>
+                    HITLIST CLEARED! YOU ARE UNSTOPPABLE.
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pb-2 pr-1 custom-scrollbar">
+                  <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pb-4 pr-1 custom-scrollbar">
                     {mistakeWords.map((item, i) => (
-                      <div key={i} className="bg-[#121c2d] border border-gray-800 hover:border-red-900/50 rounded-xl flex items-center justify-between p-3.5 transition-all gap-3">
-                        <div className="flex items-center gap-3 overflow-hidden">
-                           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-900/20 text-red-400 flex items-center justify-center border border-red-900/50">
-                             <Target size={14} />
+                      <div key={i} className="bg-white border-2 border-gray-100 hover:border-red-300 rounded-2xl flex items-center justify-between p-4 transition-all gap-3 shadow-sm hover:shadow-md">
+                        <div className="flex items-center gap-4 overflow-hidden">
+                           <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center border border-red-100 shadow-sm">
+                             <Target size={20} strokeWidth={2.5} />
                            </div>
-                           <span className="text-white font-bold text-sm uppercase tracking-wider truncate">{item.word}</span>
+                           <span className="text-gray-900 font-black text-base uppercase tracking-wider truncate">{item.word}</span>
                         </div>
                         <div className="flex gap-2 justify-end">
                            <button 
                              onClick={() => startMistakePracticeForWord(item.word)} 
-                             className="bg-[#1a2538] hover:bg-red-900/30 hover:text-red-400 text-gray-400 border border-gray-700 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1"
+                             className="bg-red-50 hover:bg-red-500 hover:text-white text-red-600 border border-red-100 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                            >
-                             <Swords size={12} /> Fight
+                             <Swords size={14} /> Fight
                            </button>
                            <button 
                              onClick={() => startClearChallenge(item.word)} 
-                             className="bg-[#1a2538] hover:bg-[#41ffd1]/10 border border-gray-700 hover:border-[#41ffd1]/30 hover:text-[#41ffd1] text-gray-400 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1"
+                             className="bg-gray-50 hover:bg-[#8B004A] border border-gray-100 hover:border-[#8B004A] hover:text-white text-gray-500 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
                            >
-                             <CheckCircle2 size={12} /> Clear
+                             <CheckCircle2 size={14} /> Clear
                            </button>
                         </div>
                       </div>
@@ -580,56 +631,55 @@ export default function PracticePage() {
           <div className="space-y-6 animate-fade-in">
             
             {/* Action Header */}
-            <div className="flex flex-col gap-3 bg-[#121c2d] rounded-2xl p-4 border border-blue-900/50 shadow-lg">
+            <div className="flex flex-col gap-4 bg-white rounded-[2rem] p-5 border-2 border-gray-100 shadow-xl shadow-gray-200/50">
               <div className="flex justify-between items-center w-full">
                 <button 
                   onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); setIsClearMode(false); fetchAllData(); }}
-                  className="text-[10px] bg-[#1a2538] hover:bg-gray-700 text-gray-400 border border-gray-700 px-3 py-1.5 rounded-lg font-bold uppercase tracking-widest transition-colors"
+                  className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-[#8B004A] border border-gray-200 px-4 py-2 rounded-xl font-black uppercase tracking-widest transition-colors shadow-sm active:scale-95"
                 >
                   ◀ Abort
                 </button>
                 <div className="text-center flex-1 min-w-0 px-2">
-                  <span className="text-[8px] uppercase tracking-[0.2em] text-gray-500 block mb-1 truncate font-bold">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-gray-400 block mb-1 truncate font-black">
                     {isClearMode ? "BOSS BATTLE" : isReviewMode ? "REVENGE MODE" : "TRAINING GROUND"}
                   </span>
                   <div className="flex items-center justify-center gap-2">
-                    <span className={`font-bold uppercase tracking-widest text-sm md:text-lg truncate max-w-[150px] ${isClearMode ? "text-yellow-500" : isReviewMode ? "text-red-400" : "text-[#41ffd1]"}`} title={selectedWordObj.word}>
+                    <span className={`font-black uppercase tracking-widest text-lg md:text-xl truncate max-w-[150px] ${isClearMode ? "text-orange-500" : isReviewMode ? "text-red-500" : "text-[#8B004A]"}`} title={selectedWordObj.word}>
                       {selectedWordObj.word}
                     </span>
                     <button 
                       onClick={() => playAudio(selectedWordObj.word)}
-                      className="text-gray-400 hover:text-[#41ffd1] transition-colors"
+                      className="text-gray-400 hover:text-[#8B004A] transition-colors bg-gray-50 hover:bg-gray-100 p-2 rounded-full border border-gray-200 shadow-sm"
                     >
-                      <Volume2 size={16} />
+                      <Volume2 size={16} strokeWidth={2.5} />
                     </button>
                   </div>
                 </div>
-                <div className="text-[10px] font-bold text-black bg-[#41ffd1] px-3 py-1.5 rounded-lg shadow-sm">
+                <div className="text-[11px] font-black text-white bg-[#8B004A] px-3.5 py-2 rounded-xl shadow-md tracking-wider">
                   {currentSentenceIndex + 1} / {practiceSentences.length}
                 </div>
               </div>
               
-              <div className="w-full h-1.5 bg-[#0b101a] rounded-full overflow-hidden border border-gray-800">
+              <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                 <div 
-                  className="h-full bg-gradient-to-r from-blue-600 to-[#41ffd1] transition-all duration-500 ease-out"
+                  className="h-full bg-[#8B004A] transition-all duration-500 ease-out"
                   style={{ width: `${progressPercent}%` }}
                 ></div>
               </div>
             </div>
 
             {/* Translation Target */}
-            <div className="bg-[#121c2d] border border-gray-800 rounded-2xl p-6 text-center shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-1 bg-[#41ffd1]/30"></div>
-              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-gray-500 block mb-3">Target Meaning:</span>
-              <p className="text-xl font-semibold text-white leading-relaxed">
+            <div className="bg-white border-l-[6px] border-l-[#8B004A] rounded-2xl p-6 md:p-8 shadow-xl shadow-gray-200/50">
+              <span className="text-[10px] uppercase font-black tracking-[0.2em] text-[#8B004A]/60 block mb-3">Target Meaning:</span>
+              <p className="text-xl md:text-2xl font-black text-gray-900 leading-relaxed">
                 "{currentChallenge.hindiSentence}"
               </p>
             </div>
 
             {/* Construction Zone */}
-            <div className="min-h-[120px] bg-[#0b101a] border-2 border-dashed border-gray-700 hover:border-gray-500 transition-colors rounded-2xl p-5 flex flex-wrap gap-2 items-start content-start">
+            <div className="min-h-[140px] bg-[#F2EFE7] border-2 border-dashed border-[#8B004A]/30 rounded-3xl p-6 flex flex-wrap gap-2.5 items-start content-start shadow-inner">
               {selectedWords.length === 0 ? (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 text-[11px] font-bold uppercase tracking-widest opacity-50 pt-8">
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-black uppercase tracking-[0.2em] pt-8 opacity-70">
                   Assemble the Syntax
                 </div>
               ) : (
@@ -637,7 +687,7 @@ export default function PracticePage() {
                   <button
                     key={wordObj.id}
                     onClick={() => handleWordDeselect(wordObj)}
-                    className="bg-[#121c2d] border border-[#41ffd1] px-4 py-2 rounded-xl text-white font-bold text-sm transition-all transform hover:scale-105 active:scale-95 shadow-[0_0_10px_rgba(65,255,209,0.1)]"
+                    className="bg-[#8B004A] border-2 border-[#8B004A] px-5 py-2.5 rounded-xl text-white font-black text-sm transition-all transform hover:scale-105 active:scale-95 shadow-md shadow-[#8B004A]/30"
                   >
                     {wordObj.text}
                   </button>
@@ -647,12 +697,12 @@ export default function PracticePage() {
 
             {/* Word Pool */}
             {isCorrect === null && (
-              <div className="flex flex-wrap gap-2.5 justify-center pt-2">
+              <div className="flex flex-wrap gap-3 justify-center pt-2">
                 {availableWords.map((wordObj) => (
                   <button
                     key={wordObj.id}
                     onClick={() => handleWordSelect(wordObj)}
-                    className="bg-[#1a2538] border border-gray-700 hover:border-[#41ffd1]/50 hover:bg-[#121c2d] hover:text-[#41ffd1] px-5 py-3 rounded-xl text-gray-200 font-bold text-sm transition-all shadow-sm transform active:scale-95"
+                    className="bg-white border-2 border-gray-200 hover:border-[#8B004A] hover:bg-[#8B004A] hover:text-white px-6 py-3.5 rounded-xl text-[#8B004A] font-black text-sm transition-all shadow-sm transform active:scale-95"
                   >
                     {wordObj.text}
                   </button>
@@ -661,29 +711,29 @@ export default function PracticePage() {
             )}
 
             {/* Actions Dashboard */}
-            <div className="pt-4 flex flex-col gap-4">
+            <div className="pt-6 flex flex-col gap-4">
               {isCorrect === null && (
                 <button
                   onClick={checkAnswer}
                   disabled={selectedWords.length === 0}
-                  className="w-full bg-[#41ffd1] hover:bg-[#34e5b9] text-black disabled:opacity-50 disabled:bg-[#1a2538] disabled:text-gray-500 py-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all transform active:scale-95 shadow-lg"
+                  className="w-full bg-[#8B004A] hover:bg-[#6a0038] text-white disabled:opacity-50 disabled:bg-gray-300 disabled:text-gray-500 py-5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all transform active:scale-[0.98] shadow-xl shadow-[#8B004A]/20 border-none"
                 >
                   Submit Sequence
                 </button>
               )}
 
               {isCorrect === false && (
-                <div className="bg-[#121c2d] border border-red-900/50 rounded-2xl p-5 text-center shadow-lg animate-fade-in">
-                   <p className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 flex justify-center items-center gap-2"><XCircle size={16} /> Syntax Error</p>
-                   <div className="flex items-center justify-center gap-3 bg-[#0b101a] py-3 px-4 rounded-xl mb-5 border border-gray-800">
-                     <p className="text-lg text-white font-semibold break-words w-full text-center">{currentChallenge.englishSentence}</p>
-                     <button onClick={() => playAudio(currentChallenge.englishSentence)} className="p-2 rounded-full bg-[#1a2538] hover:text-[#41ffd1] text-gray-400 transition-colors">
-                       <Volume2 size={16} />
+                <div className="bg-white border-[3px] border-red-100 rounded-3xl p-6 text-center shadow-xl animate-fade-in">
+                   <p className="text-red-500 text-xs font-black uppercase tracking-[0.2em] mb-4 flex justify-center items-center gap-2"><XCircle size={20} strokeWidth={3} /> Syntax Error</p>
+                   <div className="flex items-center justify-center gap-3 bg-red-50 py-4 px-5 rounded-2xl mb-6 border border-red-100 shadow-inner">
+                     <p className="text-lg text-gray-900 font-black break-words w-full text-center">{currentChallenge.englishSentence}</p>
+                     <button onClick={() => playAudio(currentChallenge.englishSentence)} className="p-2.5 rounded-full bg-white border border-red-100 hover:bg-red-100 text-red-500 shadow-sm transition-colors">
+                       <Volume2 size={18} strokeWidth={2.5} />
                      </button>
                    </div>
                    <button 
                      onClick={handleNextSentence} 
-                     className="w-full bg-[#1a2538] hover:bg-gray-700 text-white border border-gray-600 py-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all active:scale-95"
+                     className="w-full bg-red-500 hover:bg-red-600 text-white border-none py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-md"
                    >
                      Acknowledge & Continue
                    </button>
@@ -693,35 +743,35 @@ export default function PracticePage() {
               {isCorrect === true && !isClearMode && (
                 <>
                   {!isReviewMode ? (
-                    <div className="bg-[#121c2d] border border-[#41ffd1]/30 rounded-2xl p-5 text-center space-y-4 shadow-lg animate-fade-in">
-                      <p className="text-[#41ffd1] text-xs font-bold uppercase tracking-[0.2em] flex justify-center items-center gap-2"><CheckCircle2 size={16} /> Perfect Execution</p>
+                    <div className="bg-white border-[3px] border-green-100 rounded-3xl p-6 text-center space-y-5 shadow-xl animate-fade-in">
+                      <p className="text-green-500 text-xs font-black uppercase tracking-[0.2em] flex justify-center items-center gap-2"><CheckCircle2 size={20} strokeWidth={3} /> Perfect Execution</p>
                       <button 
                         onClick={handleNextSentence} 
-                        className="w-full bg-[#41ffd1] hover:bg-[#34e5b9] text-black py-4 rounded-xl text-xs font-bold uppercase tracking-[0.2em] transition-all active:scale-95 shadow-[0_0_15px_rgba(65,255,209,0.2)]"
+                        className="w-full bg-[#8B004A] hover:bg-[#6a0038] text-white py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-[#8B004A]/30 border-none"
                       >
                         Next Target
                       </button>
                     </div>
                   ) : (
-                    <div className="bg-[#121c2d] border border-blue-900/50 rounded-2xl p-5 text-center space-y-4 shadow-lg">
-                       <p className="text-[#41ffd1] text-xs font-bold uppercase tracking-[0.2em] flex justify-center items-center gap-2"><CheckCircle2 size={16} /> Hit Confirmed</p>
-                       <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest">Select Memory Interval:</p>
-                       <div className="grid grid-cols-4 gap-2">
-                          <button onClick={() => handleAnkiReview('again')} className="flex flex-col items-center py-3 bg-[#0b101a] hover:border-red-500/50 text-gray-400 border border-gray-800 rounded-xl transition-all active:scale-95">
-                            <span className="text-[10px] uppercase font-bold">Again</span>
-                            <span className="text-[8px] opacity-70 font-bold mt-1 text-red-400">&lt;10m</span>
+                    <div className="bg-white border-[3px] border-gray-100 rounded-3xl p-6 text-center space-y-5 shadow-xl">
+                       <p className="text-[#8B004A] text-xs font-black uppercase tracking-[0.2em] flex justify-center items-center gap-2"><CheckCircle2 size={20} strokeWidth={3} /> Hit Confirmed</p>
+                       <p className="text-gray-400 text-[10px] uppercase font-black tracking-widest">Select Memory Interval:</p>
+                       <div className="grid grid-cols-4 gap-2.5">
+                          <button onClick={() => handleAnkiReview('again')} className="flex flex-col items-center py-4 bg-white hover:bg-red-50 text-red-500 border-2 border-gray-100 hover:border-red-200 rounded-2xl transition-all active:scale-95 shadow-sm">
+                            <span className="text-[11px] uppercase font-black">Again</span>
+                            <span className="text-[9px] font-bold mt-1 text-red-400">&lt;10m</span>
                           </button>
-                          <button onClick={() => handleAnkiReview('hard')} className="flex flex-col items-center py-3 bg-[#0b101a] hover:border-yellow-500/50 text-gray-400 border border-gray-800 rounded-xl transition-all active:scale-95">
-                            <span className="text-[10px] uppercase font-bold">Hard</span>
-                            <span className="text-[8px] opacity-70 font-bold mt-1 text-yellow-500">1d</span>
+                          <button onClick={() => handleAnkiReview('hard')} className="flex flex-col items-center py-4 bg-white hover:bg-orange-50 text-orange-500 border-2 border-gray-100 hover:border-orange-200 rounded-2xl transition-all active:scale-95 shadow-sm">
+                            <span className="text-[11px] uppercase font-black">Hard</span>
+                            <span className="text-[9px] font-bold mt-1 text-orange-400">1d</span>
                           </button>
-                          <button onClick={() => handleAnkiReview('good')} className="flex flex-col items-center py-3 bg-[#0b101a] hover:border-[#41ffd1]/50 text-gray-400 border border-gray-800 rounded-xl transition-all active:scale-95">
-                            <span className="text-[10px] uppercase font-bold text-[#41ffd1]">Good</span>
-                            <span className="text-[8px] opacity-70 font-bold mt-1 text-[#41ffd1]">3d</span>
+                          <button onClick={() => handleAnkiReview('good')} className="flex flex-col items-center py-4 bg-white hover:bg-[#F2EFE7] hover:border-[#8B004A] text-[#8B004A] border-2 border-gray-100 rounded-2xl transition-all active:scale-95 shadow-sm">
+                            <span className="text-[11px] uppercase font-black">Good</span>
+                            <span className="text-[9px] font-bold mt-1 text-gray-500">3d</span>
                           </button>
-                          <button onClick={() => handleAnkiReview('easy')} className="flex flex-col items-center py-3 bg-[#0b101a] hover:border-blue-500/50 text-gray-400 border border-gray-800 rounded-xl transition-all active:scale-95">
-                            <span className="text-[10px] uppercase font-bold">Easy</span>
-                            <span className="text-[8px] opacity-70 font-bold mt-1 text-blue-400">5d+</span>
+                          <button onClick={() => handleAnkiReview('easy')} className="flex flex-col items-center py-4 bg-white hover:bg-blue-50 text-blue-500 border-2 border-gray-100 hover:border-blue-200 rounded-2xl transition-all active:scale-95 shadow-sm">
+                            <span className="text-[11px] uppercase font-black">Easy</span>
+                            <span className="text-[9px] font-bold mt-1 text-blue-400">5d+</span>
                           </button>
                        </div>
                     </div>
@@ -734,72 +784,68 @@ export default function PracticePage() {
 
         {/* 🔥 SCREEN 3: RANDOM FLASHCARD ZONE */}
         {isRandomMode && randomWordInfo && (
-          <div className="space-y-6 animate-fade-in w-full max-w-xl mx-auto">
-            <div className="flex justify-between items-center bg-[#121c2d] rounded-2xl p-4 border border-blue-900/50 shadow-lg">
+          <div className="space-y-6 animate-fade-in w-full max-w-xl mx-auto mt-6">
+            <div className="flex justify-between items-center bg-white rounded-2xl p-4 border-2 border-gray-100 shadow-md">
               <button 
                 onClick={() => { setIsRandomMode(false); setRandomWordInfo(null); }}
-                className="text-[10px] bg-[#1a2538] hover:bg-gray-700 text-gray-400 border border-gray-700 px-4 py-2 rounded-xl font-bold uppercase tracking-widest transition-all"
+                className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-[#8B004A] border border-gray-200 px-4 py-2.5 rounded-xl font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
               >
                 ◀ Abort
               </button>
               <div className="text-center flex items-center justify-center gap-2">
-                <span className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span>
-                <span className="text-[10px] uppercase tracking-[0.3em] text-yellow-500 font-bold block">
+                <span className="animate-pulse w-2 h-2 bg-[#8B004A] rounded-full"></span>
+                <span className="text-[11px] uppercase tracking-[0.3em] text-[#8B004A] font-black block">
                   SPEED RECALL
                 </span>
-                <span className="animate-pulse w-2 h-2 bg-yellow-500 rounded-full"></span>
+                <span className="animate-pulse w-2 h-2 bg-[#8B004A] rounded-full"></span>
               </div>
-              <div className="w-[70px]"></div>
+              <div className="w-[75px]"></div>
             </div>
 
-            <div className="bg-[#121c2d] border border-gray-800 rounded-[2.5rem] p-8 md:p-12 text-center shadow-2xl min-h-[350px] flex flex-col justify-center items-center relative overflow-hidden">
+            <div className="bg-white border-2 border-gray-100 rounded-[3rem] p-8 md:p-12 text-center shadow-2xl min-h-[380px] flex flex-col justify-center items-center relative overflow-hidden">
               
-              {/* Cyan Glow backdrop */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#41ffd1]/5 blur-[80px] rounded-full pointer-events-none"></div>
-
               <div className="relative z-10 flex flex-col items-center w-full">
-                
-                <h2 className="text-4xl md:text-5xl font-bold text-white tracking-wide mb-4 capitalize">
+                <h2 className="text-5xl md:text-6xl font-black text-[#8B004A] tracking-wider mb-6 capitalize drop-shadow-sm">
                   <ScrambleText text={randomWordInfo.word} />
                 </h2>
                 
-                <div className="flex items-center gap-3 mb-8 justify-center">
+                <div className="flex items-center gap-3 mb-10 justify-center">
                   {randomWordInfo.pronunciation && (
-                    <p className="text-sm text-gray-400 font-medium italic">
+                    <p className="text-sm text-gray-500 font-bold italic bg-gray-50 border border-gray-200 px-4 py-1.5 rounded-full shadow-sm">
                       /{randomWordInfo.pronunciation}/
                     </p>
                   )}
                   <button 
                     onClick={() => playAudio(randomWordInfo.word)}
-                    className="w-10 h-10 rounded-full bg-[#1a2538] hover:text-[#41ffd1] text-gray-300 flex items-center justify-center transition-all border border-gray-700 active:scale-95"
+                    className="w-12 h-12 rounded-full bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white flex items-center justify-center transition-all shadow-md active:scale-90 border-none"
                   >
-                    <Volume2 size={18} />
+                    <Volume2 size={20} strokeWidth={2.5} />
                   </button>
                 </div>
 
                 {!showRandomAnswer ? (
                   <button
                     onClick={() => setShowRandomAnswer(true)}
-                    className="bg-[#1a2538] hover:bg-gray-700 border border-gray-600 text-white px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all w-full max-w-[280px] flex items-center justify-center gap-2"
+                    className="bg-[#8B004A] hover:bg-[#6a0038] text-white border-none px-10 py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all w-full max-w-[280px] flex items-center justify-center gap-2.5 shadow-xl shadow-[#8B004A]/20 active:scale-95"
                   >
-                    <Eye size={16} /> Reveal Target
+                    <Eye size={18} strokeWidth={2.5} /> Reveal Target
                   </button>
                 ) : (
                   <div className="animate-fade-in w-full flex flex-col items-center max-w-md">
-                    <div className="w-full h-[1px] bg-gray-800 mb-6"></div>
+                    <div className="w-16 h-[3px] bg-gray-200 mb-6 rounded-full"></div>
                     
-                    <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#41ffd1] block mb-3">
+                    <span className="text-[10px] uppercase font-black tracking-[0.2em] text-gray-400 block mb-3">
                       Intel (Meaning):
                     </span>
-                    <p className="text-xl font-bold text-white leading-relaxed bg-[#0b101a] px-6 py-5 rounded-2xl border border-gray-800 w-full shadow-inner break-words">
+                    <p className="text-2xl font-black text-gray-900 leading-relaxed bg-[#F2EFE7] px-6 py-6 rounded-3xl border-2 border-[#8B004A]/10 w-full shadow-inner break-words">
                       {randomWordInfo.meaning || randomWordInfo.hindiMeaning || "Meaning not available in DB"}
                     </p>
                     
                     <button
                         onClick={triggerRandomChallenge}
-                        className="mt-8 w-full max-w-[300px] bg-[#41ffd1] hover:bg-[#34e5b9] text-black py-4 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] transition-all transform active:scale-95 flex justify-center items-center gap-2 shadow-[0_0_15px_rgba(65,255,209,0.2)]"
+                        className="mt-8 w-full max-w-[280px] bg-gray-900 hover:bg-black text-white py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all transform active:scale-95 flex justify-center items-center gap-2.5 shadow-xl border-none"
                     >
-                        <RefreshCw size={16} /> Next Target
+                        <RefreshCw size={16} strokeWidth={2.5} /> Next Target
                     </button>
                   </div>
                 )}

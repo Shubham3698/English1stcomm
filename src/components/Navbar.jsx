@@ -51,14 +51,15 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="bg-[#0b101a]/95 text-white px-4 md:px-6 py-4 flex justify-between items-center sticky top-0 z-[100] border-b border-gray-800 shadow-lg backdrop-blur-md">
+      {/* 🔥 NEW THEME: Light/Vibrant Navbar */}
+      <nav className="bg-[#F2EFE7]/95 px-4 md:px-6 py-4 flex justify-between items-center sticky top-0 z-[100] border-b-2 border-[#8B004A]/10 shadow-lg shadow-[#8B004A]/5 backdrop-blur-md transition-colors duration-500">
         
         {/* 🔴 BRAND LOGO */}
         <div className="flex flex-col cursor-pointer active:scale-95 transition-transform group" onClick={() => navigate("/")}>
-          <h1 className="font-black text-xl md:text-2xl italic tracking-tighter leading-none text-white group-hover:text-gray-200 transition-colors">
-            LEARN<span className="text-[#41ffd1]">-IGLISH</span>
+          <h1 className="font-black text-xl md:text-2xl italic tracking-tighter leading-none text-[#8B004A] group-hover:text-[#E01A76] transition-colors drop-shadow-sm">
+            LEARN<span className="text-[#E01A76]">-IGLISH</span>
           </h1>
-          <span className="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.4em] text-gray-500 italic mt-0.5">
+          <span className="text-[8px] md:text-[9px] font-extrabold uppercase tracking-[0.4em] text-gray-500 italic mt-0.5">
             Serial Learners
           </span>
         </div>
@@ -72,25 +73,25 @@ export default function Navbar() {
               if (isLoggedIn) setShowNotifications(!showNotifications);
               else { setShowSignIn(true); toast.error("Sign in to check signals! 📡"); }
             }}
-            className={`relative w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer transition-all active:scale-95 border
+            className={`relative w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer transition-all active:scale-95 border-2 shadow-sm
             ${isLoggedIn 
-              ? (showNotifications ? 'border-[#41ffd1] bg-[#41ffd1]/10 text-[#41ffd1] shadow-[0_0_15px_rgba(65,255,209,0.2)]' : 'border-gray-700 bg-[#1a2538] text-gray-400 hover:text-white hover:border-gray-500') 
-              : 'border-gray-800 bg-[#0b101a] text-gray-600 opacity-60'}`}
+              ? (showNotifications ? 'border-[#8B004A] bg-[#8B004A]/10 text-[#8B004A] shadow-[0_0_15px_rgba(139,0,74,0.2)]' : 'border-gray-200 bg-white text-gray-500 hover:text-[#8B004A] hover:border-[#8B004A]') 
+              : 'border-gray-200 bg-gray-100 text-gray-400 opacity-60'}`}
           >
-            <Bell size={18} className={showNotifications ? "fill-[#41ffd1]/20" : ""} />
+            <Bell size={18} className={showNotifications ? "fill-[#8B004A]/20" : ""} />
           </div>
 
           {/* 👤 USER PROFILE */}
           <div className="relative group">
             <div 
               onClick={() => isLoggedIn ? navigate("/user") : setShowSignIn(true)}
-              className={`w-10 h-10 rounded-xl border overflow-hidden cursor-pointer active:scale-95 transition-all flex items-center justify-center relative bg-[#1a2538]
-              ${isLoggedIn ? (isVIP ? 'border-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.2)]' : 'border-gray-600 hover:border-gray-400') : 'border-gray-800 text-gray-500 hover:text-gray-300'}`}
+              className={`w-10 h-10 rounded-xl border-2 overflow-hidden cursor-pointer active:scale-95 transition-all flex items-center justify-center relative bg-white shadow-sm
+              ${isLoggedIn ? (isVIP ? 'border-[#FFB800] shadow-[0_0_10px_rgba(255,184,0,0.4)]' : 'border-gray-200 hover:border-[#8B004A]') : 'border-gray-200 text-gray-400 hover:text-[#8B004A]'}`}
             >
               {isLoggedIn ? (
                 <img 
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${localStorage.getItem("eng_userName") || 'learner'}`} 
-                  alt="user" className="w-full h-full object-cover"
+                  alt="user" className="w-full h-full object-cover bg-gray-50"
                 />
               ) : (
                 <User size={18} />
@@ -98,7 +99,7 @@ export default function Navbar() {
             </div>
             {isLoggedIn && isVIP && (
               <div className="absolute -top-2 -right-2 z-10 pointer-events-none">
-                <div className="bg-yellow-500 text-black text-[8px] font-bold px-1.5 py-0.5 rounded border border-yellow-300 shadow-sm">
+                <div className="bg-[#FFB800] text-[#4A0027] text-[8px] font-black px-1.5 py-0.5 rounded border border-[#E6A600] shadow-md uppercase tracking-wider">
                   PRO
                 </div>
               </div>
@@ -108,7 +109,7 @@ export default function Navbar() {
           {/* ☰ HAMBURGER */}
           <button 
             onClick={() => setIsMenuOpen(true)} 
-            className="w-10 h-10 flex items-center justify-center bg-[#1a2538] border border-gray-700 text-gray-300 hover:text-white rounded-xl active:scale-95 transition-colors"
+            className="w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-200 text-gray-600 hover:text-[#8B004A] hover:border-[#8B004A] rounded-xl active:scale-95 transition-all shadow-sm"
           >
             <Menu size={20} />
           </button>
@@ -118,17 +119,17 @@ export default function Navbar() {
       {/* 🌑 SIDEBAR OVERLAY */}
       <div 
         onClick={() => setIsMenuOpen(false)} 
-        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-[110] transition-opacity duration-500 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
+        className={`fixed inset-0 bg-[#4A0027]/40 backdrop-blur-sm z-[110] transition-opacity duration-500 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
       />
 
       {/* 📱 SIDEBAR */}
-      <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-[#0b101a] border-l border-gray-800 z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-[#F2EFE7] border-l-[6px] border-[#8B004A] z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col shadow-2xl ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
         
         {/* CLOSE BUTTON */}
         <div className="p-8 flex justify-end">
             <button 
               onClick={() => setIsMenuOpen(false)} 
-              className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-white bg-[#1a2538] hover:bg-gray-800 rounded-xl transition-all active:scale-90 border border-gray-800"
+              className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#E01A76] hover:border-[#E01A76] bg-white rounded-xl transition-all active:scale-90 border-2 border-gray-200 shadow-sm"
             >
               <X size={20} />
             </button>
@@ -152,7 +153,7 @@ export default function Navbar() {
                 else navigate(item.path);
                 setIsMenuOpen(false);
               }}
-              className="w-full text-left bg-transparent border-none p-0 transition-all duration-300 font-[900] text-gray-600 hover:text-[#41ffd1] hover:translate-x-2 uppercase text-2xl sm:text-3xl italic tracking-tighter active:scale-95 leading-none block"
+              className="w-full text-left bg-transparent border-none p-0 transition-all duration-300 font-[900] text-gray-400 hover:text-[#8B004A] hover:translate-x-2 uppercase text-2xl sm:text-3xl italic tracking-tighter active:scale-95 leading-none block drop-shadow-sm"
             >
               {item.label}
             </button>
@@ -160,10 +161,10 @@ export default function Navbar() {
         </div>
 
         {/* FOOTER SECTION */}
-        <div className="p-8 space-y-5 border-t border-gray-800 bg-[#121c2d]/50">
+        <div className="p-8 space-y-5 border-t-2 border-[#8B004A]/10 bg-white/60">
             <button 
                 onClick={() => { navigate("/upgrade"); setIsMenuOpen(false); }}
-                className="text-yellow-500 font-bold uppercase text-[10px] tracking-[0.2em] hover:tracking-[0.3em] transition-all flex items-center gap-2"
+                className="text-[#FFB800] font-black uppercase text-[10px] tracking-[0.2em] hover:tracking-[0.3em] transition-all flex items-center gap-2 drop-shadow-sm"
             >
                 Upgrade to Pro 💎
             </button>
@@ -171,14 +172,14 @@ export default function Navbar() {
             {isLoggedIn ? (
                 <button 
                   onClick={handleLogout} 
-                  className="text-red-400 font-bold uppercase text-[10px] tracking-[0.2em] hover:text-red-300 transition-colors w-full text-left"
+                  className="text-red-500 font-black uppercase text-[10px] tracking-[0.2em] hover:text-red-700 transition-colors w-full text-left"
                 >
                     Terminate Session 🚪
                 </button>
             ) : (
                 <button 
                   onClick={() => { setIsMenuOpen(false); setShowSignIn(true); }} 
-                  className="text-[#41ffd1] font-bold uppercase text-[10px] tracking-[0.2em] hover:text-white transition-colors w-full text-left"
+                  className="text-[#E01A76] font-black uppercase text-[10px] tracking-[0.2em] hover:text-[#8B004A] transition-colors w-full text-left"
                 >
                     Authorize Login 🔑
                 </button>
@@ -195,5 +196,5 @@ export default function Navbar() {
 
       {showSignIn && <SignInModal onClose={() => setShowSignIn(false)} />}
     </>
-  );
+  ); 
 }

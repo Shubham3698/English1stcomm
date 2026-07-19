@@ -43,6 +43,8 @@ export default function LessonsPage() {
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
   const recognitionRef = useRef(null); 
+  // 🔥 NAYA REF: Silence detect karne ke liye
+  const silenceTimerRef = useRef(null); 
 
   // --- COMPLETE STRUCTURED COURSE DATA (WITH SPEAKING DATA) ---
   const courseDatabase = {
@@ -138,7 +140,10 @@ export default function LessonsPage() {
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      clearInterval(intervalRef.current);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); // Cleanup timer
+    };
   }, []);
 
   useEffect(() => {
@@ -245,11 +250,14 @@ export default function LessonsPage() {
     }
   };
 
-  // 🔥 SUPERCHARGED TOGGLE LISTENING LOGIC FOR MOBILE
+  // 🔥 SUPERCHARGED TOGGLE LISTENING LOGIC FOR MOBILE (FIXED)
   const toggleListening = (targetSentence) => {
     if (isListening) {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+      }
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
       }
       return;
     }
@@ -264,34 +272,46 @@ export default function LessonsPage() {
     recognitionRef.current = recognition;
     
     recognition.lang = 'en-US';
-    recognition.interimResults = true; // Enables live typing
-    recognition.continuous = true; // 🔥 CRUCIAL: Prevents Mobile Chrome from opening native Google Voice UI overlay
+    recognition.interimResults = true; 
+    recognition.continuous = true; 
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
       setIsListening(true);
       setSpokenText("");
       setSpeakingResult(null);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
 
     recognition.onresult = (event) => {
-      // Jo bhi bola gaya hai usko live capture karna
+      // Jaise hi user kuch bole, purana silence timer cancel kardo
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+
       const currentTranscript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join('');
         
       setSpokenText(currentTranscript);
 
-      // Jab bolna ruk jaye tab automatically final check karo
-      const latestResult = event.results[event.results.length - 1];
-      if (latestResult.isFinal) {
+      const normalize = (str) => str.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ").trim();
+
+      // 🔥 CONDITION 1: EXACT MATCH (Instant stop & success)
+      if (normalize(currentTranscript) === normalize(targetSentence)) {
         checkPronunciation(currentTranscript, targetSentence);
-        recognition.stop(); // Result aane par manually rok do
+        recognition.stop();
+        return;
       }
+
+      // 🔥 CONDITION 2: SILENCE DETECTION (Wait 2 seconds after user stops talking)
+      silenceTimerRef.current = setTimeout(() => {
+        checkPronunciation(currentTranscript, targetSentence);
+        recognition.stop();
+      }, 2000); 
     };
 
     recognition.onerror = (event) => {
       setIsListening(false);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (event.error === 'no-speech') {
         toast.error("Awaaz nahi aayi! Thoda zor se bolo. 🎤");
       } else {
@@ -301,6 +321,7 @@ export default function LessonsPage() {
 
     recognition.onend = () => {
       setIsListening(false);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
 
     recognition.start();
@@ -617,6 +638,7 @@ export default function LessonsPage() {
                   setActiveSpeakingLesson(null); 
                   setIsListening(false); 
                   if(recognitionRef.current) recognitionRef.current.stop(); 
+                  if(silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
                 }}
                 className="text-[10px] font-black uppercase tracking-wider bg-gray-100 px-3.5 py-2 rounded-xl border border-gray-200 text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors"
               >

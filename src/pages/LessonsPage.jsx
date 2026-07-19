@@ -42,7 +42,7 @@ export default function LessonsPage() {
 
   const playerRef = useRef(null);
   const intervalRef = useRef(null);
-  const recognitionRef = useRef(null); // 🔥 Added Ref for Mic Control
+  const recognitionRef = useRef(null); 
 
   // --- COMPLETE STRUCTURED COURSE DATA (WITH SPEAKING DATA) ---
   const courseDatabase = {
@@ -185,7 +185,6 @@ export default function LessonsPage() {
     }
   };
 
-  // --- ACTIONS ---
   const toggleChapter = (id) => setExpandedChapters(prev => ({ ...prev, [id]: !prev[id] }));
   const toggleLesson = (id) => setExpandedLessons(prev => ({ ...prev, [id]: !prev[id] }));
   const closeLesson = () => setActiveVideoLesson(null);
@@ -246,7 +245,7 @@ export default function LessonsPage() {
     }
   };
 
-  // 🔥 UPDATED TOGGLE LISTENING LOGIC
+  // 🔥 SUPERCHARGED TOGGLE LISTENING LOGIC FOR MOBILE
   const toggleListening = (targetSentence) => {
     if (isListening) {
       if (recognitionRef.current) {
@@ -265,7 +264,8 @@ export default function LessonsPage() {
     recognitionRef.current = recognition;
     
     recognition.lang = 'en-US';
-    recognition.interimResults = true; // Live typing on
+    recognition.interimResults = true; // Enables live typing
+    recognition.continuous = true; // 🔥 CRUCIAL: Prevents Mobile Chrome from opening native Google Voice UI overlay
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => {
@@ -275,15 +275,18 @@ export default function LessonsPage() {
     };
 
     recognition.onresult = (event) => {
+      // Jo bhi bola gaya hai usko live capture karna
       const currentTranscript = Array.from(event.results)
         .map(result => result[0].transcript)
         .join('');
+        
       setSpokenText(currentTranscript);
 
-      // Check automatically when user stops speaking (isFinal hits true)
-      const isFinal = Array.from(event.results).some(result => result.isFinal);
-      if (isFinal) {
+      // Jab bolna ruk jaye tab automatically final check karo
+      const latestResult = event.results[event.results.length - 1];
+      if (latestResult.isFinal) {
         checkPronunciation(currentTranscript, targetSentence);
+        recognition.stop(); // Result aane par manually rok do
       }
     };
 
@@ -645,7 +648,7 @@ export default function LessonsPage() {
                 </button>
               </div>
 
-              {/* Status & Spoken Text Area */}
+              {/* Status & Spoken Text Area (LIVE TYPING ENABLED) */}
               <div className="mt-8 min-h-[100px] w-full text-center px-4">
                 {spokenText ? (
                   <div className={`p-4 rounded-xl border-2 ${speakingResult === 'match' ? 'bg-[#10B981]/10 border-[#10B981]/50 text-[#10B981]' : speakingResult === 'mismatch' ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-100 border-gray-200 text-gray-600'}`}>
@@ -660,16 +663,22 @@ export default function LessonsPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 font-bold uppercase tracking-wider animate-pulse">
+                  <p className="text-sm text-gray-400 font-bold uppercase tracking-wider animate-pulse flex flex-col items-center gap-2">
                     {isListening ? "Listening..." : "Tap mic and start speaking in English"}
+                    {isListening && <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>}
                   </p>
                 )}
               </div>
 
-              {/* Big Mic Button - Using toggleListening */}
+              {/* Big Mic Button - FIXED FOR MOBILE REDIRECT */}
               <div className="mt-10 mb-8">
                 <button
-                  onClick={() => toggleListening(activeSpeakingLesson.speakingData.english)}
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    toggleListening(activeSpeakingLesson.speakingData.english);
+                  }}
                   className={`w-24 h-24 rounded-full flex items-center justify-center shadow-xl transition-all ${isListening ? 'bg-[#10B981] text-white scale-110 shadow-[#10B981]/40 animate-pulse' : 'bg-white text-gray-400 border-[4px] border-gray-100 hover:border-[#10B981]/50 hover:text-[#10B981] active:scale-95'}`}
                 >
                   {isListening ? <MicOff size={36} strokeWidth={2.5} /> : <Mic size={36} strokeWidth={2.5} />}

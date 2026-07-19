@@ -251,6 +251,7 @@ export default function LessonsPage() {
   };
 
   // 🔥 SUPERCHARGED TOGGLE LISTENING LOGIC FOR MOBILE (FIXED)
+// 🔥 SUPERCHARGED TOGGLE LISTENING LOGIC FOR MOBILE (FIXED 2.0)
   const toggleListening = (targetSentence) => {
     if (isListening) {
       if (recognitionRef.current) {
@@ -287,22 +288,28 @@ export default function LessonsPage() {
       // Jaise hi user kuch bole, purana silence timer cancel kardo
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-      const currentTranscript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join('');
+      // 🔥 FIX 1: Words ko space ke sath join karna taaki "heis" na bane
+      let currentTranscript = Array.from(event.results)
+        .map(result => result[0].transcript.trim())
+        .filter(text => text.length > 0)
+        .join(' '); // Yahan space (' ') add kiya hai
         
       setSpokenText(currentTranscript);
 
       const normalize = (str) => str.toLowerCase().replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ").trim();
+      
+      const normalizedSpoken = normalize(currentTranscript);
+      const normalizedTarget = normalize(targetSentence);
 
-      // 🔥 CONDITION 1: EXACT MATCH (Instant stop & success)
-      if (normalize(currentTranscript) === normalize(targetSentence)) {
-        checkPronunciation(currentTranscript, targetSentence);
+      // 🔥 FIX 2: Agar exact match ho JAYE YA FIR Chrome ke duplication bug ki wajah se 
+      // sahi sentence repeat ho raha ho, toh bhi usko SUCCESS maan lo.
+      if (normalizedSpoken === normalizedTarget || normalizedSpoken.includes(normalizedTarget)) {
+        checkPronunciation(targetSentence, targetSentence); // UI mein sahi answer bhej do
         recognition.stop();
         return;
       }
 
-      // 🔥 CONDITION 2: SILENCE DETECTION (Wait 2 seconds after user stops talking)
+      // Agar abhi tak match nahi hua, toh 2 second chup rehne ka wait karo
       silenceTimerRef.current = setTimeout(() => {
         checkPronunciation(currentTranscript, targetSentence);
         recognition.stop();
@@ -313,7 +320,7 @@ export default function LessonsPage() {
       setIsListening(false);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (event.error === 'no-speech') {
-        toast.error("Awaaz nahi aayi! Thoda zor se bolo. 🎤");
+        // Agar mic on karke chup rahe, toh error mat dikhao, bas band kar do ya silent rakho
       } else {
         toast.error(`Microphone error: ${event.error}`);
       }

@@ -42,14 +42,25 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
       SpeechRecognition.startListening({ continuous: true, language: 'en-IN' });
     }
   };
-
-  const sendToGemini = async (userText) => {
+const sendToGemini = async (userText) => {
     setIsProcessing(true);
     setChatHistory(prev => [...prev, { role: "user", text: userText }]);
     resetTranscript();
 
     try {
-      const response = await fetch(`${API_URL}/api/ai-tutor/gemini-voice`, {
+      // 🌟 DYNAMIC URL LOGIC START 🌟
+      const currentHost = window.location.hostname;
+      let BACKEND_URL = "https://serdeptry1st.onrender.com"; // Default (Live Render Server)
+
+      if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+        BACKEND_URL = "http://localhost:3000"; // Laptop Local Server
+      } else if (currentHost.startsWith("192.168.")) {
+        BACKEND_URL = `http://${currentHost}:3000`; // Mobile WiFi Local Server
+      }
+      // 🌟 DYNAMIC URL LOGIC END 🌟
+
+      // Ab yahan BACKEND_URL variable pass kar diya
+      const response = await fetch(`${BACKEND_URL}/api/ai-tutor/gemini-voice`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userText, email: userEmail })
@@ -60,7 +71,6 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
       if (response.ok && data.reply) {
         setChatHistory(prev => [...prev, { role: "ai", text: data.reply }]);
         
-        // Agar backend se audio stream ya URL aaya hai toh play karenge
         if (data.audioUrl) {
           playAudioResponse(data.audioUrl);
         } else {

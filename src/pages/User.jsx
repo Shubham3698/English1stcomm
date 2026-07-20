@@ -159,6 +159,9 @@ export default function EnglishAppUser() {
     vaultData?.customCategories?.length > 0 ? vaultData.customCategories : ['hard', 'dailyUse', 'heard', 'easy'], 
   [vaultData]);
 
+  // 🔥 CHECK ADMIN EMAIL
+  const isAdmin = user.email === "pandey0shubham3698@gmail.com";
+
   return (
     // 🔥 NEW THEME: Murrey (#F2EFE7) Light Base with Alabaster (#8B004A)
     <div className="min-h-screen bg-[#F2EFE7] flex flex-col items-center p-4 font-sans pb-24 text-gray-900 transition-colors duration-500">
@@ -274,6 +277,16 @@ export default function EnglishAppUser() {
             <h1 className="text-3xl font-black text-[#8B004A] tracking-wide capitalize drop-shadow-sm">Hey, {user.name.split(' ')[0]}!</h1>
             <p className="text-gray-500 text-[10px] font-bold uppercase tracking-[0.1em] mt-1.5 mb-8">{user.email}</p>
             
+            {/* 🔥 NEW ADMIN BUTTON (Sirf Admin ko dikhega) */}
+            {isAdmin && (
+              <button 
+                onClick={() => navigate("/admin-dashboard")} // Route aap apne hisaab se change kar sakte hain
+                className="w-full mb-6 py-3.5 bg-gray-900 hover:bg-black text-[#FFB800] border-2 border-gray-800 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                <Crown size={16} /> Admin: Add Lessons
+              </button>
+            )}
+
             <div className="flex gap-3 mb-8">
               <button 
                 onClick={() => navigate("/community")} 

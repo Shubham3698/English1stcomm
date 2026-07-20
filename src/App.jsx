@@ -18,6 +18,7 @@ import FindVocab from "./pages/FindVocab";
 import EbookStore from "./pages/EbookStore";
 import InteractiveQuizPage from "./pages/InteractiveQuizPage";
 import VocabDeckPage from "./pages/VocabDeckPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // ✅ 1. Apna naya Lessons page import karo (path apne folder structure ke hisaab se check kar lena)
 import LessonsPage from "./pages/LessonsPage"; 
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="/ebook-store" element={<EbookStore />} />
           <Route path="/vocab-deck" element={<VocabDeckPage />} />
           <Route path="/interactive-quiz" element={<InteractiveQuizPage />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           
           {/* ✅ 3. Yahan par naya route add kar diya */}
           <Route path="/lessons" element={<LessonsPage />} />

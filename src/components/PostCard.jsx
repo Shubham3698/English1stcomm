@@ -213,7 +213,7 @@ export default function PostCard({
     const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
 
     return (
-      <div className="relative group w-full aspect-square sm:aspect-[4/5] bg-gray-50 overflow-hidden border-y border-gray-200" onDoubleClick={handleVote}>
+      <div className="relative group w-full bg-gray-50 border-y border-gray-100" onDoubleClick={handleVote}>
         
         <div className="absolute top-3 right-3 z-[2] bg-white/90 backdrop-blur-md border border-[#8B004A]/20 px-3 py-1 rounded-full pointer-events-none shadow-sm">
           <p className="text-[10px] font-black text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
@@ -230,12 +230,13 @@ export default function PostCard({
           onSwiper={(s) => (swiperRef.current = s)}
           modules={[Pagination]} 
           pagination={mediaItems.length > 1 ? { clickable: true } : false} 
+          autoHeight={true} // 🔥 MAgic Prop: Adjusets container height dynamically based on active image
           onSlideChange={(s) => {
             const item = mediaItems[s.activeIndex];
             if (item) setCurrentVocabIdx(item.vocabIndex);
             setPlayingIndex({}); 
           }}
-          className="w-full h-full"
+          className="w-full flex items-center justify-center"
         >
           {mediaItems.map((item, idx) => {
             let videoId = "";
@@ -248,9 +249,10 @@ export default function PostCard({
             const isPlaying = playingIndex[post._id] === idx;
 
             return (
-              <SwiperSlide key={idx} className="bg-gray-100 flex items-center justify-center">
+              <SwiperSlide key={idx} className="bg-gray-100 flex items-center justify-center w-full">
                 {(item?.type === 'video' || videoId) ? (
-                  <div className="w-full h-full relative bg-black">
+                  // 🔥 VIDEO WRAPPER (Compact Reels style)
+                  <div className="w-full aspect-[4/5] max-h-[550px] relative bg-black flex items-center justify-center">
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
                     ) : (
@@ -263,7 +265,14 @@ export default function PostCard({
                     )}
                   </div>
                 ) : (
-                  <img src={item?.url || post.image} className="w-full h-full object-cover sm:object-contain" alt="content" />
+                  // 🔥 IMAGE WRAPPER (Dynamic Natural Height based on Full Width)
+                  <div className="w-full bg-gray-50 flex items-center justify-center max-h-[600px]">
+                    <img 
+                      src={item?.url || post.image} 
+                      className="w-full h-auto max-h-[600px] object-contain object-center" 
+                      alt="content" 
+                    />
+                  </div>
                 )}
               </SwiperSlide>
             );
@@ -276,7 +285,7 @@ export default function PostCard({
   return (
     <div ref={cardRef} id={post._id} className="mb-8 mx-auto w-full max-w-[440px] bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] shadow-xl shadow-[#8B004A]/5 font-sans pb-4">
       
-      {/* 1. HEADER (Clean English Enthusiast Terminology + Badge) */}
+      {/* 1. HEADER */}
       <div className="flex items-center justify-between px-4 py-3 border-b-2 border-gray-50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8B004A] to-[#E01A76] flex items-center justify-center text-sm font-black text-white shadow-md">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import PostCard from "../components/PostCard"; 
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Loader2 } from "lucide-react"; // Icons for premium look
+import { Search, Loader2 } from "lucide-react"; 
 
 export default function CommunityPost() {
   const [dbPosts, setDbPosts] = useState([]);
@@ -84,30 +84,30 @@ export default function CommunityPost() {
   }, [dbPosts, searchQuery, activeFilter, userEmail]);
 
   return (
-    // Background updated to dark navy theme
-    <div className="flex justify-center bg-[#0b101a] min-h-screen font-sans overflow-x-hidden pb-24">
+    // Background updated to Light theme matching VocabPage
+    <div className="flex justify-center bg-[#F2EFE7] min-h-screen font-sans overflow-x-hidden pb-24">
       <div className="w-full max-w-[450px] relative">
         
-        {/* COMPACT ELITE HEADER - Dark Frosted Glass Effect */}
+        {/* COMPACT ELITE HEADER - Light Frosted Glass Effect */}
         <motion.div 
           initial={{ y: 0, opacity: 1 }}
           animate={{ y: showHeader ? 0 : -100, opacity: showHeader ? 1 : 0 }} 
           transition={{ type: "spring", stiffness: 140, damping: 20 }} 
           style={{ top: "64px" }} 
-          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#0b101a] via-[#0b101a]/90 to-transparent backdrop-blur-md pointer-events-none"
+          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#F2EFE7] via-[#F2EFE7]/90 to-transparent backdrop-blur-md pointer-events-none"
         >
-          <div className="bg-[#121c2d] rounded-2xl shadow-xl border border-blue-900/40 p-3 space-y-3 pointer-events-auto">
+          <div className="bg-white rounded-[1.5rem] shadow-xl shadow-[#8B004A]/5 border-[3px] border-[#8B004A]/10 p-3 space-y-3 pointer-events-auto">
             
             {/* Search Input */}
-            <div className="relative">
+            <div className="relative group">
               <input 
                 type="text"
                 placeholder="Search community hub..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#0b101a] border border-gray-800 rounded-xl py-2.5 px-10 text-xs font-bold tracking-wide outline-none focus:border-[#41ffd1]/50 focus:ring-1 focus:ring-[#41ffd1]/20 transition-all text-white placeholder-gray-500"
+                className="w-full bg-[#F2EFE7] border-2 border-gray-200 rounded-xl py-3 px-10 text-sm font-bold tracking-wide outline-none focus:bg-white focus:border-[#E01A76] focus:shadow-[0_0_15px_rgba(224,26,118,0.1)] transition-all text-gray-900 placeholder-gray-400"
               />
-              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
             </div>
 
             {/* Filter Tabs */}
@@ -116,10 +116,10 @@ export default function CommunityPost() {
                 <button
                   key={id}
                   onClick={() => setActiveFilter(id)}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-200 active:scale-95
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 active:scale-95 border-2
                     ${activeFilter === id 
-                      ? "bg-[#41ffd1] text-black shadow-[0_0_10px_rgba(65,255,209,0.2)]" 
-                      : "bg-[#1a2538] text-gray-400 border border-gray-800 hover:text-gray-200"}`}
+                      ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
+                      : "bg-white text-gray-500 border-gray-100 hover:text-[#8B004A] hover:border-[#8B004A]/30 hover:bg-[#8B004A]/5"}`}
                 >
                   {id}
                 </button>
@@ -129,7 +129,7 @@ export default function CommunityPost() {
         </motion.div>
 
         {/* LIST CONTENT */}
-        <div className="mt-[160px] px-3 space-y-4"> 
+        <div className="mt-[170px] px-3 space-y-6"> 
           {!loading && filteredPosts.map((post) => (
             <PostCard 
               key={post._id}
@@ -145,22 +145,22 @@ export default function CommunityPost() {
 
           {/* Empty State */}
           {filteredPosts.length === 0 && !loading && (
-            <div className="py-24 flex flex-col items-center justify-center text-center opacity-40">
-              <div className="bg-gray-800/50 p-4 rounded-full mb-3">
-                <Search className="w-8 h-8 text-gray-400" />
+            <div className="py-24 flex flex-col items-center justify-center text-center">
+              <div className="bg-white border-[3px] border-gray-100 shadow-sm p-5 rounded-full mb-4">
+                <Search className="w-8 h-8 text-[#8B004A] opacity-40" />
               </div>
-              <span className="font-black uppercase tracking-[0.15em] text-xs text-gray-300">
+              <span className="font-black uppercase tracking-[0.15em] text-xs text-gray-500">
                 No Signals Found
               </span>
-              <p className="text-[10px] text-gray-500 mt-1">Try adjusting your filters</p>
+              <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">Try adjusting your filters</p>
             </div>
           )}
 
           {/* Loading State */}
           {loading && (
-             <div className="py-24 flex flex-col items-center justify-center text-center">
-               <Loader2 className="w-8 h-8 text-[#41ffd1] animate-spin mb-3 opacity-80" />
-               <span className="animate-pulse font-black uppercase tracking-widest text-xs text-gray-400">
+             <div className="py-32 flex flex-col items-center justify-center text-center">
+               <Loader2 className="w-10 h-10 text-[#E01A76] animate-spin mb-4" />
+               <span className="animate-pulse font-black uppercase tracking-[0.2em] text-xs text-[#8B004A]">
                  Syncing Signals...
                </span>
              </div>

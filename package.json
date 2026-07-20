@@ -15,7 +15,7 @@
     "fabric": "^7.3.1",
     "firebase": "^12.12.1",
     "framer-motion": "^12.39.0",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.25.0",
     "react": "^19.2.5",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.5",
@@ -25,6 +25,8 @@
     "react-image-crop": "^11.0.10",
     "react-player": "^3.4.0",
     "react-router-dom": "^7.14.2",
+    "react-speech-recognition": "^4.0.1",
+    "regenerator-runtime": "^0.14.1",
     "sweetalert2": "^11.26.24",
     "swiper": "^12.1.4",
     "tesseract.js": "^7.0.0"

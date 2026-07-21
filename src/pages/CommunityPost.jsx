@@ -13,8 +13,12 @@ export default function CommunityPost() {
 
   // 🔥 UI TOGGLES
   const [showFilterSheet, setShowFilterSheet] = useState(false); 
-  const [showHeader, setShowHeader] = useState(true);
-  const [isManualOverride, setIsManualOverride] = useState(false); // Naya state button click ke liye
+  
+  // 🔥 MASTER SCROLL STATE
+  // "expanded" = Pura header khula hai
+  // "hidden"   = Niche scroll kiya, sab chhip gaya
+  // "peek"     = Upar scroll kiya, sirf handle 4px aake ATAK GAYA!
+  const [uiState, setUiState] = useState("expanded");
 
   // 🔥 STATES FOR GROUPS / SQUADS
   const [activeView, setActiveView] = useState("community"); 
@@ -26,25 +30,24 @@ export default function CommunityPost() {
 
   const { scrollY } = useScroll();
 
-  // 🚀 Header Animation Logic
+  // 🚀 Scroll Engine (Jaisa aapne bataya - Atakne wala logic)
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
     const diff = latest - previous;
     
-    // Scroll down
-    if (diff > 10) {
-        setShowHeader(false);
-        setIsManualOverride(false); // Scroll karte hi manual open reset ho jayega
-    } 
-    // Scroll up
-    else if (diff < -10) {
-        setShowHeader(true);
-        setIsManualOverride(false);
-    }
-    // Top of page
+    // Top pe aane par sab khol do
     if (latest < 20) {
-        setShowHeader(true);
-        setIsManualOverride(false);
+        setUiState("expanded");
+        return;
+    }
+
+    // Niche Scroll -> Sab gayab
+    if (diff > 10 && uiState !== "hidden") {
+        setUiState("hidden"); 
+    } 
+    // Upar Scroll -> Handle latkao (Peek state)
+    else if (diff < -10 && uiState === "hidden") {
+        setUiState("peek");
     }
   });
 
@@ -112,40 +115,40 @@ export default function CommunityPost() {
     });
   }, [dbPosts, searchQuery, activeFilter, userEmail]);
 
-  const activeSquadPosts = useMemo(() => {
-    const currentSquad = squads.find(s => s._id === activeSquadId);
-    if(!currentSquad) return [];
-    return dbPosts.filter(post => currentSquad.members.includes(post.userEmail));
-  }, [dbPosts, activeSquadId, squads]);
-
   const handleApplyFilter = (filterId) => {
     setActiveFilter(filterId);
     setShowFilterSheet(false);
   };
 
-  // Determine if header should be visible based on scroll OR button click
-  const isHeaderVisible = showHeader || isManualOverride;
-
   return (
     <div className="flex justify-center bg-[#F2EFE7] min-h-screen font-sans overflow-x-hidden pb-24 relative">
       <div className="w-full max-w-[450px] relative">
         
-        {/* 🔥 PULL DOWN TAB (Jaisa screenshot mein hai) 🔥 */}
+        {/* 🔥 THE "ATAK GAYA" PEEK TAB (Sirf 4px latkega) 🔥 */}
         <motion.button
+          // top-[64px] taki ye navbar ke niche se nikle
+          className="fixed top-[64px] left-1/2 -translate-x-1/2 z-[60] bg-white border-b-[3px] border-x-[3px] border-[#8B004A]/20 px-8 py-1 rounded-b-[1rem] shadow-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 active:scale-95"
           initial={{ y: -50 }}
-          animate={{ y: !isHeaderVisible ? 0 : -50 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          onClick={() => setIsManualOverride(true)}
-          className="fixed top-0 left-1/2 -translate-x-1/2 z-[60] bg-white border-b-2 border-x-2 border-[#8B004A]/10 px-6 py-1.5 rounded-b-[1rem] shadow-md shadow-[#8B004A]/5 hover:bg-gray-50 transition-colors"
+          // Agar 'peek' state hai, toh sirf 4px niche aake atak jayega
+          animate={{ y: uiState === "peek" ? 4 : -50 }}
+          // 🔥 MAGIC: Yeh physics usko ekdam "thud" karke atakne wala feel degi
+          transition={{ type: "spring", stiffness: 600, damping: 12 }} 
+          onClick={() => setUiState("expanded")}
         >
-          <ChevronDown className="w-5 h-5 text-[#8B004A]" />
+          {/* Chota sa grip line taaki pull tab jaisa lage */}
+          <div className="w-6 h-1 bg-gray-200 rounded-full mb-0.5"></div>
+          <ChevronDown className="w-4 h-4 text-[#8B004A]" />
         </motion.button>
 
-        {/* COMPACT ELITE HEADER */}
+        {/* 🔥 MAIN HEADER 🔥 */}
         <motion.div 
           initial={{ y: 0, opacity: 1 }}
-          animate={{ y: isHeaderVisible ? 0 : -150, opacity: isHeaderVisible ? 1 : 0 }} 
-          transition={{ type: "spring", stiffness: 140, damping: 20 }} 
+          // Agar khula hai to 0, varna poora upar (-200px) gayab
+          animate={{ 
+            y: uiState === "expanded" ? 0 : -200, 
+            opacity: uiState === "expanded" ? 1 : 0 
+          }} 
+          transition={{ type: "spring", stiffness: 180, damping: 22 }} 
           style={{ top: "64px" }} 
           className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#F2EFE7] via-[#F2EFE7]/90 to-transparent backdrop-blur-md pointer-events-none"
         >
@@ -181,7 +184,6 @@ export default function CommunityPost() {
                   <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
                 </div>
                 
-                {/* Filter Trigger Button */}
                 <button
                   onClick={() => setShowFilterSheet(true)}
                   className={`relative flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-all duration-300 active:scale-95 ${
@@ -222,13 +224,11 @@ export default function CommunityPost() {
         </motion.div>
 
         {/* LIST CONTENT */}
-        <div className="px-3 space-y-6 pt-[155px]"> 
-          {/* COMMUNITY VIEW */}
+        <div className="px-3 space-y-6 pt-[165px]"> 
           {activeView === "community" && !loading && filteredPosts.map((post) => (
             <PostCard key={post._id} post={post} userEmail={userEmail} isPremiumUser={isPremiumUser} activeIndex={activeIndex} setActiveIndex={setActiveIndex} onRefresh={() => fetchPosts(true)} API_URL={API_URL} />
           ))}
 
-          {/* SQUADS VIEW */}
           {activeView === "squads" && (
             <div className="animate-in fade-in duration-500">
               {isCreatingSquad ? (
@@ -272,7 +272,7 @@ export default function CommunityPost() {
           )}
         </div>
 
-        {/* BOTTOM SHEET FOR FILTERS */}
+        {/* BOTTOM SHEET FOR FILTERS (Filter pe click karne ke liye as it is!) */}
         <AnimatePresence>
           {showFilterSheet && (
             <>

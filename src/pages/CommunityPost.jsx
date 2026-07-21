@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import PostCard from "../components/PostCard"; 
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Loader2, Globe, Users, UserPlus, Plus, Send } from "lucide-react"; 
-import toast from 'react-hot-toast'; // Assuming you use this for notifications
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
+import { Search, Loader2, Globe, Users, UserPlus, Plus, Send, Filter } from "lucide-react"; 
+import toast from 'react-hot-toast'; 
 
 export default function CommunityPost() {
   const [dbPosts, setDbPosts] = useState([]);
@@ -11,9 +11,12 @@ export default function CommunityPost() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeIndex, setActiveIndex] = useState(null);
 
-  // 🔥 NEW STATES FOR GROUPS / SQUADS
-  const [activeView, setActiveView] = useState("community"); // 'community' | 'squads'
-  const [squads, setSquads] = useState([]); // Array of groups
+  // 🔥 UI TOGGLES
+  const [showFilters, setShowFilters] = useState(false); // Controls the collapsible filter menu
+
+  // 🔥 STATES FOR GROUPS / SQUADS
+  const [activeView, setActiveView] = useState("community"); 
+  const [squads, setSquads] = useState([]); 
   const [activeSquadId, setActiveSquadId] = useState(null);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [isCreatingSquad, setIsCreatingSquad] = useState(false);
@@ -26,7 +29,10 @@ export default function CommunityPost() {
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
     const diff = latest - previous;
-    if (diff > 10) setShowHeader(false); 
+    if (diff > 10) {
+        setShowHeader(false);
+        setShowFilters(false); // Auto-hide filters on scroll down for cleaner UX
+    } 
     else if (diff < -10) setShowHeader(true);
     if (latest < 20) setShowHeader(true);
   });
@@ -51,10 +57,8 @@ export default function CommunityPost() {
     }
   }, [API_URL, activeView]);
 
-  // 🔥 MOCK FUNCTION: Fetch User's Squads (Replace with real API)
+  // Fetch User's Squads (Mock)
   const fetchSquads = useCallback(async () => {
-    // TODO: Create an endpoint like `/api/groups/my-groups?email=${userEmail}`
-    // Yeh abhi UI testing ke liye dummy data hai
     setSquads([
       { _id: "g1", name: "IELTS Prep Squad", members: ["you@gmail.com", "rahul@gmail.com"] },
       { _id: "g2", name: "Daily Vocab Masters", members: ["you@gmail.com", "priya@gmail.com"] }
@@ -103,19 +107,14 @@ export default function CommunityPost() {
     });
   }, [dbPosts, searchQuery, activeFilter, userEmail]);
 
-  // 🔥 SQUAD LOGIC: Filter posts specifically shared in the active group (Mock Logic)
   const activeSquadPosts = useMemo(() => {
-    // Real logic me aap API se uss specific group ke posts mangaoge
-    // Yaha main sirf dummy dikha raha hu ki jo posts active squad ke members ne banayi hai, wo dikhegi
     const currentSquad = squads.find(s => s._id === activeSquadId);
     if(!currentSquad) return [];
     return dbPosts.filter(post => currentSquad.members.includes(post.userEmail));
   }, [dbPosts, activeSquadId, squads]);
 
-  // Handlers for Group Actions
   const handleCreateSquad = () => {
     if(!newSquadName) return toast.error("Enter squad name!");
-    // TODO: Hit Backend API to create group
     toast.success(`${newSquadName} created!`);
     setIsCreatingSquad(false);
     setNewSquadName("");
@@ -123,7 +122,6 @@ export default function CommunityPost() {
 
   const handleAddMember = () => {
     if(!newMemberEmail) return toast.error("Enter an email!");
-    // TODO: Hit Backend API to add user by email
     toast.success(`${newMemberEmail} added to squad!`);
     setNewMemberEmail("");
   };
@@ -140,9 +138,9 @@ export default function CommunityPost() {
           style={{ top: "64px" }} 
           className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#F2EFE7] via-[#F2EFE7]/90 to-transparent backdrop-blur-md pointer-events-none"
         >
-          <div className="bg-white rounded-[1.5rem] shadow-xl shadow-[#8B004A]/5 border-[3px] border-[#8B004A]/10 p-3 space-y-3 pointer-events-auto">
+          <div className="bg-white rounded-[1.5rem] shadow-xl shadow-[#8B004A]/5 border-[3px] border-[#8B004A]/10 p-3 space-y-3 pointer-events-auto transition-all duration-300">
             
-            {/* 🔥 VIEW TOGGLE (Community vs Squads) */}
+            {/* 🔥 VIEW TOGGLE */}
             <div className="flex bg-gray-100/80 p-1 rounded-xl border border-gray-200">
               <button 
                 onClick={() => setActiveView("community")}
@@ -158,37 +156,64 @@ export default function CommunityPost() {
               </button>
             </div>
 
-            {/* ONLY SHOW SEARCH & FILTERS IF IN COMMUNITY VIEW */}
+            {/* 🔥 NEW COMPACT SEARCH & FILTER BAR */}
             {activeView === "community" && (
-              <>
-                <div className="relative group">
-                  <input 
-                    type="text"
-                    placeholder="Search community hub..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-[#F2EFE7] border-2 border-gray-200 rounded-xl py-2.5 px-10 text-sm font-bold tracking-wide outline-none focus:bg-white focus:border-[#E01A76] focus:shadow-[0_0_15px_rgba(224,26,118,0.1)] transition-all text-gray-900 placeholder-gray-400"
-                  />
-                  <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="relative group flex-1">
+                    <input 
+                      type="text"
+                      placeholder="Search hub..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-[#F2EFE7] border-2 border-gray-200 rounded-xl py-2.5 px-10 text-sm font-bold tracking-wide outline-none focus:bg-white focus:border-[#E01A76] focus:shadow-[0_0_15px_rgba(224,26,118,0.1)] transition-all text-gray-900 placeholder-gray-400"
+                    />
+                    <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
+                  </div>
+                  
+                  {/* Filter Toggle Button */}
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className={`flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-all duration-300 active:scale-95 ${
+                      showFilters || activeFilter !== "all" 
+                      ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
+                      : "bg-[#F2EFE7] text-gray-400 border-gray-200 hover:text-[#8B004A]"
+                    }`}
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
                 </div>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                  {["all", "voted", "unvoted", "liked"].map((id) => (
-                    <button
-                      key={id}
-                      onClick={() => setActiveFilter(id)}
-                      className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 active:scale-95 border-2
-                        ${activeFilter === id 
-                          ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
-                          : "bg-white text-gray-500 border-gray-100 hover:text-[#8B004A] hover:border-[#8B004A]/30 hover:bg-[#8B004A]/5"}`}
+
+                {/* Collapsible Filter Chips */}
+                <AnimatePresence>
+                  {showFilters && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
                     >
-                      {id}
-                    </button>
-                  ))}
-                </div>
-              </>
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar pt-1 pb-1">
+                        {["all", "voted", "unvoted", "liked"].map((id) => (
+                          <button
+                            key={id}
+                            onClick={() => setActiveFilter(id)}
+                            className={`flex-shrink-0 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 active:scale-95 border-2
+                              ${activeFilter === id 
+                                ? "bg-[#8B004A] text-white border-[#8B004A] shadow-sm" 
+                                : "bg-white text-gray-500 border-gray-100 hover:text-[#8B004A] hover:bg-[#8B004A]/5"}`}
+                          >
+                            {id}
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
 
-            {/* 🔥 SQUADS HEADER UI */}
+            {/* SQUADS HEADER UI */}
             {activeView === "squads" && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 items-center">
                 <button onClick={() => setIsCreatingSquad(!isCreatingSquad)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border-2 border-dashed border-[#8B004A]/40 text-[#8B004A] hover:bg-[#8B004A]/10 transition-all">
@@ -211,8 +236,8 @@ export default function CommunityPost() {
           </div>
         </motion.div>
 
-        {/* LIST CONTENT */}
-        <div className={`px-3 space-y-6 ${activeView === "community" ? "mt-[230px]" : "mt-[170px]"}`}> 
+        {/* LIST CONTENT - Adjusted Top Margin */}
+        <div className="px-3 space-y-6 pt-[180px]"> 
           
           {/* COMMUNITY VIEW */}
           {activeView === "community" && !loading && filteredPosts.map((post) => (

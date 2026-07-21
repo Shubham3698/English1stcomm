@@ -11,7 +11,8 @@ import {
   Upload, 
   ChevronDown,
   Compass,
-  Swords
+  Swords,
+  Share2 // 🔥 New Icon for Sharing
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -29,6 +30,9 @@ export default function VocabPage() {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   
+  // 🔥 Flashcard State for Active Recall
+  const [flippedCards, setFlippedCards] = useState({});
+
   // UX State for context badge
   const [contextBadge, setContextBadge] = useState("Active Target");
 
@@ -38,8 +42,9 @@ export default function VocabPage() {
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
 
-  // Custom Image Upload
+  // Custom Image Upload & Community Sharing
   const [isUploading, setIsUploading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false); // 🔥 New state for community upload
   const fileInputRef = useRef(null);
 
   const [userEmail, setUserEmail] = useState("");
@@ -270,6 +275,65 @@ export default function VocabPage() {
     }
   };
 
+  // 🔥 NEW FUNCTION: Share directly to Community
+// 🔥 NEW FUNCTION: Share directly to Community (Bulletproof Version)
+  const handleShareToCommunity = async () => {
+    if (!userEmail || userEmail === "guest_user@gmail.com") {
+      return toast.error("Please login to share with the community! 🚫");
+    }
+    if (!activeWord || !meaning) {
+      return toast.error("No word data to share!");
+    }
+
+    setIsSharing(true);
+    
+    const data = new FormData();
+    data.append("userEmail", userEmail);
+    data.append("title", `Lexicon Entry: ${activeWord.toUpperCase()}`); 
+    
+    // 🔥 Root level par bhi data bhej rahe hain for backend schema safety
+    data.append("word", activeWord);
+    data.append("meaning", meaning);
+    data.append("sentence", sentences || "");
+    if (imageSrc) {
+      data.append("image", imageSrc); // <-- BACKEND KO DIRECT IMAGE BHEJI
+    }
+
+    const vocabData = [{
+      word: activeWord,
+      meaning: meaning,
+      sentence: sentences || "",
+      media: imageSrc ? [{ type: 'image', url: imageSrc }] : [] 
+    }];
+    data.append("vocabData", JSON.stringify(vocabData));
+
+    if (imageSrc) {
+      const mediaMetadata = [{
+        type: 'image',
+        url: imageSrc,   
+        value: imageSrc,
+        mode: 'url',
+        vocabIndex: 0
+      }];
+      data.append("mediaMetadata", JSON.stringify(mediaMetadata));
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/create`, {
+        method: "POST",
+        body: data
+      });
+      if (res.ok) {
+        toast.success("Word Shared to Community! 🌍✨");
+      } else {
+        toast.error("Failed to share word.");
+      }
+    } catch (e) {
+      toast.error("Network Error! Could not share.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
   const loadFromHistoryCard = (item, isSilent = false) => {
     setActiveWord(item.word);
     setPartOfSpeech(item.partOfSpeech || "Vocabulary");
@@ -293,16 +357,49 @@ export default function VocabPage() {
     }
   };
 
+  const toggleFlip = (id) => {
+    setFlippedCards((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
 
   return (
     <>
-      {/* 🚀 TARGETED FONT INJECTION */}
+      {/* 🚀 TARGETED FONT & FLASHCARD INJECTION */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+          
           .font-playful {
             font-family: 'Kalam', cursive !important;
+          }
+
+          /* Active Recall 3D Flip Effects */
+          .flip-card {
+            perspective: 1000px;
+          }
+          .flip-card-inner {
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+          }
+          .flip-card-flipped {
+            transform: rotateY(180deg);
+          }
+          .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+          }
+          .flip-card-back {
+            transform: rotateY(180deg);
+          }
+          .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
         `}
       </style>
@@ -355,7 +452,6 @@ export default function VocabPage() {
                   <Compass size={12} strokeWidth={3} /> PREMIUM NODE
                 </span>
               </div>
-              {/* PLAYFUL FONT APPLIED ONLY TO MAIN TITLE */}
               <h1 className="text-4xl sm:text-5xl font-bold text-[#8B004A] tracking-wide drop-shadow-sm break-words font-playful">Vocab Mastery</h1>
               <p className="text-gray-500 font-black text-xs mt-1.5 uppercase tracking-[0.2em] opacity-80 break-words">AI-Driven Structural Lexicon</p>
             </div>
@@ -377,52 +473,69 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* HISTORY DROPDOWN PANEL */}
+          {/* HISTORY DROPDOWN PANEL - Now with Active Recall Flashcards */}
           <div className={`w-full grid transition-all duration-500 ease-in-out ${showHistory ? 'grid-rows-[1fr] opacity-100 mb-8 mt-2' : 'grid-rows-[0fr] opacity-0 mb-0 mt-0'}`}>
             <div className="overflow-hidden">
               <div className="bg-white border-[3px] border-[#8B004A]/20 rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#8B004A]/10 relative w-full mt-1">
                 <div className="absolute top-0 left-0 w-full h-1.5 bg-[#8B004A]"></div>
-                <h4 className="text-xs font-black text-gray-400 uppercase mb-4 tracking-[0.2em] break-words">Your Word Arsenal</h4>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] break-words">Your Flashcards</h4>
+                  <span className="text-[9px] text-[#E01A76] font-bold uppercase tracking-widest bg-[#E01A76]/10 px-2 py-1 rounded-md">
+                    Tap cards to recall
+                  </span>
+                </div>
+
                 {history.length === 0 ? (
                   <p className="text-center text-sm font-black text-gray-400 py-6 uppercase tracking-wider">No words discovered yet.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar pb-2">
                     {history.map((item) => (
-                      <div
-                        key={item._id}
-                        className="bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 text-left transition-all group shadow-sm hover:shadow-md w-full flex flex-col overflow-hidden"
-                      >
-                        <div 
-                          className="flex-1 cursor-pointer mb-3" 
-                          onClick={() => loadFromHistoryCard(item)}
+                      <div key={item._id} className="flip-card w-full h-[140px] group">
+                        <div
+                          className={`flip-card-inner w-full h-full relative cursor-pointer ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}
+                          onClick={() => toggleFlip(item._id)}
                         >
-                          <div className="text-gray-900 text-sm font-black truncate group-hover:text-[#E01A76] tracking-wide w-full">
-                            {item.word} {item.imageUrl && "🖼️"}
+                          {/* FRONT OF CARD: English Word */}
+                          <div className="flip-card-front absolute w-full h-full bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
+                            <span className="text-gray-900 text-lg font-black group-hover:text-[#E01A76] tracking-wide text-center w-full truncate">
+                              {item.word} {item.imageUrl && "🖼️"}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
+                              Tap to Recall
+                            </span>
                           </div>
-                          <div className="text-[10px] font-bold text-gray-500 truncate mt-1.5 tracking-wider w-full">
-                            {item.meaning}
-                          </div>
-                        </div>
 
-                        <div className="flex items-center gap-2 mt-auto pt-3 border-t-2 border-gray-200">
-                           <button
-                             onClick={(e) => { 
-                               e.stopPropagation(); 
-                               loadFromHistoryCard(item); 
-                             }}
-                             className="flex-1 bg-white hover:bg-[#8B004A] text-[#8B004A] hover:text-white border border-gray-200 hover:border-transparent py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
-                           >
-                             <Search size={12} strokeWidth={3} /> Analyze
-                           </button>
-                           <button
-                             onClick={(e) => { 
-                               e.stopPropagation(); 
-                               navigate('/find-vocab'); 
-                             }}
-                             className="flex-1 bg-gray-900 hover:bg-[#E01A76] text-white py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
-                           >
-                             <Swords size={12} strokeWidth={3} /> Practice
-                           </button>
+                          {/* BACK OF CARD: Hindi Meaning & Actions */}
+                          <div className="flip-card-back absolute w-full h-full bg-white border-2 border-[#8B004A]/30 rounded-2xl p-3 flex flex-col shadow-md">
+                            <div className="flex-1 flex flex-col items-center justify-center overflow-hidden w-full mb-1">
+                              <span className="text-[11px] font-black text-[#8B004A] uppercase tracking-widest mb-1">Meaning</span>
+                              <span className="text-[13px] font-bold text-gray-800 text-center line-clamp-3 leading-tight w-full">
+                                {item.meaning}
+                              </span>
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex items-center gap-1.5 mt-auto pt-2 border-t border-gray-100">
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  loadFromHistoryCard(item); 
+                                }}
+                                className="flex-1 bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white border border-transparent py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                              >
+                                <Search size={10} strokeWidth={3} /> Read
+                              </button>
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  navigate('/find-vocab'); 
+                                }}
+                                className="flex-1 bg-gray-900 hover:bg-[#E01A76] text-white py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                              >
+                                <Swords size={10} strokeWidth={3} /> Test
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -611,13 +724,26 @@ export default function VocabPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-center sm:justify-end border-t-2 border-gray-100 mt-8 pt-5 w-full">
+                {/* 🔥 ACTION BUTTONS: Alternative Context & Share to Community */}
+                <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 border-t-2 border-gray-100 mt-8 pt-5 w-full">
                   <button
                     onClick={() => handleSearchWord(activeWord, true)}
                     disabled={loading}
                     className="text-[10px] bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-sm active:scale-95 w-full sm:w-auto"
                   >
                     <RefreshCw size={14} strokeWidth={2.5} className="flex-shrink-0" /> Alternative Context
+                  </button>
+
+                  <button
+                    onClick={handleShareToCommunity}
+                    disabled={isSharing}
+                    className="text-[10px] bg-[#8B004A] hover:bg-[#E01A76] text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-md shadow-[#8B004A]/30 active:scale-95 w-full sm:w-auto"
+                  >
+                    {isSharing ? (
+                      <><RefreshCw size={14} className="animate-spin flex-shrink-0" /> Sharing...</>
+                    ) : (
+                      <><Share2 size={14} strokeWidth={2.5} className="flex-shrink-0" /> Share to Community</>
+                    )}
                   </button>
                 </div>
 

@@ -74,8 +74,9 @@ export default function PostCard({
     deck.forEach((vocab, vIdx) => {
       if (vocab.media && vocab.media.length > 0) {
         vocab.media.forEach((m) => {
-          if(m.url) {
-            items.push({ ...m, vocabIndex: vIdx, word: vocab.word });
+          const mediaUrl = m.url || m.value; // 🔥 FIX HERE: Add m.value as fallback
+          if(mediaUrl) {
+            items.push({ ...m, url: mediaUrl, vocabIndex: vIdx, word: vocab.word });
             map.push(vIdx);
           }
         });
@@ -230,7 +231,7 @@ export default function PostCard({
           onSwiper={(s) => (swiperRef.current = s)}
           modules={[Pagination]} 
           pagination={mediaItems.length > 1 ? { clickable: true } : false} 
-          autoHeight={true} // 🔥 MAgic Prop: Adjusets container height dynamically based on active image
+          autoHeight={true} 
           onSlideChange={(s) => {
             const item = mediaItems[s.activeIndex];
             if (item) setCurrentVocabIdx(item.vocabIndex);
@@ -251,7 +252,7 @@ export default function PostCard({
             return (
               <SwiperSlide key={idx} className="bg-gray-100 flex items-center justify-center w-full">
                 {(item?.type === 'video' || videoId) ? (
-                  // 🔥 VIDEO WRAPPER (Compact Reels style)
+                  // 🔥 VIDEO WRAPPER
                   <div className="w-full aspect-[4/5] max-h-[550px] relative bg-black flex items-center justify-center">
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
@@ -265,7 +266,7 @@ export default function PostCard({
                     )}
                   </div>
                 ) : (
-                  // 🔥 IMAGE WRAPPER (Dynamic Natural Height based on Full Width)
+                  // 🔥 IMAGE WRAPPER (Fallback logic is now working perfectly)
                   <div className="w-full bg-gray-50 flex items-center justify-center max-h-[600px]">
                     <img 
                       src={item?.url || post.image} 
@@ -307,7 +308,6 @@ export default function PostCard({
           </div>
         </div>
         
-        {/* 🔥 BADGE RESTORED 🔥 */}
         <div className="px-2 py-1 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded text-[9px] text-[#8B004A] font-black tracking-wider uppercase">
           {post.badgeName || "NORMAL"}
         </div>

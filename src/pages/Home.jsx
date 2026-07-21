@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import PostCard from "../components/PostCard"; 
 import { 
   Search, 
   History, 
@@ -12,7 +13,10 @@ import {
   ChevronDown,
   Compass,
   Swords,
-  Share2 // 🔥 New Icon for Sharing
+  Share2,
+  Globe, 
+  Loader2,
+  BookOpen // 🔥 Added BookOpen Icon for Tabs
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -44,11 +48,20 @@ export default function VocabPage() {
 
   // Custom Image Upload & Community Sharing
   const [isUploading, setIsUploading] = useState(false);
-  const [isSharing, setIsSharing] = useState(false); // 🔥 New state for community upload
+  const [isSharing, setIsSharing] = useState(false); 
   const fileInputRef = useRef(null);
 
   const [userEmail, setUserEmail] = useState("");
+  const isPremiumUser = localStorage.getItem("eng_isPremium") === "true"; 
   const isInitialized = useRef(false);
+
+  // 🔥 NEW STATES FOR COMMUNITY POSTS INTEGRATION 🔥
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [isFetchingPosts, setIsFetchingPosts] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(null);
+
+  // 🔥 RESULT VIEW TAB STATE ("ai" | "posts") 🔥
+  const [resultView, setResultView] = useState("ai");
 
   // 🔥 PLACEHOLDER TYPING ANIMATION STATES
   const [placeholderText, setPlaceholderText] = useState("");
@@ -57,17 +70,10 @@ export default function VocabPage() {
   const typingSpeed = isDeleting ? 60 : 120;
   
   const classicWords = [
-  "Strategy...", 
-  "Objective...", 
-  "Efficiency...", 
-  "Collaboration...", 
-  "Innovation...", 
-  "Optimization...", 
-  "Productivity...", 
-  "Leadership...", 
-  "Execution...", 
-  "Development..."
-];
+    "Strategy...", "Objective...", "Efficiency...", "Collaboration...", 
+    "Innovation...", "Optimization...", "Productivity...", "Leadership...", 
+    "Execution...", "Development..."
+  ];
 
   useEffect(() => {
     let timer = setTimeout(() => {
@@ -81,7 +87,7 @@ export default function VocabPage() {
       );
 
       if (!isDeleting && placeholderText === fullText) {
-        setTimeout(() => setIsDeleting(true), 1500); // Pause when word completes
+        setTimeout(() => setIsDeleting(true), 1500); 
       } else if (isDeleting && placeholderText === "") {
         setIsDeleting(false);
         setLoopNum(loopNum + 1);
@@ -92,8 +98,7 @@ export default function VocabPage() {
   }, [placeholderText, isDeleting, loopNum]);
 
 
-  const API_URL =
-    window.location.hostname === "localhost"
+  const API_URL = window.location.hostname === "localhost"
       ? "http://localhost:3000"
       : "https://serdeptry1st.onrender.com";
 
@@ -114,6 +119,29 @@ export default function VocabPage() {
     utterance.pitch = 1;
     utterance.rate = 0.85;
     window.speechSynthesis.speak(utterance);
+  };
+
+  const fetchRelatedPosts = async (searchWord) => {
+    if (!searchWord) return;
+    setIsFetchingPosts(true);
+    setRelatedPosts([]); 
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/all`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data)) {
+        const query = searchWord.toLowerCase().trim();
+        const matchedPosts = data.filter(post => {
+          return post.title?.toLowerCase().includes(query) || 
+                 post.word?.toLowerCase().includes(query) ||
+                 (Array.isArray(post.vocabData) && post.vocabData.some(v => v.word?.toLowerCase().includes(query)));
+        });
+        setRelatedPosts(matchedPosts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch related community posts:", err);
+    } finally {
+      setIsFetchingPosts(false);
+    }
   };
 
   const fetchHistoryFromDB = async (isFirstLoad = false) => {
@@ -229,6 +257,7 @@ export default function VocabPage() {
 
     setLoading(true);
     setShowHistory(false);
+    setResultView("ai"); // 🔥 Reset view to AI Read when searching
     if (!isSilent) setContextBadge("Analyzed Target");
 
     try {
@@ -257,6 +286,7 @@ export default function VocabPage() {
         
         setWord("");
         fetchHistoryFromDB();
+        fetchRelatedPosts(resData.data.word);
 
         if (resData.data.imageUrl) {
             setImageSrc(resData.data.imageUrl);
@@ -275,8 +305,6 @@ export default function VocabPage() {
     }
   };
 
-  // 🔥 NEW FUNCTION: Share directly to Community
-// 🔥 NEW FUNCTION: Share directly to Community (Bulletproof Version)
   const handleShareToCommunity = async () => {
     if (!userEmail || userEmail === "guest_user@gmail.com") {
       return toast.error("Please login to share with the community! 🚫");
@@ -291,12 +319,11 @@ export default function VocabPage() {
     data.append("userEmail", userEmail);
     data.append("title", `Lexicon Entry: ${activeWord.toUpperCase()}`); 
     
-    // 🔥 Root level par bhi data bhej rahe hain for backend schema safety
     data.append("word", activeWord);
     data.append("meaning", meaning);
     data.append("sentence", sentences || "");
     if (imageSrc) {
-      data.append("image", imageSrc); // <-- BACKEND KO DIRECT IMAGE BHEJI
+      data.append("image", imageSrc); 
     }
 
     const vocabData = [{
@@ -325,6 +352,8 @@ export default function VocabPage() {
       });
       if (res.ok) {
         toast.success("Word Shared to Community! 🌍✨");
+        fetchRelatedPosts(activeWord);
+        setResultView("posts"); // 🔥 Move user directly to "See Posts" tab after successful share
       } else {
         toast.error("Failed to share word.");
       }
@@ -334,6 +363,7 @@ export default function VocabPage() {
       setIsSharing(false);
     }
   };
+
   const loadFromHistoryCard = (item, isSilent = false) => {
     setActiveWord(item.word);
     setPartOfSpeech(item.partOfSpeech || "Vocabulary");
@@ -343,11 +373,14 @@ export default function VocabPage() {
     setAntonyms(item.antonyms);
     setSentences(item.sentences);
     setShowHistory(false);
+    setResultView("ai"); // 🔥 Reset view to AI Read when loading from history
     
     if (!isSilent) {
       setContextBadge("Historical Target");
       handlePronounce(item.word);
     }
+
+    fetchRelatedPosts(item.word);
     
     if (item.imageUrl) {
         setImageSrc(item.imageUrl);
@@ -368,7 +401,6 @@ export default function VocabPage() {
 
   return (
     <>
-      {/* 🚀 TARGETED FONT & FLASHCARD INJECTION */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
@@ -377,24 +409,17 @@ export default function VocabPage() {
             font-family: 'Kalam', cursive !important;
           }
 
-          /* Active Recall 3D Flip Effects */
-          .flip-card {
-            perspective: 1000px;
-          }
+          .flip-card { perspective: 1000px; }
           .flip-card-inner {
             transform-style: preserve-3d;
             transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
           }
-          .flip-card-flipped {
-            transform: rotateY(180deg);
-          }
+          .flip-card-flipped { transform: rotateY(180deg); }
           .flip-card-front, .flip-card-back {
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
           }
-          .flip-card-back {
-            transform: rotateY(180deg);
-          }
+          .flip-card-back { transform: rotateY(180deg); }
           .line-clamp-3 {
             display: -webkit-box;
             -webkit-line-clamp: 3;
@@ -404,7 +429,6 @@ export default function VocabPage() {
         `}
       </style>
 
-      {/* REVERTED TO STANDARD TAILWIND SANS-SERIF FOR BODY */}
       <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-sans transition-colors duration-500 pb-28 overflow-x-hidden w-full">
         <Toaster 
           position="top-center" 
@@ -473,7 +497,7 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* HISTORY DROPDOWN PANEL - Now with Active Recall Flashcards */}
+          {/* HISTORY DROPDOWN PANEL */}
           <div className={`w-full grid transition-all duration-500 ease-in-out ${showHistory ? 'grid-rows-[1fr] opacity-100 mb-8 mt-2' : 'grid-rows-[0fr] opacity-0 mb-0 mt-0'}`}>
             <div className="overflow-hidden">
               <div className="bg-white border-[3px] border-[#8B004A]/20 rounded-3xl p-5 sm:p-6 shadow-xl shadow-[#8B004A]/10 relative w-full mt-1">
@@ -495,7 +519,6 @@ export default function VocabPage() {
                           className={`flip-card-inner w-full h-full relative cursor-pointer ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}
                           onClick={() => toggleFlip(item._id)}
                         >
-                          {/* FRONT OF CARD: English Word */}
                           <div className="flip-card-front absolute w-full h-full bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
                             <span className="text-gray-900 text-lg font-black group-hover:text-[#E01A76] tracking-wide text-center w-full truncate">
                               {item.word} {item.imageUrl && "🖼️"}
@@ -504,8 +527,6 @@ export default function VocabPage() {
                               Tap to Recall
                             </span>
                           </div>
-
-                          {/* BACK OF CARD: Hindi Meaning & Actions */}
                           <div className="flip-card-back absolute w-full h-full bg-white border-2 border-[#8B004A]/30 rounded-2xl p-3 flex flex-col shadow-md">
                             <div className="flex-1 flex flex-col items-center justify-center overflow-hidden w-full mb-1">
                               <span className="text-[11px] font-black text-[#8B004A] uppercase tracking-widest mb-1">Meaning</span>
@@ -513,8 +534,6 @@ export default function VocabPage() {
                                 {item.meaning}
                               </span>
                             </div>
-                            
-                            {/* Action Buttons */}
                             <div className="flex items-center gap-1.5 mt-auto pt-2 border-t border-gray-100">
                               <button
                                 onClick={(e) => { 
@@ -545,8 +564,8 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* 🔥 SINGLE LINE SEARCH BAR WITH ANIMATION 🔥 */}
-          <div className="w-full mb-10 group">
+          {/* SEARCH BAR */}
+          <div className="w-full mb-6 group">
             <div className="relative flex items-center bg-white border-[3px] border-[#8B004A]/20 hover:border-[#8B004A]/40 focus-within:border-[#E01A76] rounded-full p-1.5 sm:p-2 shadow-sm transition-all duration-300 w-full">
               <Search className="absolute left-6 text-[#8B004A] transition-transform group-focus-within:scale-110 flex-shrink-0" size={22} strokeWidth={2.5} />
               <input
@@ -569,185 +588,264 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* RESULT CARD - Deep Engaging View */}
+          {/* 🔥 NEW TOGGLE TABS (AI READ / SEE POSTS) 🔥 */}
           {activeWord && (
-            <div className="space-y-4 animate-fade-in relative w-full">
+            <div className="w-full max-w-[440px] mx-auto mb-6 flex bg-white p-1.5 rounded-2xl border-[3px] border-[#8B004A]/10 shadow-sm animate-fade-in">
+              <button
+                onClick={() => setResultView("ai")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+                  resultView === "ai"
+                    ? "bg-[#8B004A] text-white shadow-md"
+                    : "text-gray-500 hover:text-[#8B004A] hover:bg-[#8B004A]/5"
+                }`}
+              >
+                <BookOpen size={16} strokeWidth={2.5} /> AI Read
+              </button>
+              <button
+                onClick={() => setResultView("posts")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 relative ${
+                  resultView === "posts"
+                    ? "bg-[#8B004A] text-white shadow-md"
+                    : "text-gray-500 hover:text-[#8B004A] hover:bg-[#8B004A]/5"
+                }`}
+              >
+                <Globe size={16} strokeWidth={2.5} /> See Posts
+                {/* Badge for related posts count */}
+                {relatedPosts.length > 0 && (
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] ${resultView === "posts" ? "bg-white/20 text-white" : "bg-[#E01A76]/10 text-[#E01A76]"}`}>
+                    {relatedPosts.length}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* 🔥 CONDITIONAL RENDERING BASED ON TAB SELECTION 🔥 */}
+          {activeWord && (
+            <div className="w-full flex flex-col items-center animate-fade-in">
               
-              <div className="flex justify-end pr-2 w-full">
-                <div className="bg-[#E01A76] text-white rounded-3xl rounded-tr-sm px-5 sm:px-6 py-4 text-xs font-black leading-relaxed max-w-[95%] sm:max-w-[85%] shadow-lg shadow-[#E01A76]/20 break-words">
-                  Explain the exact Hindi meaning, context, and examples for <span className="text-[#FFB800] uppercase tracking-wider text-sm mx-1 break-all font-playful">"{activeWord}"</span>.
-                </div>
-              </div>
-
-              <div className="bg-white border-[4px] border-[#8B004A]/10 rounded-[2.5rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden mt-2 w-full">
-                
-                <div className="absolute top-0 right-0 bg-[#F2EFE7] text-[#8B004A] px-3 sm:px-4 py-1.5 rounded-bl-2xl font-black text-[8px] sm:text-[9px] uppercase tracking-[0.2em] border-b-2 border-l-2 border-[#8B004A]/10 max-w-[60%] truncate text-right">
-                  {contextBadge}
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-gray-100 pb-5 mb-5 mt-6 sm:mt-2 gap-4">
-                  <div className="w-full sm:w-auto min-w-0">
-                    <div className="flex flex-wrap items-center gap-3">
-                      {/* PLAYFUL FONT APPLIED ONLY TO MAIN TARGET WORD */}
-                      <h2 className="text-4xl sm:text-6xl font-bold text-[#8B004A] capitalize drop-shadow-sm tracking-tight break-all font-playful pb-2">
-                        {activeWord}
-                      </h2>
-                      <span className="bg-[#8B004A] text-[#F2EFE7] text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm flex-shrink-0">
-                        {partOfSpeech}
-                      </span>
+              {/* === VIEW 1: AI READ === */}
+              {resultView === "ai" && (
+                <>
+                  <div className="flex justify-end pr-2 w-full max-w-[440px]">
+                    <div className="bg-[#E01A76] text-white rounded-3xl rounded-tr-sm px-5 sm:px-6 py-4 text-xs font-black leading-relaxed max-w-[95%] sm:max-w-[85%] shadow-lg shadow-[#E01A76]/20 break-words">
+                      Explain the exact Hindi meaning, context, and examples for <span className="text-[#FFB800] uppercase tracking-wider text-sm mx-1 break-all font-playful">"{activeWord}"</span>.
                     </div>
                   </div>
-                  <button
-                    onClick={() => handlePronounce(activeWord)}
-                    className="bg-[#F2EFE7] hover:bg-[#8B004A] p-4 rounded-full text-[#8B004A] hover:text-white transition-all border-2 border-transparent hover:border-white shadow-sm active:scale-90 flex-shrink-0 self-end sm:self-auto"
-                    title="Listen to pronunciation"
-                  >
-                    <Volume2 size={24} strokeWidth={2.5} />
-                  </button>
-                </div>
 
-                <div className="space-y-6 text-sm w-full">
-                  <div className="space-y-4">
-                    <div className="bg-[#F2EFE7] rounded-2xl p-5 sm:p-6 border-l-[6px] border-[#E01A76] shadow-inner w-full">
-                      <span className="text-[#8B004A]/70 text-[10px] uppercase font-black tracking-[0.2em] mb-2 block">Meaning</span>
-                      <p className="text-[#8B004A] font-black text-xl sm:text-2xl leading-snug break-words">{meaning}</p>
-                    </div>
+                  <div className="bg-white border-[4px] border-[#8B004A]/10 rounded-[2.5rem] p-5 sm:p-8 shadow-2xl relative overflow-hidden mt-2 w-full max-w-[440px] mb-8">
                     
-                    <div className="pl-4 sm:pl-5 border-l-[3px] border-[#FFB800] w-full">
-                      <p className="text-gray-700 font-bold leading-relaxed text-sm break-words">{explanation}</p>
+                    <div className="absolute top-0 right-0 bg-[#F2EFE7] text-[#8B004A] px-3 sm:px-4 py-1.5 rounded-bl-2xl font-black text-[8px] sm:text-[9px] uppercase tracking-[0.2em] border-b-2 border-l-2 border-[#8B004A]/10 max-w-[60%] truncate text-right">
+                      {contextBadge}
                     </div>
-                  </div>
 
-                  <div className="pt-2 w-full">
-                    <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-3 flex items-center gap-2">
-                      <Sparkles size={16} className="text-[#FFB800] flex-shrink-0" strokeWidth={2.5} /> Practical Application
-                    </span>
-                    <div className="bg-gray-50 rounded-2xl p-5 sm:p-6 border-2 border-dashed border-gray-200 text-gray-800 whitespace-pre-line font-bold text-sm leading-loose shadow-sm break-words w-full overflow-hidden">
-                      {sentences}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full">
-                    <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
-                      <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Similar Words</span>
-                      <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{synonyms || "N/A"}</span>
-                    </div>
-                    <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
-                      <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Opposite Words</span>
-                      <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{antonyms || "N/A"}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-8 mt-6 border-t-2 border-gray-100 w-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
-                        <ImageIcon size={18} className="text-[#E01A76] flex-shrink-0" strokeWidth={2.5} /> Memory Anchor
-                      </span>
-                    </div>
-                    
-                    <div className={`w-full rounded-[2rem] bg-[#F2EFE7] border-[3px] border-gray-200 shadow-inner flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10 sm:py-12' : ''}`}>
-                      
-                      {(isImageLoading || isUploading) && (
-                        <div className="flex flex-col items-center justify-center gap-4 absolute inset-0 bg-[#F2EFE7]/90 backdrop-blur-sm z-10 min-h-[150px]">
-                          <div className="w-10 h-10 border-[4px] border-[#E01A76] border-t-transparent rounded-full animate-spin"></div>
-                          <p className="text-[#8B004A] font-black text-[10px] uppercase tracking-[0.2em] animate-pulse text-center px-4">
-                            {isUploading ? 'Uploading Data...' : 'Rendering Visual...'}
-                          </p>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b-2 border-gray-100 pb-5 mb-5 mt-6 sm:mt-2 gap-4">
+                      <div className="w-full sm:w-auto min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h2 className="text-4xl sm:text-6xl font-bold text-[#8B004A] capitalize drop-shadow-sm tracking-tight break-all font-playful pb-2">
+                            {activeWord}
+                          </h2>
+                          <span className="bg-[#8B004A] text-[#F2EFE7] text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm flex-shrink-0">
+                            {partOfSpeech}
+                          </span>
                         </div>
-                      )}
-
-                      {imageSrc && !isImageExpanded && !isImageLoading && !isUploading && (
-                        <div className="flex flex-col items-center text-center px-4 animate-fade-in w-full">
-                          <div className="bg-white p-4 sm:p-5 rounded-full mb-4 text-[#8B004A] shadow-md border-2 border-gray-100 flex-shrink-0">
-                            <ImageIcon size={32} strokeWidth={2} />
-                          </div>
-                          <h3 className="text-lg font-black text-gray-900 mb-1 break-words">Visual Concept Ready</h3>
-                          <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-6 break-words px-2">Tap to burn "{activeWord}" into memory</p>
-                          <button 
-                            onClick={() => setIsImageExpanded(true)}
-                            className="px-8 sm:px-10 py-4 bg-[#8B004A] hover:bg-[#E01A76] text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-[#8B004A]/20 active:scale-95 border-none w-full sm:w-auto"
-                          >
-                            Reveal Imagery
-                          </button>
-                        </div>
-                      )}
-
-                      {imageSrc && isImageExpanded && (
-                        <img 
-                          src={imageSrc} 
-                          alt={activeWord} 
-                          className="w-full h-auto max-h-[450px] object-cover transition-opacity duration-700 block"
-                        />
-                      )}
-                    </div>
-
-                    {imageSrc && isImageExpanded && (
-                      <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 mt-4 justify-center animate-fade-in w-full">
-                        <button
-                          onClick={() => handleGenerateImage('regenerate', activeWord)}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
-                        >
-                          <RefreshCw size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Regenerate</span>
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            const userIdea = window.prompt("Custom visual prompt (e.g., 'A modern neon city'):");
-                            if (userIdea !== null && userIdea.trim() !== "") {
-                              handleGenerateImage('refine', activeWord, userIdea);
-                            }
-                          }}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
-                        >
-                          <Sparkles size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Custom</span>
-                        </button>
-
-                        <button
-                          onClick={() => fileInputRef.current.click()}
-                          disabled={isImageLoading || isUploading}
-                          className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
-                        >
-                          <Upload size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Upload</span>
-                        </button>
-
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          ref={fileInputRef} 
-                          onChange={handleCustomImageUpload} 
-                          className="hidden" 
-                        />
                       </div>
-                    )}
+                      <button
+                        onClick={() => handlePronounce(activeWord)}
+                        className="bg-[#F2EFE7] hover:bg-[#8B004A] p-4 rounded-full text-[#8B004A] hover:text-white transition-all border-2 border-transparent hover:border-white shadow-sm active:scale-90 flex-shrink-0 self-end sm:self-auto"
+                        title="Listen to pronunciation"
+                      >
+                        <Volume2 size={24} strokeWidth={2.5} />
+                      </button>
+                    </div>
+
+                    <div className="space-y-6 text-sm w-full">
+                      <div className="space-y-4">
+                        <div className="bg-[#F2EFE7] rounded-2xl p-5 sm:p-6 border-l-[6px] border-[#E01A76] shadow-inner w-full">
+                          <span className="text-[#8B004A]/70 text-[10px] uppercase font-black tracking-[0.2em] mb-2 block">Meaning</span>
+                          <p className="text-[#8B004A] font-black text-xl sm:text-2xl leading-snug break-words">{meaning}</p>
+                        </div>
+                        
+                        <div className="pl-4 sm:pl-5 border-l-[3px] border-[#FFB800] w-full">
+                          <p className="text-gray-700 font-bold leading-relaxed text-sm break-words">{explanation}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 w-full">
+                        <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest mb-3 flex items-center gap-2">
+                          <Sparkles size={16} className="text-[#FFB800] flex-shrink-0" strokeWidth={2.5} /> Practical Application
+                        </span>
+                        <div className="bg-gray-50 rounded-2xl p-5 sm:p-6 border-2 border-dashed border-gray-200 text-gray-800 whitespace-pre-line font-bold text-sm leading-loose shadow-sm break-words w-full overflow-hidden">
+                          {sentences}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 w-full">
+                        <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
+                          <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Similar Words</span>
+                          <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{synonyms || "N/A"}</span>
+                        </div>
+                        <div className="bg-white border-[3px] border-gray-100 rounded-2xl p-5 shadow-sm overflow-hidden">
+                          <span className="text-[#8B004A]/60 font-black text-[10px] uppercase tracking-[0.2em] block mb-2">Opposite Words</span>
+                          <span className="text-gray-900 font-black text-sm tracking-wide break-words block">{antonyms || "N/A"}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-8 mt-6 border-t-2 border-gray-100 w-full">
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="text-gray-500 text-[10px] uppercase font-black tracking-widest flex items-center gap-2">
+                            <ImageIcon size={18} className="text-[#E01A76] flex-shrink-0" strokeWidth={2.5} /> Memory Anchor
+                          </span>
+                        </div>
+                        
+                        <div className={`w-full rounded-[2rem] bg-[#F2EFE7] border-[3px] border-gray-200 shadow-inner flex flex-col items-center justify-center overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10 sm:py-12' : ''}`}>
+                          
+                          {(isImageLoading || isUploading) && (
+                            <div className="flex flex-col items-center justify-center gap-4 absolute inset-0 bg-[#F2EFE7]/90 backdrop-blur-sm z-10 min-h-[150px]">
+                              <div className="w-10 h-10 border-[4px] border-[#E01A76] border-t-transparent rounded-full animate-spin"></div>
+                              <p className="text-[#8B004A] font-black text-[10px] uppercase tracking-[0.2em] animate-pulse text-center px-4">
+                                {isUploading ? 'Uploading Data...' : 'Rendering Visual...'}
+                              </p>
+                            </div>
+                          )}
+
+                          {imageSrc && !isImageExpanded && !isImageLoading && !isUploading && (
+                            <div className="flex flex-col items-center text-center px-4 animate-fade-in w-full">
+                              <div className="bg-white p-4 sm:p-5 rounded-full mb-4 text-[#8B004A] shadow-md border-2 border-gray-100 flex-shrink-0">
+                                <ImageIcon size={32} strokeWidth={2} />
+                              </div>
+                              <h3 className="text-lg font-black text-gray-900 mb-1 break-words">Visual Concept Ready</h3>
+                              <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest mb-6 break-words px-2">Tap to burn "{activeWord}" into memory</p>
+                              <button 
+                                onClick={() => setIsImageExpanded(true)}
+                                className="px-8 sm:px-10 py-4 bg-[#8B004A] hover:bg-[#E01A76] text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-[#8B004A]/20 active:scale-95 border-none w-full sm:w-auto"
+                              >
+                                Reveal Imagery
+                              </button>
+                            </div>
+                          )}
+
+                          {imageSrc && isImageExpanded && (
+                            <img 
+                              src={imageSrc} 
+                              alt={activeWord} 
+                              className="w-full h-auto max-h-[450px] object-cover transition-opacity duration-700 block"
+                            />
+                          )}
+                        </div>
+
+                        {imageSrc && isImageExpanded && (
+                          <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3 mt-4 justify-center animate-fade-in w-full">
+                            <button
+                              onClick={() => handleGenerateImage('regenerate', activeWord)}
+                              disabled={isImageLoading || isUploading}
+                              className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
+                            >
+                              <RefreshCw size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Regenerate</span>
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                const userIdea = window.prompt("Custom visual prompt (e.g., 'A modern neon city'):");
+                                if (userIdea !== null && userIdea.trim() !== "") {
+                                  handleGenerateImage('refine', activeWord, userIdea);
+                                }
+                              }}
+                              disabled={isImageLoading || isUploading}
+                              className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
+                            >
+                              <Sparkles size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Custom</span>
+                            </button>
+
+                            <button
+                              onClick={() => fileInputRef.current.click()}
+                              disabled={isImageLoading || isUploading}
+                              className="flex-1 w-full sm:w-auto py-4 px-2 bg-white hover:bg-[#F2EFE7] text-[#8B004A] text-[9px] sm:text-[10px] font-black rounded-xl disabled:opacity-50 transition-all border-2 border-gray-200 hover:border-[#8B004A]/30 flex justify-center items-center gap-1.5 sm:gap-2 uppercase tracking-widest shadow-sm active:scale-95"
+                            >
+                              <Upload size={14} className="sm:w-4 sm:h-4" strokeWidth={2.5} /> <span className="truncate">Upload</span>
+                            </button>
+
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              ref={fileInputRef} 
+                              onChange={handleCustomImageUpload} 
+                              className="hidden" 
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 border-t-2 border-gray-100 mt-8 pt-5 w-full">
+                      <button
+                        onClick={() => handleSearchWord(activeWord, true)}
+                        disabled={loading}
+                        className="text-[10px] bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-sm active:scale-95 w-full sm:w-auto"
+                      >
+                        <RefreshCw size={14} strokeWidth={2.5} className="flex-shrink-0" /> Alternative Context
+                      </button>
+
+                      <button
+                        onClick={handleShareToCommunity}
+                        disabled={isSharing}
+                        className="text-[10px] bg-[#8B004A] hover:bg-[#E01A76] text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-md shadow-[#8B004A]/30 active:scale-95 w-full sm:w-auto"
+                      >
+                        {isSharing ? (
+                          <><RefreshCw size={14} className="animate-spin flex-shrink-0" /> Sharing...</>
+                        ) : (
+                          <><Share2 size={14} strokeWidth={2.5} className="flex-shrink-0" /> Share to Community</>
+                        )}
+                      </button>
+                    </div>
                   </div>
+                </>
+              )}
+
+              {/* === VIEW 2: SEE POSTS === */}
+              {resultView === "posts" && (
+                <div className="w-full flex flex-col items-center">
+                  {isFetchingPosts ? (
+                    <div className="flex flex-col items-center justify-center py-16 bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] w-full max-w-[440px]">
+                      <Loader2 className="w-10 h-10 text-[#E01A76] animate-spin mb-4" />
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Searching community archives...</span>
+                    </div>
+                  ) : relatedPosts.length > 0 ? (
+                    <div className="w-full flex flex-col items-center space-y-6">
+                      {relatedPosts.map(post => (
+                        <PostCard 
+                          key={post._id} 
+                          post={post} 
+                          userEmail={userEmail} 
+                          isPremiumUser={isPremiumUser} 
+                          activeIndex={activeIndex} 
+                          setActiveIndex={setActiveIndex} 
+                          onRefresh={() => fetchRelatedPosts(activeWord)} 
+                          API_URL={API_URL} 
+                          highlightWord={activeWord} 
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 px-6 bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] w-full max-w-[440px] text-center shadow-sm">
+                      <div className="w-16 h-16 bg-[#F2EFE7] rounded-full flex items-center justify-center mb-4">
+                        <Globe className="w-8 h-8 text-[#8B004A]/40" />
+                      </div>
+                      <h3 className="text-gray-900 font-black text-lg mb-2 tracking-wide">No Posts Yet</h3>
+                      <p className="text-gray-500 text-[11px] uppercase tracking-widest font-bold leading-relaxed max-w-[250px]">
+                        Be the first to share <span className="text-[#E01A76]">"{activeWord}"</span> with the community!
+                      </p>
+                      <button 
+                        onClick={() => setResultView("ai")}
+                        className="mt-6 px-6 py-3 bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                      >
+                        Go back to AI Read
+                      </button>
+                    </div>
+                  )}
                 </div>
+              )}
 
-                {/* 🔥 ACTION BUTTONS: Alternative Context & Share to Community */}
-                <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 border-t-2 border-gray-100 mt-8 pt-5 w-full">
-                  <button
-                    onClick={() => handleSearchWord(activeWord, true)}
-                    disabled={loading}
-                    className="text-[10px] bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-sm active:scale-95 w-full sm:w-auto"
-                  >
-                    <RefreshCw size={14} strokeWidth={2.5} className="flex-shrink-0" /> Alternative Context
-                  </button>
-
-                  <button
-                    onClick={handleShareToCommunity}
-                    disabled={isSharing}
-                    className="text-[10px] bg-[#8B004A] hover:bg-[#E01A76] text-white flex items-center justify-center gap-2 font-black transition-all uppercase tracking-[0.2em] px-5 py-3.5 rounded-xl shadow-md shadow-[#8B004A]/30 active:scale-95 w-full sm:w-auto"
-                  >
-                    {isSharing ? (
-                      <><RefreshCw size={14} className="animate-spin flex-shrink-0" /> Sharing...</>
-                    ) : (
-                      <><Share2 size={14} strokeWidth={2.5} className="flex-shrink-0" /> Share to Community</>
-                    )}
-                  </button>
-                </div>
-
-              </div>
             </div>
           )}
         </div>

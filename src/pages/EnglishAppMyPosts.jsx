@@ -17,7 +17,7 @@ import VocabCard from "../myuploadComponents/VocabCard";
 import ArchiveItem from "../myuploadComponents/ArchiveItem";
 
 export default function EnglishAppMyPosts() {
-  const [deckTitle, setDeckTitle] = useState(""); // 🔥 Naya state Ultimate Title ke liye
+  const [deckTitle, setDeckTitle] = useState(""); 
   const [vocabItems, setVocabItems] = useState([{ word: "", meaning: "", sentence: "" }]);
   const [mediaItems, setMediaItems] = useState([]);
   const [tempImage, setTempImage] = useState(null);
@@ -60,7 +60,7 @@ export default function EnglishAppMyPosts() {
 
   const startEdit = (post) => {
     setEditingId(post._id);
-    setDeckTitle(post.title || ""); // 🔥 Edit karte waqt purana title load hoga
+    setDeckTitle(post.title || ""); 
 
     const reconstructedVocab = post.vocabData?.map((v, idx) => ({
       ...v,
@@ -99,7 +99,7 @@ export default function EnglishAppMyPosts() {
   };
 
   const resetForm = () => {
-    setDeckTitle(""); // 🔥 Reset hone pe title bhi clear hoga
+    setDeckTitle(""); 
     setVocabItems([{ word: "", meaning: "", sentence: "" }]);
     setMediaItems([]);
     setEditingId(null);
@@ -147,6 +147,7 @@ export default function EnglishAppMyPosts() {
     };
   };
 
+  // 🔥 UPDATED SUBMIT FUNCTION WITH SQUAD BROADCAST 🔥
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if(!deckTitle.trim()){
@@ -155,9 +156,10 @@ export default function EnglishAppMyPosts() {
     }
     
     setUploading(true);
+    const userEmail = localStorage.getItem("eng_userEmail");
     const data = new FormData();
-    data.append("userEmail", localStorage.getItem("eng_userEmail"));
-    data.append("title", deckTitle); // 🔥 Backend ko Ultimate Title bhejna
+    data.append("userEmail", userEmail);
+    data.append("title", deckTitle); 
     data.append("vocabData", JSON.stringify(vocabItems));
     mediaItems.forEach(m => { if (m.value instanceof File) data.append("images", m.value); });
     data.append("mediaMetadata", JSON.stringify(mediaItems.map(m => ({ ...m, url: m.value instanceof File ? null : m.value }))));
@@ -165,13 +167,54 @@ export default function EnglishAppMyPosts() {
     try {
       const url = editingId ? `${API_URL}/api/english-posts/update/${editingId}` : `${API_URL}/api/english-posts/create`;
       const res = await fetch(url, { method: editingId ? "PUT" : "POST", body: data });
-      if (res.ok) { toast.success("Deck Saved Successfully! 🎉"); resetForm(); fetchMyPosts(); }
-    } catch (e) { toast.error("Something went wrong!"); } finally { setUploading(false); }
+      const postResponseData = await res.json(); // Data capture kiya 
+
+      if (res.ok) { 
+        toast.success("Deck Saved Successfully! 🎉"); 
+
+        // 🔥 AUTO SHARE TO SQUADS (Only on New Post creation) 🔥
+        if (!editingId) {
+          try {
+            const squadsRes = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
+            const squadsData = await squadsRes.json();
+
+            if (squadsData.success && squadsData.squads.length > 0) {
+              const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
+
+              if (newPostId) {
+                squadsData.squads.forEach(async (squad) => {
+                  await fetch(`${API_URL}/api/squads/${squad._id}/message`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      senderEmail: userEmail,
+                      type: "post",
+                      postId: newPostId,
+                      text: `Hey squad! I just added a new deck: ${deckTitle}`
+                    }),
+                  });
+                });
+              }
+            }
+          } catch (squadErr) {
+            console.error("Failed to broadcast to squads:", squadErr);
+          }
+        }
+
+        resetForm(); 
+        fetchMyPosts(); 
+      } else {
+        toast.error(postResponseData.message || "Failed to save post");
+      }
+    } catch (e) { 
+      toast.error("Something went wrong!"); 
+    } finally { 
+      setUploading(false); 
+    }
   };
 
   return (
     <>
-      {/* 🚀 TARGETED FONT INJECTION */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');

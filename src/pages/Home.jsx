@@ -305,7 +305,7 @@ export default function VocabPage() {
     }
   };
 
-  const handleShareToCommunity = async () => {
+const handleShareToCommunity = async () => {
     if (!userEmail || userEmail === "guest_user@gmail.com") {
       return toast.error("Please login to share with the community! 🚫");
     }
@@ -346,14 +346,52 @@ export default function VocabPage() {
     }
 
     try {
+      // 1. CREATE COMMUNITY POST
       const res = await fetch(`${API_URL}/api/english-posts/create`, {
         method: "POST",
         body: data
       });
+      
+      const postResponseData = await res.json(); // Backend se return data read kiya
+
       if (res.ok) {
         toast.success("Word Shared to Community! 🌍✨");
+
+        // 🔥 2. AUTO-SHARE TO ALL SQUADS LOGIC 🔥
+        try {
+          // A. Pehle user ke saare squads fetch karo
+          const squadsRes = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
+          const squadsData = await squadsRes.json();
+
+          if (squadsData.success && squadsData.squads.length > 0) {
+            
+            // Backend mostly post ID is structure me bhejta hai, carefully nikal lete hain:
+            const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
+
+            if (newPostId) {
+              // B. Har group ke chat mein message bhej do
+              squadsData.squads.forEach(async (squad) => {
+                await fetch(`${API_URL}/api/squads/${squad._id}/message`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    senderEmail: userEmail,
+                    type: "post", 
+                    postId: newPostId, // 🔥 Ye ID attach ki taaki chat me post card dikhe
+                    text: `Hey squad! I just added a new word: ${activeWord}`
+                  }),
+                });
+              });
+            }
+          }
+        } catch (squadErr) {
+          console.error("Failed to broadcast to squads:", squadErr);
+          // Agar group me bhejna fail hua toh usse main app crash na ho isliye silent catch
+        }
+        // 🔥 LOGIC END 🔥
+
         fetchRelatedPosts(activeWord);
-        setResultView("posts"); // 🔥 Move user directly to "See Posts" tab after successful share
+        setResultView("posts"); // Move user directly to "See Posts" tab
       } else {
         toast.error("Failed to share word.");
       }

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom"; 
 import PostCard from "../components/PostCard"; 
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Loader2, Globe, Users, UserPlus, Plus, Send, Filter, X, Check, ChevronDown } from "lucide-react"; 
+import { Search, Loader2, Globe, Users, UserPlus, Plus, Send, Filter, X, Check, ChevronDown, MessageCircle } from "lucide-react"; 
 import toast from 'react-hot-toast'; 
 
 export default function CommunityPost() {
+  const navigate = useNavigate(); 
+  
   const [dbPosts, setDbPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -15,9 +18,6 @@ export default function CommunityPost() {
   const [showFilterSheet, setShowFilterSheet] = useState(false); 
   
   // 🔥 MASTER SCROLL STATE
-  // "expanded" = Pura header khula hai
-  // "hidden"   = Niche scroll kiya, sab chhip gaya
-  // "peek"     = Upar scroll kiya, sirf handle 4px aake ATAK GAYA!
   const [uiState, setUiState] = useState("expanded");
 
   // 🔥 STATES FOR GROUPS / SQUADS
@@ -30,22 +30,18 @@ export default function CommunityPost() {
 
   const { scrollY } = useScroll();
 
-  // 🚀 Scroll Engine (Jaisa aapne bataya - Atakne wala logic)
+  // 🚀 Scroll Engine
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious();
     const diff = latest - previous;
     
-    // Top pe aane par sab khol do
     if (latest < 20) {
         setUiState("expanded");
         return;
     }
-
-    // Niche Scroll -> Sab gayab
     if (diff > 10 && uiState !== "hidden") {
         setUiState("hidden"); 
     } 
-    // Upar Scroll -> Handle latkao (Peek state)
     else if (diff < -10 && uiState === "hidden") {
         setUiState("peek");
     }
@@ -56,6 +52,10 @@ export default function CommunityPost() {
   
   const API_URL = window.location.hostname === "localhost" 
     ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+
+  // ==========================================
+  // API CALLS & LOGIC
+  // ==========================================
 
   const fetchPosts = useCallback(async (isSilent = false) => {
     if (!isSilent && activeView === "community") setLoading(true);
@@ -70,13 +70,22 @@ export default function CommunityPost() {
     }
   }, [API_URL, activeView]);
 
+  // ✅ 1. REAL API SE SQUADS FETCH KARNA
   const fetchSquads = useCallback(async () => {
-    setSquads([
-      { _id: "g1", name: "IELTS Prep Squad", members: ["you@gmail.com", "rahul@gmail.com"] },
-      { _id: "g2", name: "Daily Vocab Masters", members: ["you@gmail.com", "priya@gmail.com"] }
-    ]);
-    if (!activeSquadId) setActiveSquadId("g1");
-  }, [userEmail, activeSquadId]);
+    if (!userEmail) return;
+    try {
+      const res = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
+      const data = await res.json();
+      if (data.success) {
+        setSquads(data.squads);
+        if (data.squads.length > 0 && !activeSquadId) {
+          setActiveSquadId(data.squads[0]._id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch squads:", err);
+    }
+  }, [userEmail, activeSquadId, API_URL]);
 
   useEffect(() => {
     if (activeView === "community") fetchPosts();
@@ -84,6 +93,65 @@ export default function CommunityPost() {
     const interval = setInterval(() => fetchPosts(true), 30000);
     return () => clearInterval(interval);
   }, [fetchPosts, fetchSquads, activeView]);
+
+  // ✅ 2. REAL SQUAD CREATE KARNA
+  const handleCreateSquad = async () => {
+    if (!newSquadName.trim()) return toast.error("Enter a squad name!");
+    try {
+      const res = await fetch(`${API_URL}/api/squads/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newSquadName, email: userEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Squad '${newSquadName}' created!`);
+        setIsCreatingSquad(false);
+        setNewSquadName("");
+        fetchSquads(); // Refresh list
+      }
+    } catch (err) {
+      toast.error("Failed to create squad");
+    }
+  };
+
+  // ✅ 3. SQUAD ME MEMBER ADD KARNA
+  const handleAddMember = async () => {
+    if (!newMemberEmail.trim()) return toast.error("Enter an email!");
+    if (!activeSquadId) return toast.error("Select a squad first!");
+    
+    try {
+      const res = await fetch(`${API_URL}/api/squads/${activeSquadId}/add-member`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newMemberEmail }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`${newMemberEmail} added to squad!`);
+        setNewMemberEmail("");
+        fetchSquads(); // Refresh list to get updated members
+      }
+    } catch (err) {
+      toast.error("Failed to add member");
+    }
+  };
+
+  // ✅ 4. SQUAD FEED FILTER LOGIC (Member post karega toh group mein dikhega)
+  const activeSquadPosts = useMemo(() => {
+    if (!activeSquadId || squads.length === 0 || !dbPosts) return [];
+    
+    const activeSquad = squads.find((s) => s._id === activeSquadId);
+    if (!activeSquad) return [];
+    
+    const memberEmails = activeSquad.members.map(e => e.toLowerCase().trim());
+
+    return dbPosts.filter(post => {
+      // Handle different possible key names for author email from your DB
+      const postAuthor = (post.userEmail || post.email || post.createdBy || "").toLowerCase().trim();
+      return memberEmails.includes(postAuthor);
+    });
+  }, [activeSquadId, squads, dbPosts]);
 
   const filteredPosts = useMemo(() => {
     if (!dbPosts || !Array.isArray(dbPosts)) return [];
@@ -120,22 +188,22 @@ export default function CommunityPost() {
     setShowFilterSheet(false);
   };
 
+  // ==========================================
+  // RENDER
+  // ==========================================
+
   return (
     <div className="flex justify-center bg-[#F2EFE7] min-h-screen font-sans overflow-x-hidden pb-24 relative">
       <div className="w-full max-w-[450px] relative">
         
-        {/* 🔥 THE "ATAK GAYA" PEEK TAB (Sirf 4px latkega) 🔥 */}
+        {/* 🔥 THE "ATAK GAYA" PEEK TAB */}
         <motion.button
-          // top-[64px] taki ye navbar ke niche se nikle
           className="fixed top-[64px] left-1/2 -translate-x-1/2 z-[60] bg-white border-b-[3px] border-x-[3px] border-[#8B004A]/20 px-8 py-1 rounded-b-[1rem] shadow-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 active:scale-95"
           initial={{ y: -50 }}
-          // Agar 'peek' state hai, toh sirf 4px niche aake atak jayega
           animate={{ y: uiState === "peek" ? 4 : -50 }}
-          // 🔥 MAGIC: Yeh physics usko ekdam "thud" karke atakne wala feel degi
           transition={{ type: "spring", stiffness: 600, damping: 12 }} 
           onClick={() => setUiState("expanded")}
         >
-          {/* Chota sa grip line taaki pull tab jaisa lage */}
           <div className="w-6 h-1 bg-gray-200 rounded-full mb-0.5"></div>
           <ChevronDown className="w-4 h-4 text-[#8B004A]" />
         </motion.button>
@@ -143,7 +211,6 @@ export default function CommunityPost() {
         {/* 🔥 MAIN HEADER 🔥 */}
         <motion.div 
           initial={{ y: 0, opacity: 1 }}
-          // Agar khula hai to 0, varna poora upar (-200px) gayab
           animate={{ 
             y: uiState === "expanded" ? 0 : -200, 
             opacity: uiState === "expanded" ? 1 : 0 
@@ -207,16 +274,27 @@ export default function CommunityPost() {
                   <Plus className="w-5 h-5" />
                 </button>
                 {squads.map((squad) => (
-                  <button
-                    key={squad._id}
-                    onClick={() => setActiveSquadId(squad._id)}
-                    className={`flex-shrink-0 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 border-2
-                      ${activeSquadId === squad._id 
-                        ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
-                        : "bg-white text-gray-500 border-gray-100 hover:text-[#8B004A]"}`}
-                  >
-                    {squad.name}
-                  </button>
+                  <div key={squad._id} className="flex-shrink-0 flex items-center bg-white border-2 border-gray-100 rounded-xl p-0.5 shadow-sm transition-all">
+                    <button
+                      onClick={() => setActiveSquadId(squad._id)}
+                      className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                        activeSquadId === squad._id 
+                        ? "bg-[#8B004A] text-white" 
+                        : "text-gray-500 hover:text-[#8B004A]"
+                      }`}
+                    >
+                      {squad.name}
+                    </button>
+
+                    {/* 🚀 CHAT PE JANE WALA BUTTON 🚀 */}
+                    <button
+                      onClick={() => navigate('/squad-chat', { state: { squad } })}
+                      className="p-2 mx-0.5 rounded-lg bg-[#8B004A]/10 text-[#8B004A] hover:bg-[#8B004A] hover:text-white transition-all group"
+                      title="Open Chat"
+                    >
+                      <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </div>
                 ))}
               </div>
             )}
@@ -236,7 +314,9 @@ export default function CommunityPost() {
                    <h3 className="text-xs font-black text-gray-800 uppercase tracking-widest mb-3">Create New Squad</h3>
                    <div className="flex gap-2">
                      <input type="text" placeholder="Squad Name..." value={newSquadName} onChange={e=>setNewSquadName(e.target.value)} className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-[#E01A76]" />
-                     <button onClick={() => { toast.success(`${newSquadName} created!`); setIsCreatingSquad(false); setNewSquadName(""); }} className="bg-[#8B004A] text-white px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md">Create</button>
+                     
+                     {/* ✅ FIXED BUTTON: handleCreateSquad call hogi yahan */}
+                     <button onClick={handleCreateSquad} className="bg-[#8B004A] text-white px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md">Create</button>
                    </div>
                  </div>
               ) : (
@@ -244,13 +324,15 @@ export default function CommunityPost() {
                   <div className="bg-white p-4 rounded-[1.5rem] border-[3px] border-[#8B004A]/10 mb-6 shadow-sm flex items-center gap-3">
                     <UserPlus className="text-[#8B004A] w-6 h-6" />
                     <input type="email" placeholder="Add member by email..." value={newMemberEmail} onChange={e=>setNewMemberEmail(e.target.value)} className="flex-1 bg-transparent border-b-2 border-gray-100 px-1 py-1 text-sm font-bold outline-none focus:border-[#E01A76] placeholder-gray-400" />
-                    <button onClick={() => { toast.success(`${newMemberEmail} added!`); setNewMemberEmail(""); }} className="bg-[#FFB800]/20 text-[#8B004A] p-2 rounded-lg hover:bg-[#FFB800]/40 transition-all">
+                    
+                    {/* ✅ FIXED BUTTON: handleAddMember call hogi yahan */}
+                    <button onClick={handleAddMember} className="bg-[#FFB800]/20 text-[#8B004A] p-2 rounded-lg hover:bg-[#FFB800]/40 transition-all">
                       <Send className="w-4 h-4" />
                     </button>
                   </div>
                 )
               )}
-              {squads.length > 0 && activeSquadPosts.map((post) => (
+              {squads.length > 0 && activeSquadPosts?.map((post) => (
                 <PostCard key={post._id} post={post} userEmail={userEmail} isPremiumUser={isPremiumUser} activeIndex={activeIndex} setActiveIndex={setActiveIndex} onRefresh={() => fetchPosts(true)} API_URL={API_URL} />
               ))}
             </div>
@@ -272,7 +354,7 @@ export default function CommunityPost() {
           )}
         </div>
 
-        {/* BOTTOM SHEET FOR FILTERS (Filter pe click karne ke liye as it is!) */}
+        {/* BOTTOM SHEET FOR FILTERS */}
         <AnimatePresence>
           {showFilterSheet && (
             <>

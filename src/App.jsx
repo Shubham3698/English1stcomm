@@ -19,6 +19,8 @@ import EbookStore from "./pages/EbookStore";
 import InteractiveQuizPage from "./pages/InteractiveQuizPage";
 import VocabDeckPage from "./pages/VocabDeckPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import SquadChat from './pages/SquadChat';
+
 
 // ✅ 1. Apna naya Lessons page import karo (path apne folder structure ke hisaab se check kar lena)
 import LessonsPage from "./pages/LessonsPage"; 
@@ -114,6 +116,7 @@ export default function App() {
           
           {/* ✅ 3. Yahan par naya route add kar diya */}
           <Route path="/lessons" element={<LessonsPage />} />
+          <Route path="/squad-chat" element={<SquadChat />} />
         </Routes>
 
         {/* ✅ Bottom Navbar */}

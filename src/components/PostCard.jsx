@@ -10,10 +10,9 @@ import 'swiper/css/pagination';
 import CommentModal from "./CommentModal"; 
 import PremiumSoundFeature from "./PremiumSoundFeature"; 
 
-// 🔥 DYNAMIC HIGHLIGHT ENGINE 🔥
+// 🔥 DYNAMIC HIGHLIGHT ENGINE
 const highlightText = (text, highlight) => {
   if (!text || !highlight) return text;
-  
   const regex = new RegExp(`(${highlight})`, "gi");
   const parts = String(text).split(regex);
   
@@ -74,7 +73,7 @@ export default function PostCard({
     deck.forEach((vocab, vIdx) => {
       if (vocab.media && vocab.media.length > 0) {
         vocab.media.forEach((m) => {
-          const mediaUrl = m.url || m.value; // 🔥 FIX HERE: Add m.value as fallback
+          const mediaUrl = m.url || m.value;
           if(mediaUrl) {
             items.push({ ...m, url: mediaUrl, vocabIndex: vIdx, word: vocab.word });
             map.push(vIdx);
@@ -85,7 +84,6 @@ export default function PostCard({
     return { mediaItems: items, slideToVocabMap: map };
   }, [deck]);
 
-  // 🔥 NORMAL ENGLISH LEARNING ENGAGEMENT TEXTS 🔥
   const defaultEngagementComments = useMemo(() => [
     { name: "System", text: "A highly useful word for everyday conversations! 💯", isBot: true },
     { name: "Learner", text: "Adding this to my notes. Very helpful! 📚", isBot: true },
@@ -118,21 +116,35 @@ export default function PostCard({
     }
   }, [slideToVocabMap]);
 
+  // 🔥 URL TARGET EFFECT (Scroll & Glow) 🔥
   useEffect(() => {
     const urlPostId = searchParams.get("postId");
-    const urlHighlight = searchParams.get("highlight");
-    
     if (urlPostId === post._id) {
+      
+      // 1. Unconditional Scroll to this exact Post
+      setTimeout(() => {
+        if (cardRef.current) {
+          cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          
+          // Mast glow effect dikhega
+          cardRef.current.style.borderColor = "#E01A76";
+          cardRef.current.style.boxShadow = "0 0 20px rgba(224,26,118,0.3)";
+          
+          // 3 second baad glow hat jayega
+          setTimeout(() => {
+            cardRef.current.style.borderColor = "";
+            cardRef.current.style.boxShadow = "";
+          }, 3000);
+        }
+      }, 800);
+
+      // 2. Swiper Slide set for Highlighted Word
+      const urlHighlight = searchParams.get("highlight");
       const targetWord = propHighlight || urlHighlight;
       if (targetWord) {
         const targetIdx = deck.findIndex(v => v.word.toLowerCase() === targetWord.toLowerCase());
         if (targetIdx !== -1) {
           handleWordSelect(targetIdx);
-          setTimeout(() => {
-            if (cardRef.current) {
-              cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-          }, 800);
         }
       }
     }
@@ -252,7 +264,6 @@ export default function PostCard({
             return (
               <SwiperSlide key={idx} className="bg-gray-100 flex items-center justify-center w-full">
                 {(item?.type === 'video' || videoId) ? (
-                  // 🔥 VIDEO WRAPPER
                   <div className="w-full aspect-[4/5] max-h-[550px] relative bg-black flex items-center justify-center">
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
@@ -266,7 +277,6 @@ export default function PostCard({
                     )}
                   </div>
                 ) : (
-                  // 🔥 IMAGE WRAPPER (Fallback logic is now working perfectly)
                   <div className="w-full bg-gray-50 flex items-center justify-center max-h-[600px]">
                     <img 
                       src={item?.url || post.image} 
@@ -284,7 +294,7 @@ export default function PostCard({
   };
 
   return (
-    <div ref={cardRef} id={post._id} className="mb-8 mx-auto w-full max-w-[440px] bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] shadow-xl shadow-[#8B004A]/5 font-sans pb-4">
+    <div ref={cardRef} id={post._id} className="mb-8 mx-auto w-full max-w-[440px] bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] shadow-xl shadow-[#8B004A]/5 font-sans pb-4 transition-all duration-500">
       
       {/* 1. HEADER */}
       <div className="flex items-center justify-between px-4 py-3 border-b-2 border-gray-50">

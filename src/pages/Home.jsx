@@ -16,7 +16,7 @@ import {
   Share2,
   Globe, 
   Loader2,
-  BookOpen // 🔥 Added BookOpen Icon for Tabs
+  BookOpen 
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -352,7 +352,7 @@ const handleShareToCommunity = async () => {
         body: data
       });
       
-      const postResponseData = await res.json(); // Backend se return data read kiya
+      const postResponseData = await res.json(); 
 
       if (res.ok) {
         toast.success("Word Shared to Community! 🌍✨");
@@ -377,7 +377,7 @@ const handleShareToCommunity = async () => {
                   body: JSON.stringify({
                     senderEmail: userEmail,
                     type: "post", 
-                    postId: newPostId, // 🔥 Ye ID attach ki taaki chat me post card dikhe
+                    postId: newPostId, 
                     text: `Hey squad! I just added a new word: ${activeWord}`
                   }),
                 });
@@ -386,7 +386,6 @@ const handleShareToCommunity = async () => {
           }
         } catch (squadErr) {
           console.error("Failed to broadcast to squads:", squadErr);
-          // Agar group me bhejna fail hua toh usse main app crash na ho isliye silent catch
         }
         // 🔥 LOGIC END 🔥
 
@@ -550,50 +549,63 @@ const handleShareToCommunity = async () => {
                 {history.length === 0 ? (
                   <p className="text-center text-sm font-black text-gray-400 py-6 uppercase tracking-wider">No words discovered yet.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-80 overflow-y-auto pr-2 custom-scrollbar pb-2">
+                  // 🔥 Grid updated for compact strips
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar pb-2">
                     {history.map((item) => (
-                      <div key={item._id} className="flip-card w-full h-[140px] group">
-                        <div
-                          className={`flip-card-inner w-full h-full relative cursor-pointer ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}
+                      // 📦 MAIN STRIP CONTAINER (Static)
+                      <div key={item._id} className="flex items-center gap-2 bg-white border-2 border-[#8B004A]/10 rounded-2xl p-1.5 shadow-sm hover:shadow-md transition-shadow w-full">
+                        
+                        {/* 🔄 FLIP AREA (Only this left part flips) */}
+                        <div 
+                          className="flip-card flex-1 h-[56px] cursor-pointer"
                           onClick={() => toggleFlip(item._id)}
                         >
-                          <div className="flip-card-front absolute w-full h-full bg-[#F2EFE7] border-2 border-transparent hover:border-[#E01A76] rounded-2xl p-4 flex flex-col justify-center items-center shadow-sm">
-                            <span className="text-gray-900 text-lg font-black group-hover:text-[#E01A76] tracking-wide text-center w-full truncate">
-                              {item.word} {item.imageUrl && "🖼️"}
-                            </span>
-                            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-2">
-                              Tap to Recall
-                            </span>
-                          </div>
-                          <div className="flip-card-back absolute w-full h-full bg-white border-2 border-[#8B004A]/30 rounded-2xl p-3 flex flex-col shadow-md">
-                            <div className="flex-1 flex flex-col items-center justify-center overflow-hidden w-full mb-1">
-                              <span className="text-[11px] font-black text-[#8B004A] uppercase tracking-widest mb-1">Meaning</span>
-                              <span className="text-[13px] font-bold text-gray-800 text-center line-clamp-3 leading-tight w-full">
+                          <div className={`flip-card-inner w-full h-full relative ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}>
+                            
+                            {/* FRONT: English Word */}
+                            <div className="flip-card-front absolute w-full h-full bg-[#F2EFE7] hover:bg-[#E01A76]/10 rounded-xl px-4 flex items-center justify-between border border-transparent transition-colors">
+                              <span className="text-gray-900 text-sm font-black tracking-wide truncate">
+                                {item.word} {item.imageUrl && "🖼️"}
+                              </span>
+                              <span className="text-[8px] text-gray-400 font-bold uppercase tracking-widest bg-white px-1.5 py-0.5 rounded shadow-sm">
+                                Tap
+                              </span>
+                            </div>
+
+                            {/* BACK: Hindi Meaning */}
+                            <div className="flip-card-back absolute w-full h-full bg-[#8B004A] text-white rounded-xl px-3 flex items-center justify-center shadow-inner">
+                              <span className="text-xs font-bold text-center line-clamp-2 leading-tight w-full">
                                 {item.meaning}
                               </span>
                             </div>
-                            <div className="flex items-center gap-1.5 mt-auto pt-2 border-t border-gray-100">
-                              <button
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  loadFromHistoryCard(item); 
-                                }}
-                                className="flex-1 bg-[#F2EFE7] hover:bg-[#8B004A] text-[#8B004A] hover:text-white border border-transparent py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
-                              >
-                                <Search size={10} strokeWidth={3} /> Read
-                              </button>
-                              <button
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  navigate('/find-vocab'); 
-                                }}
-                                className="flex-1 bg-gray-900 hover:bg-[#E01A76] text-white py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1 shadow-sm active:scale-95"
-                              >
-                                <Swords size={10} strokeWidth={3} /> Test
-                              </button>
-                            </div>
                           </div>
                         </div>
+
+                        {/* 🛑 STATIC ACTIONS AREA (Right Side - Never flips) */}
+                        <div className="flex flex-row gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              loadFromHistoryCard(item); 
+                            }}
+                            className="bg-gray-50 hover:bg-[#8B004A] text-[#8B004A] hover:text-white h-[56px] w-[46px] rounded-xl transition-all shadow-sm active:scale-95 border border-gray-100 flex items-center justify-center group"
+                            title="Read Details"
+                          >
+                            <Search size={16} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                          </button>
+                          
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              navigate('/find-vocab'); 
+                            }}
+                            className="bg-gray-900 hover:bg-[#E01A76] text-white h-[56px] w-[46px] rounded-xl transition-all shadow-sm active:scale-95 border border-transparent flex items-center justify-center group"
+                            title="Take Test"
+                          >
+                            <Swords size={16} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
+                          </button>
+                        </div>
+
                       </div>
                     ))}
                   </div>

@@ -23,17 +23,17 @@ const BottomNav = () => {
     setIsMoreOpen(false);
   }, [location.pathname]);
 
-  // 🎯 Main Navbar Items (Community ke baad Lessons aa gaya)
+  // 🎯 Main Navbar Items 
   const mainNavItems = [
     { name: 'Learn', path: '/home', icon: Home },
     { name: 'Community', path: '/community', icon: Users },
-    { name: 'Lessons', path: '/lessons', icon: BookOpen }, // ✅ Lessons ab main menu me hai
+    { name: 'Lessons', path: '/lessons', icon: BookOpen }, 
     { name: 'Test', path: '/interactive-quiz', icon: FileText },
   ];
 
-  // 📂 More Menu Items (Talk ab andar chala gaya)
+  // 📂 More Menu Items 
   const moreNavItems = [
-    { name: 'Talk', path: '/find-vocab', icon: Mic }, // ✅ Talk ab More ke andar hai
+    { name: 'Talk', path: '/find-vocab', icon: Mic }, 
     { name: 'E-Books', path: '/ebook-store', icon: Library },
     { name: 'Profile', path: '/user', icon: User },
   ];
@@ -42,10 +42,12 @@ const BottomNav = () => {
     // Fixed wrapper for entire navigation area
     <div className="fixed bottom-0 w-full z-50 pointer-events-none" ref={menuRef}>
       
-      {/* 🔼 MORE MENU POPUP - Vibrant Light Theme */}
+      {/* 🔼 MORE MENU POPUP - Fixed the Ghost Clicks here */}
       <div 
-        className={`absolute bottom-[75px] right-4 bg-white border-2 border-[#8B004A]/10 rounded-2xl shadow-xl shadow-[#8B004A]/10 p-2 w-48 transition-all duration-300 origin-bottom-right pointer-events-auto ${
-          isMoreOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
+        className={`absolute bottom-[75px] right-4 bg-white border-2 border-[#8B004A]/10 rounded-2xl shadow-xl shadow-[#8B004A]/10 p-2 w-48 transition-all duration-300 origin-bottom-right ${
+          isMoreOpen 
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto visible' 
+            : 'opacity-0 scale-95 translate-y-2 pointer-events-none invisible'
         }`}
       >
         {moreNavItems.map((item) => {
@@ -55,6 +57,9 @@ const BottomNav = () => {
             <Link
               key={item.name}
               to={item.path}
+              // ✅ Prevent interaction fully when menu is closed
+              tabIndex={isMoreOpen ? 0 : -1} 
+              onClick={(e) => !isMoreOpen && e.preventDefault()} 
               className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold ${
                 isActive ? 'bg-[#E01A76]/10 text-[#E01A76]' : 'text-gray-500 hover:bg-[#F2EFE7] hover:text-[#8B004A]'
               }`}
@@ -66,7 +71,7 @@ const BottomNav = () => {
         })}
       </div>
 
-      {/* 🔽 MAIN BOTTOM NAVIGATION BAR - Premium Murrey/Glassmorphism Base */}
+      {/* 🔽 MAIN BOTTOM NAVIGATION BAR */}
       <div className="w-full bg-[#F2EFE7]/95 backdrop-blur-md border-t-2 border-[#8B004A]/10 shadow-[0_-5px_20px_rgba(139,0,74,0.05)] flex justify-between px-6 py-3 pb-4 pointer-events-auto transition-colors duration-500">
         {mainNavItems.map((item) => {
           const Icon = item.icon;

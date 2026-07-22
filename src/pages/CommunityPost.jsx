@@ -153,13 +153,18 @@ export default function CommunityPost() {
     });
   }, [activeSquadId, squads, dbPosts]);
 
-  const filteredPosts = useMemo(() => {
+const filteredPosts = useMemo(() => {
     if (!dbPosts || !Array.isArray(dbPosts)) return [];
-    const currentUser = userEmail?.trim().toLowerCase();
+    
+    // currentUser setup safely
+    const currentUser = userEmail ? userEmail.trim().toLowerCase() : "";
 
     return dbPosts.filter((post) => {
-      const query = searchQuery.toLowerCase().trim();
+      
+      // 🔥 1. SEARCH LOGIC
+      const query = searchQuery ? searchQuery.toLowerCase().trim() : "";
       const matchesSearch = 
+        query === "" || 
         post.title?.toLowerCase().includes(query) || 
         post.word?.toLowerCase().includes(query) ||
         (Array.isArray(post.vocabData) && post.vocabData.some(v => v.word?.toLowerCase().includes(query)));
@@ -167,22 +172,32 @@ export default function CommunityPost() {
       if (!matchesSearch) return false;
       if (activeFilter === "all") return true;
 
+      // 🔥 2. CHECK STATS (Easy/Hard/DailyUse) -> ACTUAL "VOTED"
+      // Helper function to check if user exists in the stats array
+      const hasGivenStat = (stats) => {
+        return Array.isArray(stats) && stats.some(stat => stat?.email?.toLowerCase().trim() === currentUser);
+      };
+
       const isVoted = 
-        (Array.isArray(post.votedBy) && post.votedBy.some(email => email.toLowerCase().trim() === currentUser)) ||
-        (Array.isArray(post.vocabData) && post.vocabData.some(v => Array.isArray(v.votedBy) && v.votedBy.some(email => email.toLowerCase().trim() === currentUser)));
+        hasGivenStat(post.userStats) || 
+        (Array.isArray(post.vocabData) && post.vocabData.some(v => hasGivenStat(v.wordStats)));
 
-      const isLiked = Array.isArray(post.savedBy) && 
-                      post.savedBy.some(email => email.toLowerCase().trim() === currentUser);
+      // 🔥 3. CHECK LIKES (Hearts) & SAVES (Bookmarks) -> "LIKED / SAVED"
+      const isLiked = 
+        (Array.isArray(post.savedBy) && post.savedBy.some(email => email?.toLowerCase().trim() === currentUser)) ||
+        (Array.isArray(post.votedBy) && post.votedBy.some(email => email?.toLowerCase().trim() === currentUser)) ||
+        (Array.isArray(post.vocabData) && post.vocabData.some(v => Array.isArray(v.votedBy) && v.votedBy.some(email => email?.toLowerCase().trim() === currentUser)));
 
+      // 🔥 4. APPLY EXACT FILTER
       switch (activeFilter) {
-        case "voted": return isVoted;
-        case "unvoted": return !isVoted;
-        case "liked": return isLiked;
+        case "voted": return isVoted;      // Sirf easy/hard wale
+        case "unvoted": return !isVoted;   // Jisme stat update nahi kiya
+        case "liked": return isLiked;      // Hearts ya saved wale
         default: return true;
       }
     });
   }, [dbPosts, searchQuery, activeFilter, userEmail]);
-
+  
   const handleApplyFilter = (filterId) => {
     setActiveFilter(filterId);
     setShowFilterSheet(false);

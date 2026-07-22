@@ -127,7 +127,7 @@ export default function PostCard({
     }
   }, [slideToVocabMap]);
 
-  // URL TARGET EFFECT
+  // 🔥 1. POST SCROLL EFFECT (Agar URL se share hokar aaya hai)
   useEffect(() => {
     const urlPostId = searchParams.get("postId");
     if (urlPostId === post._id) {
@@ -142,16 +142,27 @@ export default function PostCard({
           }, 3000);
         }
       }, 800);
-      const urlHighlight = searchParams.get("highlight");
-      const targetWord = propHighlight || urlHighlight;
-      if (targetWord) {
-        const targetIdx = deck.findIndex(v => v.word.toLowerCase() === targetWord.toLowerCase());
-        if (targetIdx !== -1) {
+    }
+  }, [searchParams, post._id]);
+
+  // 🔥 2. AUTO-SWIPE & SELECT WORD EFFECT (Search ya URL se word dhoondhne par)
+  useEffect(() => {
+    const urlHighlight = searchParams.get("highlight");
+    const targetWord = propHighlight || urlHighlight; 
+
+    if (targetWord && deck && deck.length > 0) {
+      const targetIdx = deck.findIndex(
+        v => v.word?.toLowerCase().trim() === targetWord.toLowerCase().trim()
+      );
+
+      if (targetIdx !== -1) {
+        const timer = setTimeout(() => {
           handleWordSelect(targetIdx);
-        }
+        }, 300); 
+        return () => clearTimeout(timer);
       }
     }
-  }, [searchParams, post._id, deck, propHighlight, handleWordSelect]);
+  }, [propHighlight, searchParams, deck, handleWordSelect]);
 
   const currentVocab = deck[currentVocabIdx] || deck[0];
   const isSaved = post.savedBy?.includes(userEmail); 
@@ -381,7 +392,7 @@ export default function PostCard({
         <motion.div 
           className="cursor-pointer bg-white border-2 border-gray-100 shadow-sm rounded-2xl relative inline-flex items-center justify-center px-5 py-2.5 min-w-[120px] min-h-[60px] active:scale-[0.98] transition-transform"
           
-          // 🔥 SCROLL TRIGGER
+          // 🔥 SCROLL ENTER TRIGGER
           onViewportEnter={() => {
             if (!hasHintPlayed) {
               setHasHintPlayed(true);
@@ -389,7 +400,12 @@ export default function PostCard({
               setTimeout(() => setIsFlipped(false), 800); 
             }
           }}
-          viewport={{ once: true, amount: 0.5 }}
+          
+          // 🔥 SCROLL LEAVE TRIGGER
+          onViewportLeave={() => setHasHintPlayed(false)}
+
+          // 🔥 CHANGE: once: false taaki baar baar chale
+          viewport={{ once: false, amount: 0.5 }}
           
           // 🔥 TAP TO FLIP
           onClick={() => setIsFlipped(!isFlipped)}

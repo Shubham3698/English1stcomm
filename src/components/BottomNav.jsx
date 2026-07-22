@@ -28,12 +28,12 @@ const BottomNav = () => {
     { name: 'Learn', path: '/home', icon: Home },
     { name: 'Community', path: '/community', icon: Users },
     { name: 'Lessons', path: '/lessons', icon: BookOpen }, 
-    { name: 'Test', path: '/interactive-quiz', icon: FileText },
+    { name: 'Talk', path: '/interactive-quiz', icon: Mic }, // ✅ Talk ab /interactive-quiz kholega
   ];
 
   // 📂 More Menu Items 
   const moreNavItems = [
-    { name: 'Talk', path: '/find-vocab', icon: Mic }, 
+    { name: 'Test', path: '/find-vocab', icon: FileText }, // ✅ Test ab /find-vocab kholega
     { name: 'E-Books', path: '/ebook-store', icon: Library },
     { name: 'Profile', path: '/user', icon: User },
   ];

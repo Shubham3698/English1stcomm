@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules'; 
 import { useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -51,6 +52,10 @@ export default function PostCard({
   const [activeCommentIdx, setActiveCommentIdx] = useState(0);
   const [commentFade, setCommentFade] = useState(true);
 
+  // 🔥 FLIP CARD STATES 🔥
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [hasHintPlayed, setHasHintPlayed] = useState(false);
+
   const deck = useMemo(() => {
     return post.vocabData && post.vocabData.length > 0 
       ? post.vocabData 
@@ -66,6 +71,12 @@ export default function PostCard({
           commandStats: post.commandStats 
         }];
   }, [post]);
+
+  // RESET FLIP STATE WHEN WORD CHANGES
+  useEffect(() => {
+    setIsFlipped(false);
+    setHasHintPlayed(false);
+  }, [currentVocabIdx]);
 
   const { mediaItems, slideToVocabMap } = useMemo(() => {
     const items = [];
@@ -116,29 +127,21 @@ export default function PostCard({
     }
   }, [slideToVocabMap]);
 
-  // 🔥 URL TARGET EFFECT (Scroll & Glow) 🔥
+  // URL TARGET EFFECT
   useEffect(() => {
     const urlPostId = searchParams.get("postId");
     if (urlPostId === post._id) {
-      
-      // 1. Unconditional Scroll to this exact Post
       setTimeout(() => {
         if (cardRef.current) {
           cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          
-          // Mast glow effect dikhega
           cardRef.current.style.borderColor = "#E01A76";
           cardRef.current.style.boxShadow = "0 0 20px rgba(224,26,118,0.3)";
-          
-          // 3 second baad glow hat jayega
           setTimeout(() => {
             cardRef.current.style.borderColor = "";
             cardRef.current.style.boxShadow = "";
           }, 3000);
         }
       }, 800);
-
-      // 2. Swiper Slide set for Highlighted Word
       const urlHighlight = searchParams.get("highlight");
       const targetWord = propHighlight || urlHighlight;
       if (targetWord) {
@@ -227,7 +230,6 @@ export default function PostCard({
 
     return (
       <div className="relative group w-full bg-gray-50 border-y border-gray-100" onDoubleClick={handleVote}>
-        
         <div className="absolute top-3 right-3 z-[2] bg-white/90 backdrop-blur-md border border-[#8B004A]/20 px-3 py-1 rounded-full pointer-events-none shadow-sm">
           <p className="text-[10px] font-black text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
         </div>
@@ -258,7 +260,6 @@ export default function PostCard({
                 const match = item.url.match(regExp);
                 videoId = (match && match[2].length === 11) ? match[2] : null;
             }
-
             const isPlaying = playingIndex[post._id] === idx;
 
             return (
@@ -278,11 +279,7 @@ export default function PostCard({
                   </div>
                 ) : (
                   <div className="w-full bg-gray-50 flex items-center justify-center max-h-[600px]">
-                    <img 
-                      src={item?.url || post.image} 
-                      className="w-full h-auto max-h-[600px] object-contain object-center" 
-                      alt="content" 
-                    />
+                    <img src={item?.url || post.image} className="w-full h-auto max-h-[600px] object-contain object-center" alt="content" />
                   </div>
                 )}
               </SwiperSlide>
@@ -317,7 +314,6 @@ export default function PostCard({
             )}
           </div>
         </div>
-        
         <div className="px-2 py-1 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded text-[9px] text-[#8B004A] font-black tracking-wider uppercase">
           {post.badgeName || "NORMAL"}
         </div>
@@ -380,31 +376,86 @@ export default function PostCard({
         </div>
       )}
 
-      {/* 6. ENHANCED DICTIONARY-STYLE CAPTION */}
-      <div className="px-4 mb-1">
-        <div className="flex items-end gap-2 mb-1.5">
-          <h3 className="text-[1.35rem] leading-none font-black text-[#8B004A] tracking-tight capitalize">
-            {currentVocab.word}
-          </h3>
-          <PremiumSoundFeature isPremiumUser={isPremiumUser} userEmail={userEmail}>
-             <button onClick={() => speakWord(currentVocab.word)} className="mb-[2px] text-gray-400 hover:text-[#E01A76] transition-colors active:scale-90">
-               <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z"/></svg>
-             </button>
-          </PremiumSoundFeature>
-        </div>
-        
-        <p className="text-[14px] text-gray-800 font-medium leading-relaxed">
-          {highlightText(currentVocab.meaning, currentVocab.word)}
-        </p>
-        
-        {currentVocab.sentence && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-xl border-l-4 border-[#FFB800]">
+      {/* 🚀 6. PILL-SIZED TAP-TO-FLIP FLASHCARD 🚀 */}
+      <div className="px-4 mb-2 perspective-[1000px] flex justify-start">
+        <motion.div 
+          className="cursor-pointer bg-white border-2 border-gray-100 shadow-sm rounded-2xl relative inline-flex items-center justify-center px-5 py-2.5 min-w-[120px] min-h-[60px] active:scale-[0.98] transition-transform"
+          
+          // 🔥 SCROLL TRIGGER
+          onViewportEnter={() => {
+            if (!hasHintPlayed) {
+              setHasHintPlayed(true);
+              setIsFlipped(true); 
+              setTimeout(() => setIsFlipped(false), 800); 
+            }
+          }}
+          viewport={{ once: true, amount: 0.5 }}
+          
+          // 🔥 TAP TO FLIP
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          {/* Hint indicator (adjusted for smaller card) */}
+          <div className="absolute top-1 right-2 flex items-center gap-1 opacity-40">
+             <svg className="w-2.5 h-2.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+             <span className="text-[7px] font-black uppercase tracking-widest text-gray-500">Tap</span>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {!isFlipped ? (
+              // FRONT FACE: ONLY ENGLISH WORD
+              <motion.div
+                key="front"
+                initial={{ rotateX: 90, opacity: 0 }}
+                animate={{ rotateX: 0, opacity: 1 }}
+                exit={{ rotateX: -90, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="flex items-center gap-3 mt-1.5"
+              >
+                <h3 className="text-[1.6rem] leading-none font-black text-[#8B004A] tracking-tight capitalize">
+                  {currentVocab.word}
+                </h3>
+                {/* Speaker Button */}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <PremiumSoundFeature isPremiumUser={isPremiumUser} userEmail={userEmail}>
+                    <button onClick={() => speakWord(currentVocab.word)} className="text-gray-400 hover:text-[#E01A76] transition-colors active:scale-90 bg-gray-50 p-1.5 rounded-full border border-gray-100 shadow-sm">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z"/></svg>
+                    </button>
+                  </PremiumSoundFeature>
+                </div>
+              </motion.div>
+            ) : (
+              // BACK FACE: HINDI MEANING + SMALL ENGLISH WORD
+              <motion.div
+                key="back"
+                initial={{ rotateX: 90, opacity: 0 }}
+                animate={{ rotateX: 0, opacity: 1 }}
+                exit={{ rotateX: -90, opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="flex flex-col items-center justify-center mt-1"
+              >
+                {/* 🚀 Chhota sa English word upar 🚀 */}
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                  {currentVocab.word}
+                </span>
+                <p className="text-[1.2rem] text-[#8B004A] font-bold leading-relaxed text-center px-2">
+                  {highlightText(currentVocab.meaning, currentVocab.word)}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      {/* 🚀 6.5 SENTENCE OUTSIDE THE FLIP CARD 🚀 */}
+      {currentVocab.sentence && (
+        <div className="px-4 mb-2">
+          <div className="p-3 bg-gray-50 rounded-xl border-l-4 border-[#FFB800] w-full text-left shadow-sm">
             <p className="text-[13px] text-gray-600 italic font-medium leading-relaxed">
               "{highlightText(currentVocab.sentence, currentVocab.word)}"
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 7. COMMENTS SECTION */}
       <div className="px-4 mt-3 pt-3 border-t border-gray-100">

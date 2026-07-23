@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
+import VisualAnchor from "../components/ai-wordsimg/VisualAnchor"; 
+
 import { 
   Search, 
   History, 
@@ -18,7 +20,8 @@ import {
   Loader2,
   BookOpen,
   ArrowRight,
-  Zap
+  Zap,
+  X 
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -39,7 +42,7 @@ export default function VocabPage() {
   const [flippedCards, setFlippedCards] = useState({});
   const [contextBadge, setContextBadge] = useState("Active Target");
 
-  const [imageSrc, setImageSrc] = useState(null);
+  const [imageGallery, setImageGallery] = useState([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
@@ -175,36 +178,33 @@ export default function VocabPage() {
     }
   }, [userEmail]);
 
-  const handleUpdateCommunityPost = async (updatedMeaning, updatedSentences, updatedImage, isManualClick = false) => {
+  const handleUpdateCommunityPost = async (updatedMeaning, updatedSentences, updatedGallery, isManualClick = false) => {
     if (!sharedPostId || !userEmail) return;
+
+    const currentImages = updatedGallery || imageGallery;
 
     const data = new FormData();
     data.append("title", `Lexicon Entry: ${activeWord.toUpperCase()}`); 
     data.append("word", activeWord);
     data.append("meaning", updatedMeaning || meaning);
     data.append("sentence", updatedSentences || sentences || "");
-    if (updatedImage || imageSrc) {
-      data.append("image", updatedImage || imageSrc); 
-    }
 
     const vocabData = [{
       word: activeWord,
       meaning: updatedMeaning || meaning,
       sentence: updatedSentences || sentences || "",
-      media: (updatedImage || imageSrc) ? [{ type: 'image', url: updatedImage || imageSrc }] : [] 
+      media: currentImages.map(url => ({ type: 'image', url })) 
     }];
     data.append("vocabData", JSON.stringify(vocabData));
 
-    if (updatedImage || imageSrc) {
-      const mediaMetadata = [{
-        type: 'image',
-        url: updatedImage || imageSrc,   
-        value: updatedImage || imageSrc,
-        mode: 'url',
-        vocabIndex: 0
-      }];
-      data.append("mediaMetadata", JSON.stringify(mediaMetadata));
-    }
+    const mediaMetadata = currentImages.map((url) => ({
+      type: 'image',
+      url: url,   
+      value: url,
+      mode: 'url',
+      vocabIndex: 0
+    }));
+    data.append("mediaMetadata", JSON.stringify(mediaMetadata));
 
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update/${sharedPostId}`, {
@@ -222,14 +222,15 @@ export default function VocabPage() {
     }
   };
 
-  const handleGenerateImage = async (actionType = "normal", wordToGenerate, customPrompt = "") => {
+  // 🔥 FIXED: Added skipPostUpdate flag to prevent old posts from being overwritten
+const handleGenerateImage = async (actionType = "normal", wordToGenerate, customPrompt = "", skipPostUpdate = false) => {
     if (!wordToGenerate || !userEmail) return;
     
     setIsImageLoading(true);
     setImageAction(actionType);
 
     if (actionType === "normal") {
-      setImageSrc(null);
+      setImageGallery([]); 
       setIsImageExpanded(false);
     }
 
@@ -248,12 +249,31 @@ export default function VocabPage() {
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
-        setImageSrc(data.imageUrl);
+        const updatedGallery = actionType === "normal" ? [data.imageUrl] : [...imageGallery, data.imageUrl];
+        setImageGallery(updatedGallery);
+        
+        // 🔥 THE FIX: Agar extra image generate ki hai, toh DB me full array save karo
+        if (actionType !== "normal") {
+          try {
+            await fetch(`${API_URL}/api/words/update-images`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                word: activeWord,
+                userId: userEmail,
+                imageUrls: updatedGallery
+              })
+            });
+          } catch(err) {
+            console.error("History sync failed", err);
+          }
+        }
+
         fetchHistoryFromDB(); 
         setIsImageExpanded(true); 
         
-        if (sharedPostId) {
-          handleUpdateCommunityPost(meaning, sentences, data.imageUrl);
+        if (sharedPostId && !skipPostUpdate) {
+          handleUpdateCommunityPost(meaning, sentences, updatedGallery);
         }
       } else {
         toast.error("Visual generation failed behind the scenes");
@@ -266,7 +286,7 @@ export default function VocabPage() {
     }
   };
 
-  const handleCustomImageUpload = async (e) => {
+const handleCustomImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !userEmail || !activeWord) return;
 
@@ -285,12 +305,31 @@ export default function VocabPage() {
       const data = await response.json();
 
       if (response.ok && data.imageUrl) {
-        toast.success("Image successfully replaced! 🎉");
-        setImageSrc(data.imageUrl); 
+        toast.success("Image added to gallery! 🎉");
+        
+        // Naya array jisme purani AI image aur nayi Custom image dono hain
+        const updatedGallery = [...imageGallery, data.imageUrl]; 
+        setImageGallery(updatedGallery); 
+
+        // 🔥 THE FIX: Backend ko force karo ki poora array save kare, overwrite na kare!
+        try {
+          await fetch(`${API_URL}/api/words/update-images`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              word: activeWord,
+              userId: userEmail,
+              imageUrls: updatedGallery // Dono images bhej rahe hain
+            })
+          });
+        } catch(err) {
+          console.error("History sync failed", err);
+        }
+
         fetchHistoryFromDB(); 
 
         if (sharedPostId) {
-          handleUpdateCommunityPost(meaning, sentences, data.imageUrl);
+          handleUpdateCommunityPost(meaning, sentences, updatedGallery);
         }
       } else {
         toast.error(data.error || "Custom image upload failed.");
@@ -304,11 +343,46 @@ export default function VocabPage() {
     }
   };
 
+  const handleRemoveImage = async (indexToRemove) => {
+    const updatedGallery = imageGallery.filter((_, index) => index !== indexToRemove);
+    setImageGallery(updatedGallery);
+    
+    // Update Post
+    if (sharedPostId) {
+      handleUpdateCommunityPost(meaning, sentences, updatedGallery, true);
+    }
+
+    // Update Backend History
+    try {
+      const response = await fetch(`${API_URL}/api/words/update-images`, {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word: activeWord,
+          userId: userEmail,
+          imageUrls: updatedGallery
+        })
+      });
+
+      if (response.ok) {
+        toast.success("Image removed permanently 🗑️");
+        fetchHistoryFromDB(); 
+      }
+    } catch (err) {
+      console.error("Permanent delete error:", err);
+    }
+  };
+
   const handleSearchWord = async (wordToSearch = word, isAlternative = false, isSilent = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
     if (!searchTarget && !isSilent) return toast.error("Please enter a word first ✍️");
     if (!userEmail || userEmail === "guest_user@gmail.com") {
         if (!isSilent) return toast.error("Please login first! 🚫");
+    }
+
+    // 🔥 FIX: Turant purani post ID ko hata do taaki naye word pe apply na ho
+    if (!isAlternative) {
+      setSharedPostId(null);
     }
 
     setLoading(true);
@@ -344,16 +418,25 @@ export default function VocabPage() {
         fetchHistoryFromDB();
         fetchRelatedPosts(resData.data.word); 
 
-        if (isAlternative && sharedPostId) {
-           handleUpdateCommunityPost(resData.data.meaning, resData.data.sentences, imageSrc);
+        let newGallery = [];
+        if (resData.data.imageUrls && resData.data.imageUrls.length > 0) {
+          newGallery = resData.data.imageUrls;
+        } else if (resData.data.imageUrl) {
+          newGallery = [resData.data.imageUrl]; 
         }
 
-        if (resData.data.imageUrl) {
-            setImageSrc(resData.data.imageUrl);
-            setIsImageExpanded(false); 
-        } else {
-            handleGenerateImage("normal", resData.data.word);
+        setImageGallery(newGallery);
+        setIsImageExpanded(false); 
+
+        if (isAlternative && sharedPostId) {
+           handleUpdateCommunityPost(resData.data.meaning, resData.data.sentences, newGallery);
         }
+
+        if (newGallery.length === 0) {
+            // 🔥 FIX: Added 'true' to skip auto-updating community post on fresh search
+            handleGenerateImage("normal", resData.data.word, "", true);
+        }
+
       } else {
         if (!isSilent) toast.error(resData.message || "Server did not return data!");
       }
@@ -373,7 +456,7 @@ export default function VocabPage() {
     }
 
     if (sharedPostId) {
-      await handleUpdateCommunityPost(meaning, sentences, imageSrc, true);
+      await handleUpdateCommunityPost(meaning, sentences, imageGallery, true);
       setResultView("posts");
       return;
     }
@@ -386,26 +469,23 @@ export default function VocabPage() {
     data.append("word", activeWord);
     data.append("meaning", meaning);
     data.append("sentence", sentences || "");
-    if (imageSrc) {
-      data.append("image", imageSrc); 
-    }
 
     const vocabData = [{
       word: activeWord,
       meaning: meaning,
       sentence: sentences || "",
-      media: imageSrc ? [{ type: 'image', url: imageSrc }] : [] 
+      media: imageGallery.map(url => ({ type: 'image', url })) 
     }];
     data.append("vocabData", JSON.stringify(vocabData));
 
-    if (imageSrc) {
-      const mediaMetadata = [{
+    if (imageGallery.length > 0) {
+      const mediaMetadata = imageGallery.map(url => ({
         type: 'image',
-        url: imageSrc,   
-        value: imageSrc,
+        url: url,   
+        value: url,
         mode: 'url',
         vocabIndex: 0
-      }];
+      }));
       data.append("mediaMetadata", JSON.stringify(mediaMetadata));
     }
 
@@ -458,6 +538,8 @@ export default function VocabPage() {
   };
 
   const loadFromHistoryCard = (item, isSilent = false) => {
+    // 🔥 FIX: Purani ID clear kar do taaki ghosts na aayein
+    setSharedPostId(null);
     setActiveWord(item.word);
     setPartOfSpeech(item.partOfSpeech || "Vocabulary");
     setMeaning(item.meaning);
@@ -475,11 +557,16 @@ export default function VocabPage() {
 
     fetchRelatedPosts(item.word);
     
-    if (item.imageUrl) {
-        setImageSrc(item.imageUrl);
+    if (item.imageUrls && item.imageUrls.length > 0) {
+        setImageGallery(item.imageUrls);
+        setIsImageExpanded(false);
+    } else if (item.imageUrl) {
+        setImageGallery([item.imageUrl]); 
         setIsImageExpanded(false);
     } else {
-        handleGenerateImage("normal", item.word);
+        setImageGallery([]);
+        // 🔥 FIX: Added 'true' here as well
+        handleGenerateImage("normal", item.word, "", true);
     }
   };
 
@@ -664,7 +751,7 @@ export default function VocabPage() {
                             
                             <div className="flip-card-front absolute w-full h-full bg-white group-hover:bg-[#E01A76]/5 rounded-xl px-4 flex items-center justify-between border border-transparent transition-colors shadow-sm">
                               <span className="text-gray-900 text-[14px] font-bold tracking-wide truncate">
-                                {item.word} {item.imageUrl && "🖼️"}
+                                {item.word} {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && "🖼️"}
                               </span>
                               <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider bg-gray-100 px-2 py-1 rounded">
                                 Flip
@@ -789,7 +876,7 @@ export default function VocabPage() {
                     </div>
                   </div>
 
-                  {/* Main Result Card - Cleaned up borders and background */}
+                  {/* Main Result Card */}
                   <div className="bg-dots bg-white border border-gray-200 rounded-[2rem] p-6 shadow-xl shadow-[#8B004A]/5 relative overflow-hidden w-full max-w-[440px] mb-8 animate-stagger-2">
                     
                     <div className="absolute top-0 right-0 bg-[#F2EFE7] text-[#8B004A] px-4 py-1.5 rounded-bl-2xl font-bold text-[9px] uppercase tracking-widest border-b border-l border-gray-200">
@@ -853,94 +940,20 @@ export default function VocabPage() {
                         </div>
                       </div>
 
-                      {/* VISUAL MEMORY ANCHOR */}
-                      <div className="pt-6 mt-6 border-t border-gray-100 w-full animate-stagger-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-gray-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5">
-                            <ImageIcon size={14} className="text-[#E01A76]" /> Visual Anchor
-                          </span>
-                        </div>
-                        
-                        <div className={`w-full rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden relative transition-all duration-500 ${!isImageExpanded ? 'py-10' : ''}`}>
-                          
-                          {(isImageLoading || isUploading) && (
-                            <div className="flex flex-col items-center justify-center gap-4 absolute inset-0 bg-white/80 backdrop-blur-sm z-10 min-h-[160px]">
-                              <Loader2 size={32} className="animate-spin text-[#E01A76]" strokeWidth={2} />
-                              <p className="text-[#8B004A] font-bold text-[10px] uppercase tracking-widest animate-pulse">
-                                {isUploading ? 'Uploading...' : 'Rendering Concept...'}
-                              </p>
-                            </div>
-                          )}
+                      {/* 🔥 VISUAL COMPONENT YAHAN HAI 🔥 */}
+                      <VisualAnchor 
+                        activeWord={activeWord}
+                        imageGallery={imageGallery}
+                        isImageExpanded={isImageExpanded}
+                        setIsImageExpanded={setIsImageExpanded}
+                        isImageLoading={isImageLoading}
+                        isUploading={isUploading}
+                        handleGenerateImage={handleGenerateImage}
+                        handleCustomImageUpload={handleCustomImageUpload}
+                        handleRemoveImage={handleRemoveImage}
+                        fileInputRef={fileInputRef}
+                      />
 
-                          {imageSrc && !isImageExpanded && !isImageLoading && !isUploading && (
-                            <div className="flex flex-col items-center text-center px-4 w-full">
-                              <div className="bg-[#8B004A]/10 p-4 rounded-full mb-3 text-[#8B004A]">
-                                <ImageIcon size={28} strokeWidth={1.5} />
-                              </div>
-                              <h3 className="text-lg font-bold text-gray-900 mb-1">Visual Ready</h3>
-                              <p className="text-gray-400 font-medium text-[11px] mb-5">Tap to reveal the memory anchor for "{activeWord}"</p>
-                              <button 
-                                onClick={() => setIsImageExpanded(true)}
-                                className="px-8 py-3 bg-gray-900 hover:bg-[#E01A76] text-white text-[12px] font-bold uppercase tracking-wider rounded-xl transition-colors active:scale-95 flex items-center justify-center gap-2"
-                              >
-                                Reveal Image <ArrowRight size={14} strokeWidth={2} />
-                              </button>
-                            </div>
-                          )}
-
-                          {imageSrc && isImageExpanded && (
-                            <div className="relative group w-full bg-black">
-                              <img 
-                                src={imageSrc} 
-                                alt={activeWord} 
-                                className="w-full h-auto max-h-[400px] object-cover transition-opacity duration-500 block"
-                              />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Neater Button Grid for Actions */}
-                        {imageSrc && isImageExpanded && (
-                          <div className="grid grid-cols-3 gap-2 mt-3 w-full animate-stagger-2">
-                            <button
-                              onClick={() => handleGenerateImage('regenerate', activeWord)}
-                              disabled={isImageLoading || isUploading}
-                              className="py-3 px-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[10px] font-bold rounded-xl border border-gray-200 transition-colors flex flex-col items-center gap-1 uppercase tracking-wider active:scale-95"
-                            >
-                              <RefreshCw size={16} strokeWidth={2} className="text-[#8B004A]" /> Regenerate
-                            </button>
-                            
-                            <button
-                              onClick={() => {
-                                const userIdea = window.prompt("Custom prompt (e.g., 'A modern neon city'):");
-                                if (userIdea && userIdea.trim() !== "") {
-                                  handleGenerateImage('refine', activeWord, userIdea);
-                                }
-                              }}
-                              disabled={isImageLoading || isUploading}
-                              className="py-3 px-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[10px] font-bold rounded-xl border border-gray-200 transition-colors flex flex-col items-center gap-1 uppercase tracking-wider active:scale-95"
-                            >
-                              <Sparkles size={16} strokeWidth={2} className="text-[#FFB800]" /> Custom
-                            </button>
-
-                            <button
-                              onClick={() => fileInputRef.current.click()}
-                              disabled={isImageLoading || isUploading}
-                              className="py-3 px-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-[10px] font-bold rounded-xl border border-gray-200 transition-colors flex flex-col items-center gap-1 uppercase tracking-wider active:scale-95"
-                            >
-                              <Upload size={16} strokeWidth={2} className="text-gray-500" /> Upload
-                            </button>
-
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              ref={fileInputRef} 
-                              onChange={handleCustomImageUpload} 
-                              className="hidden" 
-                            />
-                          </div>
-                        )}
-                      </div>
                     </div>
 
                     {/* Bottom Action Footer */}

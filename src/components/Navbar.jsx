@@ -51,7 +51,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* 🔥 NEW THEME: Light/Vibrant Navbar */}
+      {/* 🔥 TOP NAVBAR: untouched as requested */}
       <nav className="bg-[#F2EFE7]/95 px-4 md:px-6 py-4 flex justify-between items-center sticky top-0 z-[100] border-b-2 border-[#8B004A]/10 shadow-lg shadow-[#8B004A]/5 backdrop-blur-md transition-colors duration-500">
         
         {/* 🔴 BRAND LOGO */}
@@ -122,11 +122,11 @@ export default function Navbar() {
         className={`fixed inset-0 bg-[#4A0027]/40 backdrop-blur-sm z-[110] transition-opacity duration-500 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
       />
 
-      {/* 📱 SIDEBAR */}
+      {/* 📱 SIDEBAR (Clean & Normal Style) */}
       <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-[#F2EFE7] border-l-[6px] border-[#8B004A] z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col shadow-2xl ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
         
         {/* CLOSE BUTTON */}
-        <div className="p-8 flex justify-end">
+        <div className="p-6 flex justify-end">
             <button 
               onClick={() => setIsMenuOpen(false)} 
               className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-[#E01A76] hover:border-[#E01A76] bg-white rounded-xl transition-all active:scale-90 border-2 border-gray-200 shadow-sm"
@@ -135,16 +135,16 @@ export default function Navbar() {
             </button>
         </div>
 
-        {/* NAVIGATION LINKS */}
-        <div className="flex-1 px-8 space-y-6 mt-4 overflow-y-auto custom-scrollbar">
+        {/* NAVIGATION LINKS (Normal Text Style) */}
+        <div className="flex-1 px-8 space-y-4 mt-2 overflow-y-auto custom-scrollbar">
           {[
-            { label: "Home Base", path: "/home" },
+            { label: "Home", path: "/home" },
             { label: "Community", path: "/" },
-            { label: "Neural Conquest", path: "/vocab-deck" },
-            { label: "Word Scanner", path: "/find-vocab" },
-            { label: "Saved Intel", onClick: () => goToPath("/saved-posts") },
-            { label: "The Store", path: "/ebook-store" },
-            { label: "Profile Hub", onClick: () => goToPath("/user") }
+            { label: "Practice", path: "/vocab-deck" },
+            { label: "Dictionary", path: "/find-vocab" },
+            { label: "Saved Words", onClick: () => goToPath("/saved-posts") },
+            { label: "Store", path: "/ebook-store" },
+            { label: "Profile", onClick: () => goToPath("/user") }
           ].map((item, idx) => (
             <button
               key={idx}
@@ -153,18 +153,18 @@ export default function Navbar() {
                 else navigate(item.path);
                 setIsMenuOpen(false);
               }}
-              className="w-full text-left bg-transparent border-none p-0 transition-all duration-300 font-[900] text-gray-400 hover:text-[#8B004A] hover:translate-x-2 uppercase text-2xl sm:text-3xl italic tracking-tighter active:scale-95 leading-none block drop-shadow-sm"
+              className="w-full text-left bg-transparent border-none py-2 transition-all duration-300 font-bold text-gray-600 hover:text-[#8B004A] hover:translate-x-2 text-xl active:scale-95 block"
             >
               {item.label}
             </button>
           ))}
         </div>
 
-        {/* FOOTER SECTION */}
-        <div className="p-8 space-y-5 border-t-2 border-[#8B004A]/10 bg-white/60">
+        {/* FOOTER SECTION (Clean Buttons) */}
+        <div className="p-6 space-y-3 border-t-2 border-[#8B004A]/10 bg-white/60">
             <button 
                 onClick={() => { navigate("/upgrade"); setIsMenuOpen(false); }}
-                className="text-[#FFB800] font-black uppercase text-[10px] tracking-[0.2em] hover:tracking-[0.3em] transition-all flex items-center gap-2 drop-shadow-sm"
+                className="w-full py-3 px-4 bg-[#FFB800] text-[#4A0027] font-black uppercase text-[12px] tracking-widest rounded-xl hover:bg-[#e6a600] transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
                 Upgrade to Pro 💎
             </button>
@@ -172,16 +172,16 @@ export default function Navbar() {
             {isLoggedIn ? (
                 <button 
                   onClick={handleLogout} 
-                  className="text-red-500 font-black uppercase text-[10px] tracking-[0.2em] hover:text-red-700 transition-colors w-full text-left"
+                  className="w-full py-3 px-4 bg-white border-2 border-gray-200 text-red-500 font-black uppercase text-[12px] tracking-widest rounded-xl hover:border-red-500 hover:bg-red-50 transition-colors text-center shadow-sm"
                 >
-                    Terminate Session 🚪
+                  Log Out 🚪
                 </button>
             ) : (
                 <button 
                   onClick={() => { setIsMenuOpen(false); setShowSignIn(true); }} 
-                  className="text-[#E01A76] font-black uppercase text-[10px] tracking-[0.2em] hover:text-[#8B004A] transition-colors w-full text-left"
+                  className="w-full py-3 px-4 bg-[#E01A76] text-white font-black uppercase text-[12px] tracking-widest rounded-xl hover:bg-[#8B004A] transition-colors text-center shadow-sm"
                 >
-                    Authorize Login 🔑
+                  Sign In 🔑
                 </button>
             )}
         </div>

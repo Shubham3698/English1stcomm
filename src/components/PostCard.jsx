@@ -11,7 +11,9 @@ import 'swiper/css/pagination';
 import CommentModal from "./CommentModal"; 
 import PremiumSoundFeature from "./PremiumSoundFeature"; 
 
-// 🔥 DYNAMIC HIGHLIGHT ENGINE
+import { Sparkles, Play, RefreshCcw, Volume2, MessageCircle, Heart, Share2, Bookmark } from "lucide-react";
+
+// 🔥 DYNAMIC HIGHLIGHT ENGINE - Clean & Subtle
 const highlightText = (text, highlight) => {
   if (!text || !highlight) return text;
   const regex = new RegExp(`(${highlight})`, "gi");
@@ -21,7 +23,7 @@ const highlightText = (text, highlight) => {
     regex.test(part) ? (
       <span 
         key={i} 
-        className="bg-[#FFB800]/20 text-[#8B004A] font-black px-1.5 py-0.5 rounded-md mx-0.5 shadow-sm border border-[#FFB800]/40 inline-block"
+        className="bg-[#FFB800]/15 text-[#8B004A] font-playful font-bold px-1.5 py-0.5 rounded-md mx-0.5 border border-[#FFB800]/30 inline-block"
       >
         {part}
       </span>
@@ -52,7 +54,6 @@ export default function PostCard({
   const [activeCommentIdx, setActiveCommentIdx] = useState(0);
   const [commentFade, setCommentFade] = useState(true);
 
-  // 🔥 FLIP CARD STATES 🔥
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasHintPlayed, setHasHintPlayed] = useState(false);
 
@@ -72,7 +73,6 @@ export default function PostCard({
         }];
   }, [post]);
 
-  // RESET FLIP STATE WHEN WORD CHANGES
   useEffect(() => {
     setIsFlipped(false);
     setHasHintPlayed(false);
@@ -127,25 +127,21 @@ export default function PostCard({
     }
   }, [slideToVocabMap]);
 
-  // 🔥 1. POST SCROLL EFFECT (Agar URL se share hokar aaya hai)
   useEffect(() => {
     const urlPostId = searchParams.get("postId");
     if (urlPostId === post._id) {
       setTimeout(() => {
         if (cardRef.current) {
           cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          cardRef.current.style.borderColor = "#E01A76";
-          cardRef.current.style.boxShadow = "0 0 20px rgba(224,26,118,0.3)";
+          cardRef.current.classList.add("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
           setTimeout(() => {
-            cardRef.current.style.borderColor = "";
-            cardRef.current.style.boxShadow = "";
+            cardRef.current.classList.remove("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
           }, 3000);
         }
       }, 800);
     }
   }, [searchParams, post._id]);
 
-  // 🔥 2. AUTO-SWIPE & SELECT WORD EFFECT (Search ya URL se word dhoondhne par)
   useEffect(() => {
     const urlHighlight = searchParams.get("highlight");
     const targetWord = propHighlight || urlHighlight; 
@@ -181,9 +177,7 @@ export default function PostCard({
     const toastId = toast.loading("Syncing...");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/vote-word/${post._id}/${currentVocab._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail })
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail })
       });
       if (res.ok) { 
         toast.success("Vibe Matched! 🔥", { id: toastId }); 
@@ -197,9 +191,7 @@ export default function PostCard({
     if (!userEmail) return toast.error("Login required!");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/update-word-stat/${post._id}/${currentVocab._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ level, email: userEmail })
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ level, email: userEmail })
       });
       if (res.ok) { onRefresh(); toast.success(`${level.toUpperCase()} set!`); }
     } catch (err) { toast.error("Error!"); }
@@ -209,7 +201,7 @@ export default function PostCard({
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(word);
-      u.lang = 'en-US'; u.rate = 0.85;
+      u.lang = 'en-US'; u.rate = 0.85; u.pitch = 1.1; 
       window.speechSynthesis.speak(u);
     }
   };
@@ -227,11 +219,9 @@ export default function PostCard({
     if (!userEmail) return toast.error("Login required!");
     try {
       const res = await fetch(`${API_URL}/api/english-posts/save/${post._id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail })
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: userEmail })
       });
-      if (res.ok) { onRefresh(); toast.success("Saved! 📥"); }
+      if (res.ok) { onRefresh(); toast.success("Saved to Collection! 📥"); }
     } catch (err) { toast.error("Error!"); }
   };
 
@@ -240,15 +230,15 @@ export default function PostCard({
     const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
 
     return (
-      <div className="relative group w-full bg-gray-50 border-y border-gray-100" onDoubleClick={handleVote}>
-        <div className="absolute top-3 right-3 z-[2] bg-white/90 backdrop-blur-md border border-[#8B004A]/20 px-3 py-1 rounded-full pointer-events-none shadow-sm">
-          <p className="text-[10px] font-black text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
+      <div className="relative group w-full bg-gray-50 border-y border-gray-100 overflow-hidden" onDoubleClick={handleVote}>
+        <div className="absolute top-3 right-3 z-[2] bg-white/90 backdrop-blur-sm border border-gray-200 px-3 py-1 rounded-xl pointer-events-none shadow-sm">
+          <p className="text-[10px] font-playful font-bold text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
         </div>
 
         {mediaItems.length > 1 && isAnyVideoPlaying && (
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none animate-in fade-in duration-300">
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] backdrop-blur-sm border border-gray-200 shadow-md active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] backdrop-blur-sm border border-gray-200 shadow-md active:scale-90"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
           </div>
         )}
 
@@ -280,17 +270,18 @@ export default function PostCard({
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
                     ) : (
-                      <div className="relative w-full h-full flex items-center justify-center cursor-pointer bg-gray-900" onClick={() => setPlayingIndex({[post._id]: idx})}>
-                        <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} className="w-full h-full object-cover opacity-80" alt="video-thumb" />
-                        <div className="absolute w-14 h-14 bg-[#E01A76]/90 backdrop-blur-md border border-white/40 rounded-full flex items-center justify-center shadow-xl">
-                          <svg viewBox="0 0 24 24" fill="white" className="w-6 h-6 ml-1"><path d="M8 5v14l11-7z" /></svg>
+                      <div className="relative w-full h-full flex items-center justify-center cursor-pointer group" onClick={() => setPlayingIndex({[post._id]: idx})}>
+                        <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="video-thumb" />
+                        {/* Play button with just a subtle yellow touch */}
+                        <div className="absolute w-14 h-14 bg-[#E01A76]/90 backdrop-blur-sm border-2 border-white/80 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                          <Play fill="white" className="w-6 h-6 ml-1" />
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="w-full bg-gray-50 flex items-center justify-center max-h-[600px]">
-                    <img src={item?.url || post.image} className="w-full h-auto max-h-[600px] object-contain object-center" alt="content" />
+                  <div className="w-full bg-[#f8f9fa] flex items-center justify-center max-h-[600px]">
+                    <img src={item?.url || post.image} className="w-full h-auto max-h-[580px] object-contain" alt="content" />
                   </div>
                 )}
               </SwiperSlide>
@@ -302,30 +293,31 @@ export default function PostCard({
   };
 
   return (
-    <div ref={cardRef} id={post._id} className="mb-8 mx-auto w-full max-w-[440px] bg-white border-[3px] border-[#8B004A]/10 rounded-[2rem] shadow-xl shadow-[#8B004A]/5 font-sans pb-4 transition-all duration-500">
+    // Clean, aesthetic card container
+    <div ref={cardRef} id={post._id} className="mb-10 mx-auto w-full max-w-[440px] bg-white border border-gray-200 rounded-[2rem] shadow-sm hover:shadow-md font-body transition-all duration-300 overflow-hidden">
       
       {/* 1. HEADER */}
-      <div className="flex items-center justify-between px-4 py-3 border-b-2 border-gray-50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50 bg-white">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8B004A] to-[#E01A76] flex items-center justify-center text-sm font-black text-white shadow-md">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#8B004A] to-[#E01A76] flex items-center justify-center text-sm font-playful font-bold text-white shadow-sm">
             {post.userEmail?.charAt(0).toUpperCase()}
           </div>
           <div className="flex flex-col justify-center">
-            <span className="text-[13px] font-black text-gray-900 tracking-wide leading-none mb-1">
+            <span className="text-[14px] font-playful font-bold text-gray-900 tracking-wide leading-none mb-1">
               {post.userEmail?.split("@")[0]}
             </span>
             {post.title ? (
-              <span className="text-[10px] text-[#8B004A] font-bold uppercase tracking-wider leading-none">
+              <span className="text-[10px] font-playful text-[#8B004A] font-bold uppercase tracking-wider leading-none">
                 {post.title}
               </span>
             ) : (
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider leading-none">
-                Vocabulary Post
+              <span className="text-[10px] font-playful text-gray-400 font-bold uppercase tracking-wider leading-none">
+                Vocabulary Profile
               </span>
             )}
           </div>
         </div>
-        <div className="px-2 py-1 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded text-[9px] text-[#8B004A] font-black tracking-wider uppercase">
+        <div className="px-3 py-1 bg-[#FFB800]/10 border border-[#FFB800]/30 rounded-lg text-[9px] text-[#8B004A] font-playful font-bold tracking-wider uppercase">
           {post.badgeName || "NORMAL"}
         </div>
       </div>
@@ -333,66 +325,73 @@ export default function PostCard({
       {/* 2. MEDIA CONTAINER */}
       {renderMediaInternal()}
 
-      {/* 3. INSTAGRAM ACTION BAR */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-4 text-gray-700">
-          <button onClick={handleVote} className={`transition-all active:scale-90 ${isVoted ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
-            <svg className="w-7 h-7" fill={isVoted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+      {/* 3. INTERACTION BAR (Clean flat icons, scale on tap) */}
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-4 text-gray-600">
+          <button onClick={handleVote} className={`transition-transform active:scale-90 ${isVoted ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
+            <Heart className="w-7 h-7" fill={isVoted ? "currentColor" : "none"} strokeWidth="2" />
           </button>
           
-          <button onClick={() => setShowComments(true)} className="transition-all active:scale-90 hover:text-[#8B004A]">
-             <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"/></svg>
+          <button onClick={() => setShowComments(true)} className="transition-transform active:scale-90 hover:text-[#8B004A]">
+             <MessageCircle className="w-7 h-7" strokeWidth="2" />
           </button>
           
-          <button onClick={handleShare} className="transition-all active:scale-90 hover:text-[#8B004A]">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z"/></svg>
+          <button onClick={handleShare} className="transition-transform active:scale-90 hover:text-[#8B004A]">
+             <Share2 className="w-6 h-6" strokeWidth="2" />
           </button>
           
-          <button onClick={() => setShowStats(!showStats)} className={`transition-all active:scale-90 ml-1 ${showStats ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+          <button onClick={() => setShowStats(!showStats)} className={`transition-transform active:scale-90 ml-1 ${showStats ? "text-[#FFB800]" : "hover:text-[#8B004A]"}`}>
+             <Sparkles className="w-6 h-6" strokeWidth="2" />
           </button>
         </div>
         
-        <button onClick={handleSavePost} className={`transition-all active:scale-90 ${isSaved ? "text-[#8B004A]" : "text-gray-400 hover:text-[#8B004A]"}`}>
-          <svg className="w-7 h-7" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"/></svg>
+        <button onClick={handleSavePost} className={`transition-transform active:scale-90 ${isSaved ? "text-[#8B004A]" : "text-gray-300 hover:text-[#8B004A]"}`}>
+          <Bookmark className="w-6 h-6" fill={isSaved ? "currentColor" : "none"} strokeWidth="2" />
         </button>
       </div>
 
-      <div className="px-4 mb-2">
-        <span className="text-[13px] font-black text-gray-900 cursor-pointer">{currentVocab.voteCount || 0} likes</span>
+      <div className="px-5 mb-3">
+        <span className="text-[13px] font-playful font-bold text-gray-900 cursor-pointer">{currentVocab.voteCount || 0} Vibes</span>
       </div>
 
-      {/* 4. EXPANDABLE STATS */}
+      {/* 4. EXPANDABLE STATS (Soft buttons) */}
       <div className={`transition-all duration-300 overflow-hidden ${showStats ? "max-h-[200px] opacity-100 mb-4" : "max-h-0 opacity-0 mb-0"}`}>
-        <div className="px-4">
-          <div className="grid grid-cols-4 gap-2 bg-[#F2EFE7] p-2 rounded-xl border border-[#8B004A]/10">
+        <div className="px-5">
+          <div className="grid grid-cols-4 gap-2 bg-[#f8f9fa] p-2 rounded-xl border border-gray-100">
             {['easy', 'hard', 'heard', 'dailyUse'].map((lvl) => (
-              <button key={lvl} onClick={(e) => handleStatUpdate(e, lvl)} className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${userLevel === lvl ? "bg-[#8B004A] text-white shadow-md" : "hover:bg-white text-gray-500 hover:text-[#8B004A]"}`}>
-                <span className="text-[14px] font-black mb-1">{currentVocab.commandStats?.[lvl] || 0}</span>
-                <span className="text-[9px] font-black uppercase tracking-wider">{lvl === 'dailyUse' ? 'Daily' : lvl}</span>
+              <button 
+                key={lvl} 
+                onClick={(e) => handleStatUpdate(e, lvl)} 
+                className={`flex flex-col items-center justify-center py-2 rounded-lg transition-all active:scale-95 ${userLevel === lvl ? "bg-[#8B004A] text-white shadow-sm" : "bg-white text-gray-500 border border-gray-100 hover:bg-gray-50"}`}
+              >
+                <span className="text-[14px] font-playful font-bold mb-0.5">{currentVocab.commandStats?.[lvl] || 0}</span>
+                <span className="text-[9px] font-playful font-bold uppercase tracking-wider">{lvl === 'dailyUse' ? 'Daily' : lvl}</span>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* 5. WORD PILLS */}
+      {/* 5. WORD PILLS (Subtle tabs) */}
       {deck.length > 1 && (
-        <div className="px-4 mb-3 flex gap-2 overflow-x-auto no-scrollbar">
+        <div className="px-5 mb-4 flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {deck.map((item, idx) => (
-            <button key={idx} onClick={() => handleWordSelect(idx)} className={`flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-black border transition-all ${currentVocabIdx === idx ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" : "bg-gray-100 border-gray-200 text-gray-500 hover:bg-gray-200"}`}>
+            <button 
+              key={idx} 
+              onClick={() => handleWordSelect(idx)} 
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-[11px] font-playful font-bold transition-all active:scale-95 ${currentVocabIdx === idx ? "bg-[#8B004A] text-white shadow-sm" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+            >
               {item.word}
             </button>
           ))}
         </div>
       )}
 
-      {/* 🚀 6. PILL-SIZED TAP-TO-FLIP FLASHCARD 🚀 */}
-      <div className="px-4 mb-2 perspective-[1000px] flex justify-start">
+      {/* 🚀 6. FLASHCARD (Clean, with soft shadow) 🚀 */}
+      <div className="px-5 mb-4 perspective-[1000px] flex justify-start">
         <motion.div 
-          className="cursor-pointer bg-white border-2 border-gray-100 shadow-sm rounded-2xl relative inline-flex items-center justify-center px-5 py-2.5 min-w-[120px] min-h-[60px] active:scale-[0.98] transition-transform"
+          className="cursor-pointer bg-white border border-gray-200 shadow-sm hover:shadow-md rounded-[1.2rem] relative inline-flex items-center justify-center px-5 py-3 min-w-[140px] min-h-[65px] active:scale-[0.98] transition-all"
           
-          // 🔥 SCROLL ENTER TRIGGER
           onViewportEnter={() => {
             if (!hasHintPlayed) {
               setHasHintPlayed(true);
@@ -400,25 +399,19 @@ export default function PostCard({
               setTimeout(() => setIsFlipped(false), 800); 
             }
           }}
-          
-          // 🔥 SCROLL LEAVE TRIGGER
           onViewportLeave={() => setHasHintPlayed(false)}
-
-          // 🔥 CHANGE: once: false taaki baar baar chale
           viewport={{ once: false, amount: 0.5 }}
-          
-          // 🔥 TAP TO FLIP
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          {/* Hint indicator (adjusted for smaller card) */}
-          <div className="absolute top-1 right-2 flex items-center gap-1 opacity-40">
-             <svg className="w-2.5 h-2.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-             <span className="text-[7px] font-black uppercase tracking-widest text-gray-500">Tap</span>
+          {/* Hint indicator */}
+          <div className="absolute top-1.5 right-2 flex items-center gap-1 opacity-40">
+             <RefreshCcw size={10} className="text-gray-500" />
+             <span className="text-[7px] font-playful font-bold uppercase tracking-widest text-gray-500">Tap</span>
           </div>
 
           <AnimatePresence mode="wait">
             {!isFlipped ? (
-              // FRONT FACE: ONLY ENGLISH WORD
+              // FRONT FACE
               <motion.div
                 key="front"
                 initial={{ rotateX: 90, opacity: 0 }}
@@ -427,33 +420,32 @@ export default function PostCard({
                 transition={{ duration: 0.2, ease: "easeInOut" }}
                 className="flex items-center gap-3 mt-1.5"
               >
-                <h3 className="text-[1.6rem] leading-none font-black text-[#8B004A] tracking-tight capitalize">
+                <h3 className="text-[1.6rem] leading-none font-playful font-bold text-[#8B004A] tracking-tight capitalize">
                   {currentVocab.word}
                 </h3>
-                {/* Speaker Button */}
+                {/* Yellow Speaker Button - Subtle accent */}
                 <div onClick={(e) => e.stopPropagation()}>
                   <PremiumSoundFeature isPremiumUser={isPremiumUser} userEmail={userEmail}>
-                    <button onClick={() => speakWord(currentVocab.word)} className="text-gray-400 hover:text-[#E01A76] transition-colors active:scale-90 bg-gray-50 p-1.5 rounded-full border border-gray-100 shadow-sm">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.5A2.25 2.25 0 002.25 9.75v4.5a2.25 2.25 0 002.25 2.25h1.94l4.5 4.5c.944.945 2.56.276 2.56-1.06V4.06z"/></svg>
+                    <button onClick={() => speakWord(currentVocab.word)} className="text-[#FFB800] hover:bg-[#FFB800] hover:text-white transition-colors active:scale-90 bg-[#FFB800]/10 p-1.5 rounded-full">
+                      <Volume2 size={16} strokeWidth={2.5} />
                     </button>
                   </PremiumSoundFeature>
                 </div>
               </motion.div>
             ) : (
-              // BACK FACE: HINDI MEANING + SMALL ENGLISH WORD
+              // BACK FACE
               <motion.div
                 key="back"
                 initial={{ rotateX: 90, opacity: 0 }}
                 animate={{ rotateX: 0, opacity: 1 }}
                 exit={{ rotateX: -90, opacity: 0 }}
                 transition={{ duration: 0.2, ease: "easeInOut" }}
-                className="flex flex-col items-center justify-center mt-1"
+                className="flex flex-col items-center justify-center mt-1 w-full"
               >
-                {/* 🚀 Chhota sa English word upar 🚀 */}
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+                <span className="text-[10px] font-playful font-bold text-gray-400 uppercase tracking-wider mb-0.5">
                   {currentVocab.word}
                 </span>
-                <p className="text-[1.2rem] text-[#8B004A] font-bold leading-relaxed text-center px-2">
+                <p className="text-[1.1rem] text-[#8B004A] font-body font-bold leading-relaxed text-center px-2">
                   {highlightText(currentVocab.meaning, currentVocab.word)}
                 </p>
               </motion.div>
@@ -462,11 +454,11 @@ export default function PostCard({
         </motion.div>
       </div>
 
-      {/* 🚀 6.5 SENTENCE OUTSIDE THE FLIP CARD 🚀 */}
+      {/* 🚀 6.5 SENTENCE BUBBLE (Clean layout) 🚀 */}
       {currentVocab.sentence && (
-        <div className="px-4 mb-2">
-          <div className="p-3 bg-gray-50 rounded-xl border-l-4 border-[#FFB800] w-full text-left shadow-sm">
-            <p className="text-[13px] text-gray-600 italic font-medium leading-relaxed">
+        <div className="px-5 mb-4">
+          <div className="p-3 bg-[#FFB800]/5 rounded-xl border-l-4 border-[#FFB800] w-full text-left">
+            <p className="text-[13px] text-gray-700 font-body font-medium leading-relaxed italic">
               "{highlightText(currentVocab.sentence, currentVocab.word)}"
             </p>
           </div>
@@ -474,16 +466,16 @@ export default function PostCard({
       )}
 
       {/* 7. COMMENTS SECTION */}
-      <div className="px-4 mt-3 pt-3 border-t border-gray-100">
-        <button onClick={() => setShowComments(true)} className="text-[13px] font-bold text-gray-500 mb-1 hover:text-[#8B004A] transition-colors">
+      <div className="px-5 mt-2 pt-3 border-t border-gray-50 pb-5">
+        <button onClick={() => setShowComments(true)} className="text-[13px] font-playful font-bold text-gray-500 mb-1 hover:text-[#E01A76] transition-colors">
           View all {post.comments?.length || 0} comments
         </button>
         
-        <div className={`text-[13px] transition-opacity duration-500 flex items-center gap-1.5 h-[20px] overflow-hidden ${commentFade ? 'opacity-100' : 'opacity-0'}`}>
-          <span className="font-black text-gray-900 whitespace-nowrap shrink-0">
+        <div className={`text-[13px] font-body transition-opacity duration-500 flex items-center gap-1.5 h-[20px] overflow-hidden ${commentFade ? 'opacity-100' : 'opacity-0'}`}>
+          <span className="font-bold text-gray-900 whitespace-nowrap shrink-0">
             {displayComments[activeCommentIdx]?.name}
           </span>
-          <span className="text-gray-600 truncate">
+          <span className="text-gray-600 truncate font-medium">
             {displayComments[activeCommentIdx]?.text}
           </span>
         </div>

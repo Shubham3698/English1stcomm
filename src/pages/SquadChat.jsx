@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, UserPlus, ArrowLeft, ExternalLink, RefreshCcw } from "lucide-react";
+import { Send, UserPlus, ArrowLeft, ExternalLink, RefreshCcw, Volume2 } from "lucide-react"; // 🔥 Volume2 imported
 import toast from "react-hot-toast";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,6 +33,18 @@ const SharedFlipCard = ({ msg, isMe, navigate }) => {
   const word = post.word || post.title || "Unknown";
   const meaning = post.meaning || "View post for details...";
 
+  // 🔥 PRONUNCIATION LOGIC (Text-to-Speech)
+  const speakWord = (text) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US'; 
+      u.rate = 0.85; 
+      u.pitch = 1.1; 
+      window.speechSynthesis.speak(u);
+    }
+  };
+
   return (
     <div className={`flex flex-col w-full my-1 ${isMe ? "items-end" : "items-start"}`}>
       
@@ -42,12 +54,11 @@ const SharedFlipCard = ({ msg, isMe, navigate }) => {
         <span className="text-[9px] font-black uppercase tracking-widest text-[#8B004A]">Shared Flashcard</span>
       </div>
 
-      {/* 🔹 EXACT PostCard Flashcard (Soft shadow, rounded, inline-flex) */}
+      {/* 🔹 EXACT PostCard Flashcard */}
       <div className="perspective-[1000px] flex justify-start">
         <motion.div 
           className="cursor-pointer bg-white border border-gray-200 shadow-sm hover:shadow-md rounded-[1.2rem] relative inline-flex items-center justify-center px-5 py-3 min-w-[160px] min-h-[75px] active:scale-[0.98] transition-all"
           
-          // 🔥 EXACT SCROLL-TRIGGERED FLIP (Screen pe aate hi flip hoga)
           onViewportEnter={() => {
             if (!hasHintPlayed) {
               setHasHintPlayed(true);
@@ -68,7 +79,7 @@ const SharedFlipCard = ({ msg, isMe, navigate }) => {
 
           <AnimatePresence mode="wait">
             {!isFlipped ? (
-              // FRONT FACE (WORD)
+              // FRONT FACE (WORD + PRONUNCIATION ICON)
               <motion.div
                 key="front"
                 initial={{ rotateX: 90, opacity: 0 }}
@@ -80,6 +91,16 @@ const SharedFlipCard = ({ msg, isMe, navigate }) => {
                 <h3 className="text-[1.6rem] leading-none font-black text-[#8B004A] tracking-tight capitalize">
                   {word}
                 </h3>
+                {/* 🔥 PRONUNCIATION BUTTON (Yellow Theme) 🔥 */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Flip hone se rokega!
+                    speakWord(word);
+                  }} 
+                  className="text-[#FFB800] hover:bg-[#FFB800] hover:text-white transition-colors active:scale-90 bg-[#FFB800]/10 p-1.5 rounded-full"
+                >
+                  <Volume2 size={18} strokeWidth={2.5} />
+                </button>
               </motion.div>
             ) : (
               // BACK FACE (MEANING W/ PATTI HIGHLIGHT)
@@ -103,7 +124,7 @@ const SharedFlipCard = ({ msg, isMe, navigate }) => {
         </motion.div>
       </div>
 
-      {/* 🔹 Clean Link Button (Without heavy background) */}
+      {/* 🔹 Clean Link Button */}
       <button 
         onClick={(e) => {
           e.stopPropagation(); 
@@ -130,7 +151,7 @@ export default function SquadChat() {
   const [inputText, setInputText] = useState("");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [showAddMember, setShowAddMember] = useState(false);
-  const [isInitialLoaded, setIsInitialLoaded] = useState(false); // 🔥 Prevent annoying auto-scroll
+  const [isInitialLoaded, setIsInitialLoaded] = useState(false);
 
   const chatEndRef = useRef(null);
 
@@ -160,7 +181,6 @@ export default function SquadChat() {
     return () => clearInterval(interval);
   }, [squad?._id]);
 
-  // 🔥 SMART SCROLL LOGIC: Sirf pehli baar load hone par scroll karega
   useEffect(() => {
     if (messages.length > 0 && !isInitialLoaded) {
       chatEndRef.current?.scrollIntoView({ behavior: "auto" });
@@ -175,7 +195,6 @@ export default function SquadChat() {
     const currentText = inputText;
     setInputText("");
     
-    // 🔥 INSTANT SCROLL: Jab aap message bhejenge tab neeche scroll hoga
     setTimeout(() => {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -282,7 +301,7 @@ export default function SquadChat() {
                 </div>
               )}
 
-              {/* 🔥 SHARED POST FLIP CARD (PostCard Style) 🔥 */}
+              {/* 🔥 SHARED POST FLIP CARD WITH AUDIO BUTTON 🔥 */}
               {msg.type === "post" && msg.postId && (
                 <SharedFlipCard msg={msg} isMe={isMe} navigate={navigate} />
               )}

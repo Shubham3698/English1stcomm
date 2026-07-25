@@ -3,11 +3,14 @@ import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import toast from "react-hot-toast"; 
 
-// ✅ Firebase functions import karo
+// ✅ Firebase functions
 import { requestForToken, onMessageListener } from "./firebase"; 
 
+// ✅ Components Imports
 import Navbar from "./components/Navbar";
 import BottomNav from "./components/BottomNav"; 
+
+// ✅ Pages Imports
 import Home from "./pages/Home";
 import CommunityPost from "./pages/CommunityPost";
 import User from "./pages/User"; 
@@ -19,11 +22,12 @@ import EbookStore from "./pages/EbookStore";
 import InteractiveQuizPage from "./pages/InteractiveQuizPage";
 import VocabDeckPage from "./pages/VocabDeckPage";
 import AdminDashboard from "./pages/AdminDashboard";
-import SquadChat from './pages/SquadChat';
-
-
-// ✅ 1. Apna naya Lessons page import karo (path apne folder structure ke hisaab se check kar lena)
 import LessonsPage from "./pages/LessonsPage"; 
+
+// 🔥 Naye Squad/Chat Pages yahan import kiye hain
+import SquadChat from './pages/SquadChat';
+import SquadList from './pages/SquadList'; // <-- YEH IMPORT MISSING THA
+
 
 export default function App() {
   const userEmail = localStorage.getItem("eng_userEmail");
@@ -83,7 +87,7 @@ export default function App() {
         toastOptions={{
           duration: 2000,
           style: {
-            background: '#121c2d', // ✅ Toast ko bhi dark theme diya
+            background: '#121c2d', 
             color: '#fff',
             fontSize: '14px',
             fontWeight: 'bold',
@@ -95,7 +99,6 @@ export default function App() {
 
       <div
         onContextMenu={(e) => e.preventDefault()}
-        // ✅ 2. Background color update kiya dark theme (#0b101a) ke liye
         style={{ background: "#0b101a", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}
       >
         <Navbar />
@@ -113,13 +116,13 @@ export default function App() {
           <Route path="/vocab-deck" element={<VocabDeckPage />} />
           <Route path="/interactive-quiz" element={<InteractiveQuizPage />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          
-          {/* ✅ 3. Yahan par naya route add kar diya */}
           <Route path="/lessons" element={<LessonsPage />} />
+          
+          {/* 🔥 Chats ke Routes */}
+          <Route path="/squads" element={<SquadList />} />
           <Route path="/squad-chat" element={<SquadChat />} />
         </Routes>
 
-        {/* ✅ Bottom Navbar */}
         <BottomNav />
       </div>
     </BrowserRouter>

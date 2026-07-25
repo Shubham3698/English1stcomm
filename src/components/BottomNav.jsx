@@ -1,11 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Users, Mic, FileText, MoreHorizontal, BookOpen, Library, User } from 'lucide-react';
+import { Home, Users, Mic, FileText, MoreHorizontal, BookOpen, Library, User, MessageCircle } from 'lucide-react'; 
 
 const BottomNav = () => {
   const location = useLocation();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const menuRef = useRef(null);
+  
+  // 🔥 NEW STATE: Track if there are any unread messages
+  const [hasUnreadSquads, setHasUnreadSquads] = useState(false);
+  const userEmail = localStorage.getItem("eng_userEmail") || "guest@gmail.com";
+  const API_URL = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
 
   // 🖱️ Screen pe kahin bhi click karne se "More" menu close ho jayega
   useEffect(() => {
@@ -18,31 +23,53 @@ const BottomNav = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🔄 Route change hone pe menu automatically close ho jayega
   useEffect(() => {
     setIsMoreOpen(false);
   }, [location.pathname]);
+
+  // 🚀 BACKGROUND FETCH: Check for unread messages
+  useEffect(() => {
+    const fetchUnreadStatus = async () => {
+      if (!userEmail || userEmail === "guest@gmail.com") return;
+      try {
+        const res = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
+        const data = await res.json();
+        if (data.success) {
+          // Check if ANY squad has an unreadCount > 0
+          const hasUnread = data.squads.some(squad => squad.unreadCount > 0);
+          setHasUnreadSquads(hasUnread);
+        }
+      } catch (error) {
+        console.error("Error fetching unread status", error);
+      }
+    };
+
+    fetchUnreadStatus();
+    // Har 15 second mein check karega taaki badge automatically update ho
+    const interval = setInterval(fetchUnreadStatus, 15000);
+    return () => clearInterval(interval);
+  }, [userEmail, API_URL]);
 
   // 🎯 Main Navbar Items 
   const mainNavItems = [
     { name: 'Learn', path: '/home', icon: Home },
     { name: 'Community', path: '/community', icon: Users },
     { name: 'Lessons', path: '/lessons', icon: BookOpen }, 
-    { name: 'Talk', path: '/interactive-quiz', icon: Mic }, // ✅ Talk ab /interactive-quiz kholega
+    { name: 'Talk', path: '/interactive-quiz', icon: Mic }, 
   ];
 
   // 📂 More Menu Items 
   const moreNavItems = [
-    { name: 'Test', path: '/find-vocab', icon: FileText }, // ✅ Test ab /find-vocab kholega
+    { name: 'Squads', path: '/squads', icon: MessageCircle }, 
+    { name: 'Test', path: '/find-vocab', icon: FileText }, 
     { name: 'E-Books', path: '/ebook-store', icon: Library },
     { name: 'Profile', path: '/user', icon: User },
   ];
 
   return (
-    // Fixed wrapper for entire navigation area
     <div className="fixed bottom-0 w-full z-50 pointer-events-none" ref={menuRef}>
       
-      {/* 🔼 MORE MENU POPUP - Fixed the Ghost Clicks here */}
+      {/* 🔼 MORE MENU POPUP */}
       <div 
         className={`absolute bottom-[75px] right-4 bg-white border-2 border-[#8B004A]/10 rounded-2xl shadow-xl shadow-[#8B004A]/10 p-2 w-48 transition-all duration-300 origin-bottom-right ${
           isMoreOpen 
@@ -52,19 +79,28 @@ const BottomNav = () => {
       >
         {moreNavItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname.includes(item.path);
           return (
             <Link
               key={item.name}
               to={item.path}
-              // ✅ Prevent interaction fully when menu is closed
               tabIndex={isMoreOpen ? 0 : -1} 
-              onClick={(e) => !isMoreOpen && e.preventDefault()} 
+              onClick={(e) => {
+                if (!isMoreOpen) e.preventDefault();
+                // Jab click kare, to turant local state me dot hata do for snappy UI
+                if (item.name === 'Squads') setHasUnreadSquads(false); 
+              }} 
               className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold ${
                 isActive ? 'bg-[#E01A76]/10 text-[#E01A76]' : 'text-gray-500 hover:bg-[#F2EFE7] hover:text-[#8B004A]'
               }`}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              {/* 🔥 SQUADS MENU ITEM DOT 🔥 */}
+              <div className="relative">
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+                {item.name === 'Squads' && hasUnreadSquads && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#E01A76] rounded-full border-2 border-white animate-pulse"></span>
+                )}
+              </div>
               <span className="text-xs uppercase tracking-wider">{item.name}</span>
             </Link>
           );
@@ -102,8 +138,12 @@ const BottomNav = () => {
             isMoreOpen ? 'text-[#E01A76]' : 'text-gray-400 hover:text-[#8B004A]'
           }`}
         >
-          <div className={`p-1.5 rounded-full transition-all duration-300 ${isMoreOpen ? 'bg-[#E01A76]/10 scale-110' : 'group-hover:scale-110'}`}>
+          {/* 🔥 MAIN MORE BUTTON DOT 🔥 */}
+          <div className={`relative p-1.5 rounded-full transition-all duration-300 ${isMoreOpen ? 'bg-[#E01A76]/10 scale-110' : 'group-hover:scale-110'}`}>
             <MoreHorizontal size={24} strokeWidth={isMoreOpen ? 2.5 : 2} />
+            {hasUnreadSquads && !isMoreOpen && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#E01A76] rounded-full border-2 border-[#F2EFE7] animate-pulse"></span>
+            )}
           </div>
           <span className={`text-[10px] mt-1 uppercase tracking-wider font-extrabold transition-all duration-300 ${isMoreOpen ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}`}>
             More

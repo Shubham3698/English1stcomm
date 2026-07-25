@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
 import VisualAnchor from "../components/ai-wordsimg/VisualAnchor"; 
+import { motion, AnimatePresence } from "framer-motion";
 
 import { 
   Search, 
@@ -21,7 +22,10 @@ import {
   BookOpen,
   ArrowRight,
   Zap,
-  X 
+  X,
+  Send,
+  Users,
+  Check
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -48,7 +52,6 @@ export default function VocabPage() {
   const [isImageExpanded, setIsImageExpanded] = useState(false);
 
   const [isUploading, setIsUploading] = useState(false);
-  const [isSharing, setIsSharing] = useState(false); 
   const fileInputRef = useRef(null);
 
   const [userEmail, setUserEmail] = useState("");
@@ -66,6 +69,22 @@ export default function VocabPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [loopNum, setLoopNum] = useState(0);
   const typingSpeed = isDeleting ? 60 : 120;
+
+  // 🔥 SHARE MODAL STATES (Instagram Style Multi-Select)
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [userSquads, setUserSquads] = useState([]);
+  const [isFetchingSquads, setIsFetchingSquads] = useState(false);
+  const [sentSquads, setSentSquads] = useState(new Set()); 
+  const [selectedSquads, setSelectedSquads] = useState(new Set()); 
+  
+  // 🔥 Global Share specific states for multi-select
+  const [isGlobalSelected, setIsGlobalSelected] = useState(false);
+  const [isGlobalSent, setIsGlobalSent] = useState(false);
+  
+  const [isSendingMultiple, setIsSendingMultiple] = useState(false);
+  
+  // Total selections counter
+  const totalSelected = selectedSquads.size + (isGlobalSelected ? 1 : 0);
   
   const classicWords = [
     "Strategy...", "Objective...", "Efficiency...", "Collaboration...", 
@@ -113,7 +132,7 @@ export default function VocabPage() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = "en-US";
-    utterance.pitch = 1.2; // Thoda playful voice pitch
+    utterance.pitch = 1.2; 
     utterance.rate = 0.9;
     window.speechSynthesis.speak(utterance);
   };
@@ -162,7 +181,7 @@ export default function VocabPage() {
             loadFromHistoryCard(fetchedHistory[0], true);
             setContextBadge("Latest Resumed");
           } else {
-            handleSearchWord("magic", false, true); // Swapped 'dog' with 'magic' for a playful vibe
+            handleSearchWord("magic", false, true); 
             setContextBadge("Example Target");
           }
         }
@@ -177,6 +196,63 @@ export default function VocabPage() {
       fetchHistoryFromDB(true);
     }
   }, [userEmail]);
+
+  // 🔥 FETCH SQUADS
+  const fetchUserSquads = async () => {
+    if (!userEmail || userEmail === "guest_user@gmail.com") return;
+    setIsFetchingSquads(true);
+    try {
+      const res = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
+      const data = await res.json();
+      if (data.success) {
+        setUserSquads(data.squads);
+      }
+    } catch (err) {
+      console.error("Failed to fetch squads:", err);
+    } finally {
+      setIsFetchingSquads(false);
+    }
+  };
+
+  // 🔥 ENSURE POST EXISTS (Helper to create/get PostId before sharing)
+  const ensurePostExists = async () => {
+    if (sharedPostId) {
+      await handleUpdateCommunityPost(meaning, sentences, imageGallery, false);
+      return sharedPostId;
+    }
+    
+    const data = new FormData();
+    data.append("userEmail", userEmail);
+    data.append("title", `Lexicon Entry: ${activeWord.toUpperCase()}`); 
+    data.append("word", activeWord);
+    data.append("meaning", meaning);
+    data.append("sentence", sentences || "");
+
+    const vocabData = [{
+      word: activeWord, meaning: meaning, sentence: sentences || "",
+      media: imageGallery.map(url => ({ type: 'image', url })) 
+    }];
+    data.append("vocabData", JSON.stringify(vocabData));
+
+    if (imageGallery.length > 0) {
+      const mediaMetadata = imageGallery.map(url => ({ type: 'image', url: url, value: url, mode: 'url', vocabIndex: 0 }));
+      data.append("mediaMetadata", JSON.stringify(mediaMetadata));
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/api/english-posts/create`, { method: "POST", body: data });
+      const postResponseData = await res.json(); 
+      if (res.ok) {
+        const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
+        setSharedPostId(newPostId);
+        fetchRelatedPosts(activeWord);
+        return newPostId;
+      }
+    } catch (e) {
+      console.error("Error creating base post:", e);
+    }
+    return null;
+  };
 
   const handleUpdateCommunityPost = async (updatedMeaning, updatedSentences, updatedGallery, isManualClick = false) => {
     if (!sharedPostId || !userEmail) return;
@@ -196,27 +272,86 @@ export default function VocabPage() {
     data.append("vocabData", JSON.stringify(vocabData));
 
     const mediaMetadata = currentImages.map((url) => ({
-      type: 'image',
-      url: url,   
-      value: url,
-      mode: 'url',
-      vocabIndex: 0
+      type: 'image', url: url, value: url, mode: 'url', vocabIndex: 0
     }));
     data.append("mediaMetadata", JSON.stringify(mediaMetadata));
 
     try {
-      const res = await fetch(`${API_URL}/api/english-posts/update/${sharedPostId}`, {
-        method: "PUT", 
-        body: data
-      });
-
+      const res = await fetch(`${API_URL}/api/english-posts/update/${sharedPostId}`, { method: "PUT", body: data });
       if (res.ok) {
         if (isManualClick) toast.success("Community Post Updated! 🔄✨");
-        else toast.success("Community Post Auto-Updated! 🔄");
         fetchRelatedPosts(activeWord); 
       }
     } catch (e) {
       console.error("Failed to auto-update post", e);
+    }
+  };
+
+  // 🔥 THIS WAS MISSING! FIXES SQUAD CLICK NOT WORKING
+  const toggleSquadSelection = (squadId) => {
+    if (sentSquads.has(squadId)) return; // Already sent, cannot select
+    
+    setSelectedSquads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(squadId)) newSet.delete(squadId);
+      else newSet.add(squadId);
+      return newSet;
+    });
+  };
+
+  // 🔥 SEND TO ALL SELECTED (GLOBAL + SQUADS)
+  const handleSendMultiple = async () => {
+    if (totalSelected === 0) return;
+    setIsSendingMultiple(true);
+    
+    try {
+      // Create/Update the global post first
+      const postId = await ensurePostExists();
+      if (!postId) {
+        toast.error("Failed to prepare flashcard for sharing.");
+        setIsSendingMultiple(false);
+        return;
+      }
+
+      // If global was selected, mark it as sent 
+      if (isGlobalSelected) {
+        setIsGlobalSent(true);
+        setIsGlobalSelected(false);
+      }
+
+      // If squads were selected, send direct messages to those chats
+      if (selectedSquads.size > 0) {
+        const sendPromises = Array.from(selectedSquads).map(squadId => 
+          fetch(`${API_URL}/api/squads/${squadId}/message`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              senderEmail: userEmail,
+              type: "post",
+              postId: postId
+            })
+          }).then(res => ({ squadId, success: res.ok }))
+        );
+
+        const results = await Promise.all(sendPromises);
+        const successfulSquads = results.filter(r => r.success).map(r => r.squadId);
+
+        if (successfulSquads.length > 0) {
+          setSentSquads(prev => {
+            const newSet = new Set(prev);
+            successfulSquads.forEach(id => newSet.add(id));
+            return newSet;
+          });
+          setSelectedSquads(new Set()); 
+        }
+      }
+
+      toast.success("Shared successfully! 🚀");
+      
+    } catch (err) {
+      toast.error("Network error while sending!");
+    } finally {
+      setIsSendingMultiple(false);
     }
   };
 
@@ -248,9 +383,7 @@ export default function VocabPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ word: activeWord, userId: userEmail, imageUrls: updatedGallery })
             });
-          } catch(err) {
-            console.error("History sync failed", err);
-          }
+          } catch(err) {}
         }
         fetchHistoryFromDB(); 
         setIsImageExpanded(true); 
@@ -259,7 +392,6 @@ export default function VocabPage() {
         toast.error("Visual generation failed behind the scenes");
       }
     } catch (err) {
-      console.error("Image Fetch error:", err);
     } finally {
       setIsImageLoading(false);
       setImageAction("");
@@ -288,9 +420,7 @@ export default function VocabPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ word: activeWord, userId: userEmail, imageUrls: updatedGallery })
           });
-        } catch(err) {
-          console.error("History sync failed", err);
-        }
+        } catch(err) {}
         fetchHistoryFromDB(); 
         if (sharedPostId) handleUpdateCommunityPost(meaning, sentences, updatedGallery);
       } else {
@@ -333,6 +463,12 @@ export default function VocabPage() {
     setShowHistory(false);
     setResultView("ai"); 
     if (!isSilent) setContextBadge("Analyzed Target");
+
+    // 🔥 Reset Send states for new word
+    setSentSquads(new Set());
+    setSelectedSquads(new Set());
+    setIsGlobalSelected(false);
+    setIsGlobalSent(false);
 
     try {
       const response = await fetch(`${API_URL}/api/words/define`, {
@@ -381,54 +517,6 @@ export default function VocabPage() {
     }
   };
 
-  const handleShareToCommunity = async () => {
-    if (!userEmail || userEmail === "guest_user@gmail.com") return toast.error("Please login to share with the community! 🚫");
-    if (!activeWord || !meaning) return toast.error("No word data to share!");
-    if (sharedPostId) {
-      await handleUpdateCommunityPost(meaning, sentences, imageGallery, true);
-      setResultView("posts");
-      return;
-    }
-
-    setIsSharing(true);
-    const data = new FormData();
-    data.append("userEmail", userEmail);
-    data.append("title", `Lexicon Entry: ${activeWord.toUpperCase()}`); 
-    data.append("word", activeWord);
-    data.append("meaning", meaning);
-    data.append("sentence", sentences || "");
-
-    const vocabData = [{
-      word: activeWord, meaning: meaning, sentence: sentences || "",
-      media: imageGallery.map(url => ({ type: 'image', url })) 
-    }];
-    data.append("vocabData", JSON.stringify(vocabData));
-
-    if (imageGallery.length > 0) {
-      const mediaMetadata = imageGallery.map(url => ({ type: 'image', url: url, value: url, mode: 'url', vocabIndex: 0 }));
-      data.append("mediaMetadata", JSON.stringify(mediaMetadata));
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/api/english-posts/create`, { method: "POST", body: data });
-      const postResponseData = await res.json(); 
-
-      if (res.ok) {
-        toast.success("Word Shared to Community! 🌍✨");
-        const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
-        if (newPostId) setSharedPostId(newPostId);
-        fetchRelatedPosts(activeWord);
-        setResultView("posts"); 
-      } else {
-        toast.error("Failed to share word.");
-      }
-    } catch (e) {
-      toast.error("Network Error! Could not share.");
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
   const loadFromHistoryCard = (item, isSilent = false) => {
     setSharedPostId(null);
     setActiveWord(item.word);
@@ -441,6 +529,12 @@ export default function VocabPage() {
     setShowHistory(false);
     setResultView("ai"); 
     
+    // 🔥 Reset Send states for loaded word
+    setSentSquads(new Set());
+    setSelectedSquads(new Set());
+    setIsGlobalSelected(false);
+    setIsGlobalSent(false);
+
     if (!isSilent) {
       setContextBadge("Historical Target");
       handlePronounce(item.word);
@@ -461,6 +555,12 @@ export default function VocabPage() {
 
   const toggleFlip = (id) => setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
+
+  const handleCloseShareModal = () => {
+    setIsShareModalOpen(false);
+    setSelectedSquads(new Set()); // Reset selections on close
+    setIsGlobalSelected(false);
+  };
 
   return (
     <>
@@ -489,7 +589,7 @@ export default function VocabPage() {
           .btn-3d:active:not(:disabled) {
             transform: translateY(4px);
             border-bottom-width: 0px !important;
-            margin-top: 4px; /* prevents layout shift */
+            margin-top: 4px; 
           }
           
           .btn-3d-primary {
@@ -501,7 +601,7 @@ export default function VocabPage() {
 
           .btn-3d-secondary {
             background-color: white;
-            border-color: #cbd5e1; /* slate-300 */
+            border-color: #cbd5e1; 
             color: #8B004A;
           }
           .btn-3d-secondary:hover { background-color: #f8fafc; }
@@ -542,7 +642,7 @@ export default function VocabPage() {
         `}
       </style>
 
-      {/* Main Container - Applied Nunito body font */}
+      {/* Main Container */}
       <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-body transition-colors duration-500 pb-28 overflow-x-hidden w-full relative selection:bg-[#FFB800] selection:text-[#8B004A]">
         
         {/* Soft Playful Background Glows */}
@@ -553,19 +653,14 @@ export default function VocabPage() {
           position="top-center" 
           toastOptions={{
             style: {
-              background: '#8B004A',
-              color: '#F2EFE7',
-              border: '2px solid #E01A76',
-              fontFamily: 'Fredoka, sans-serif',
-              fontWeight: '600',
-              borderRadius: '20px',
-              padding: '14px 24px',
-              boxShadow: '0 10px 25px -5px rgba(139, 0, 74, 0.3)',
+              background: '#8B004A', color: '#F2EFE7', border: '2px solid #E01A76',
+              fontFamily: 'Fredoka, sans-serif', fontWeight: '600', borderRadius: '20px',
+              padding: '14px 24px', boxShadow: '0 10px 25px -5px rgba(139, 0, 74, 0.3)',
             }
           }}
         />
 
-        {/* TOP STATUS BAR - Chunkier and softer borders */}
+        {/* TOP STATUS BAR */}
         <div className="w-full max-w-2xl bg-white/80 backdrop-blur-xl rounded-[2rem] p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-2 border-white shadow-xl shadow-gray-200/40 relative z-10">
           <div className="flex items-center space-x-4 w-full sm:w-auto">
             <div className="bg-[#E01A76] p-3.5 rounded-2xl text-white flex-shrink-0 shadow-inner -rotate-2">
@@ -591,7 +686,7 @@ export default function VocabPage() {
         </div>
 
         <div className="w-full max-w-2xl relative z-10">
-          {/* BRANDING HEADER WITH 3D ACTION BUTTONS */}
+          {/* BRANDING HEADER */}
           <div className="px-2 mb-10 flex flex-col sm:flex-row justify-between sm:items-end gap-5">
             <div>
               <div className="flex items-center space-x-2 mb-3">
@@ -608,7 +703,6 @@ export default function VocabPage() {
             </div>
             
             <div className="flex flex-row items-center gap-3 w-full sm:w-auto h-14">
-              {/* Using New 3D Tactile Buttons */}
               <button
                 onClick={() => navigate('/find-vocab')}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 font-playful text-sm font-bold px-6 h-full rounded-2xl btn-3d btn-3d-primary"
@@ -625,7 +719,7 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* HISTORY DROPDOWN PANEL - Playful rounded cards */}
+          {/* HISTORY DROPDOWN PANEL */}
           <div className={`w-full grid transition-all duration-500 ease-in-out ${showHistory ? 'grid-rows-[1fr] opacity-100 mb-8' : 'grid-rows-[0fr] opacity-0 mb-0'}`}>
             <div className="overflow-hidden">
               <div className="bg-white border-4 border-gray-100 rounded-[2.5rem] p-6 shadow-xl relative w-full mt-2">
@@ -689,7 +783,7 @@ export default function VocabPage() {
             </div>
           </div>
 
-          {/* MASSIVE SEARCH BAR - Big, bouncy and inviting */}
+          {/* MASSIVE SEARCH BAR */}
           <div className="w-full mb-8 group relative z-20">
             <div className="relative flex items-center bg-white border-4 border-gray-100 focus-within:border-[#E01A76]/50 focus-within:shadow-2xl rounded-[2.5rem] p-2 shadow-lg transition-all duration-300 w-full hover:shadow-xl">
               <div className="absolute left-6 text-[#E01A76] opacity-60 group-focus-within:opacity-100 group-focus-within:scale-110 group-focus-within:rotate-6 transition-all flex-shrink-0">
@@ -862,7 +956,7 @@ export default function VocabPage() {
                       </div>
                     </div>
 
-                    {/* Bottom Action Footer */}
+                    {/* Bottom Action Footer - 🔥 OPEN INSTAGRAM STYLE SHARE MODAL 🔥 */}
                     <div className="flex flex-col sm:flex-row justify-between gap-3 border-t-2 border-gray-100 mt-8 pt-6 w-full animate-stagger-4">
                       <button
                         onClick={() => handleSearchWord(activeWord, true)}
@@ -873,18 +967,14 @@ export default function VocabPage() {
                       </button>
 
                       <button
-                        onClick={handleShareToCommunity}
-                        disabled={isSharing}
-                        className={`font-playful text-[13px] flex items-center justify-center gap-2 font-bold px-5 h-12 rounded-2xl flex-1 btn-3d ${sharedPostId ? 'bg-emerald-500 hover:bg-emerald-600 border-[#047857] text-white' : 'btn-3d-primary'}`}
+                        onClick={() => {
+                          setIsShareModalOpen(true);
+                          fetchUserSquads();
+                        }}
+                        className={`font-playful text-[13px] flex items-center justify-center gap-2 font-bold px-5 h-12 rounded-2xl flex-1 btn-3d btn-3d-primary`}
                       >
-                        {isSharing ? (
-                          <><Loader2 size={16} className="animate-spin" /> ...</>
-                        ) : (
-                          <>
-                            {sharedPostId ? <RefreshCw size={16} strokeWidth={3} /> : <Share2 size={16} strokeWidth={3} />}
-                            {sharedPostId ? "Update Post" : "Share Word"}
-                          </>
-                        )}
+                        <Share2 size={16} strokeWidth={3} />
+                        Share / Send
                       </button>
                     </div>
                   </div>
@@ -940,6 +1030,173 @@ export default function VocabPage() {
           )}
         </div>
       </div>
+
+      {/* 🔥 INSTAGRAM STYLE SHARE MODAL (MULTI-SELECT BOTTOM SHEET) 🔥 */}
+      <AnimatePresence>
+        {isShareModalOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              onClick={handleCloseShareModal}
+            />
+            
+            {/* Bottom Sheet */}
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 max-w-[450px] mx-auto bg-white rounded-t-[2.5rem] z-[101] p-6 pb-10 shadow-2xl flex flex-col max-h-[85vh] border-t-4 border-[#FFB800]"
+            >
+              {/* Drag Handle & Header */}
+              <div className="w-full flex justify-center mb-4">
+                 <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+              </div>
+              <div className="flex justify-between items-center mb-5">
+                 <h3 className="font-playful text-xl font-bold text-[#8B004A] flex items-center gap-2">
+                   <Share2 size={20} className="text-[#E01A76]" /> Share to...
+                 </h3>
+                 <button onClick={handleCloseShareModal} className="p-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-gray-600 active:scale-90">
+                   <X size={20}/>
+                 </button>
+              </div>
+
+              {/* 1. Global Share Option (NOW SELECTABLE MULTI-SHARE ROW) */}
+              <div 
+                onClick={() => {
+                  if (!isGlobalSent) setIsGlobalSelected(!isGlobalSelected);
+                }}
+                className={`flex items-center justify-between p-3.5 rounded-[1.2rem] mb-4 transition-all cursor-pointer border-2 ${
+                  isGlobalSent 
+                    ? "opacity-60 bg-gray-50 border-transparent cursor-default" 
+                    : isGlobalSelected 
+                      ? "bg-[#FFB800]/10 border-[#FFB800]/40 shadow-sm" 
+                      : "bg-gradient-to-r from-[#FFB800]/10 to-[#FFB800]/5 border-[#FFB800]/30 hover:shadow-md"
+                }`}
+              >
+                 <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-gradient-to-tr from-[#FFB800] to-[#f0ad00] rounded-full flex items-center justify-center text-[#4A0027] shadow-sm">
+                       <Globe size={20} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                      <p className="font-playful font-bold text-gray-900 text-[14px]">Global Hub</p>
+                      <p className="text-[10px] text-[#E01A76] uppercase tracking-widest font-bold">Public Feed</p>
+                    </div>
+                 </div>
+                 
+                 {/* Select Circle Indicator for Global */}
+                 <div className="flex items-center justify-center mr-2">
+                   {isGlobalSent ? (
+                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Shared</span>
+                   ) : (
+                     <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all border-2 ${
+                       isGlobalSelected ? "bg-[#FFB800] border-[#FFB800]" : "bg-white border-gray-300"
+                     }`}>
+                       {isGlobalSelected && <Check size={14} className="text-[#4A0027]" strokeWidth={3} />}
+                     </div>
+                   )}
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-3 my-2 opacity-50">
+                 <div className="h-px bg-gray-300 flex-1"></div>
+                 <span className="font-playful text-[10px] font-bold uppercase tracking-widest text-gray-400">YOUR SQUADS</span>
+                 <div className="h-px bg-gray-300 flex-1"></div>
+              </div>
+
+              {/* 2. Squads List (MULTI-SELECT UI) */}
+              <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar mt-2 relative">
+                 {isFetchingSquads ? (
+                   <div className="flex flex-col items-center justify-center py-8">
+                     <Loader2 className="animate-spin text-[#E01A76] w-8 h-8 mb-2" />
+                     <span className="font-playful text-[10px] text-gray-400 font-bold uppercase tracking-widest">Loading Squads...</span>
+                   </div>
+                 ) : userSquads.length === 0 ? (
+                   <div className="flex flex-col items-center text-center py-6 px-4">
+                     <Users size={32} className="text-gray-300 mb-2" />
+                     <p className="text-sm font-bold text-gray-500 font-body">No squads found.</p>
+                     <p className="text-[11px] text-gray-400 mt-1">Create a squad in Community tab to share privately!</p>
+                   </div>
+                 ) : (
+                   <div className="pb-16"> {/* Extra padding so last item isn't hidden by sticky button */}
+                     {userSquads.map(squad => {
+                       const isSent = sentSquads.has(squad._id);
+                       const isSelected = selectedSquads.has(squad._id);
+                       
+                       return (
+                         <div 
+                           key={squad._id} 
+                           onClick={() => toggleSquadSelection(squad._id)}
+                           className={`flex items-center justify-between p-2.5 rounded-2xl mb-1.5 transition-all cursor-pointer border-2 ${
+                             isSent 
+                               ? "opacity-60 bg-gray-50 border-transparent cursor-default" 
+                               : isSelected 
+                                 ? "bg-[#E01A76]/5 border-[#E01A76]/30 shadow-sm" 
+                                 : "hover:bg-gray-50 border-transparent hover:border-gray-100"
+                           }`}
+                         >
+                           <div className="flex items-center gap-3">
+                              <div className="w-11 h-11 bg-gradient-to-tr from-[#8B004A]/10 to-[#E01A76]/5 text-[#8B004A] font-playful font-black text-xl rounded-full flex items-center justify-center border border-[#8B004A]/10">
+                                 {squad.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-900 text-[14px] font-body">{squad.name}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{squad.members?.length || 0} Members</p>
+                              </div>
+                           </div>
+                           
+                           {/* Select Circle Indicator */}
+                           <div className="flex items-center justify-center mr-2">
+                             {isSent ? (
+                               <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Sent</span>
+                             ) : (
+                               <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all border-2 ${
+                                 isSelected ? "bg-[#E01A76] border-[#E01A76]" : "bg-white border-gray-300"
+                               }`}>
+                                 {isSelected && <Check size={14} className="text-white" strokeWidth={3} />}
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                       )
+                     })}
+                   </div>
+                 )}
+              </div>
+
+              {/* 3. Sticky Bottom Multi-Send Button */}
+              <AnimatePresence>
+                {totalSelected > 0 && (
+                  <motion.div
+                    initial={{ y: 50, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 50, opacity: 0 }}
+                    className="absolute bottom-6 left-6 right-6"
+                  >
+                    <button
+                      onClick={handleSendMultiple}
+                      disabled={isSendingMultiple}
+                      className="w-full bg-[#8B004A] text-white py-4 rounded-[1.2rem] font-black uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                    >
+                      {isSendingMultiple ? (
+                        <><Loader2 size={18} className="animate-spin" /> Sending...</>
+                      ) : (
+                        <>Send Selected ({totalSelected}) <Send size={16} /></>
+                      )}
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
     </>
   );
 }

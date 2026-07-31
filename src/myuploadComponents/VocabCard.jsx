@@ -4,7 +4,9 @@ export default function VocabCard({
   vItem, vIdx, updateVocabValue, removeVocabSlot, 
   handleAutoTranslate, translating, mediaItems, 
   setMediaItems, updateMediaValue, setTempImage, 
-  setIsCropping, setActiveMediaIndex 
+  setIsCropping, setActiveMediaIndex,
+  // 🔥 YE NAYE PROPS AAYE HAIN AI MAGIC KE LIYE 🔥
+  handleAiMagic, aiLoading
 }) {
 
   useEffect(() => {
@@ -85,17 +87,43 @@ export default function VocabCard({
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 w-full">
-          <div className="space-y-1 text-left">
-            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">Word</label>
-            <input 
-              type="text" 
-              placeholder="WORD..." 
-              value={vItem.word || ""} 
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white outline-none focus:border-blue-500 uppercase italic transition-all shadow-inner placeholder:text-gray-800" 
-              onChange={e => updateVocabValue(vIdx, "word", e.target.value)} 
-              onBlur={() => vItem.word && handleAutoTranslate(vItem.word, vIdx)} 
-            />
+          
+          {/* 🔥 UPDATED WORD INPUT WITH AI MAGIC BUTTON 🔥 */}
+          <div className="space-y-1 text-left relative">
+            <div className="flex items-center justify-between ml-1 mb-1">
+               <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Word</label>
+            </div>
+            
+            <div className="relative flex items-center group">
+              <input 
+                type="text" 
+                placeholder="WORD..." 
+                value={vItem.word || ""} 
+                // pr-14 add kiya hai taaki text button ke piche na chhupe
+                className="w-full bg-black/40 border border-white/10 rounded-xl pl-4 pr-14 py-3 text-lg font-black text-white outline-none focus:border-blue-500 uppercase italic transition-all shadow-inner placeholder:text-gray-800" 
+                onChange={e => updateVocabValue(vIdx, "word", e.target.value)} 
+              />
+              
+              <button 
+                type="button"
+                onClick={() => handleAiMagic && handleAiMagic(vItem.word, vIdx)}
+                disabled={aiLoading === vIdx}
+                className="absolute right-2 text-[#FFB800] hover:text-[#fff0b3] p-2 bg-[#FFB800]/10 hover:bg-[#FFB800]/20 border border-[#FFB800]/30 rounded-lg transition-all active:scale-90 flex items-center justify-center disabled:opacity-50"
+                title="AI Autofill (Meaning, Sentence & Image)"
+              >
+                {aiLoading === vIdx ? (
+                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="12" cy="12" r="10" strokeWidth="3" strokeOpacity="0.25"></circle>
+                    <path d="M12 2a10 10 0 0 1 10 10" strokeWidth="3" strokeLinecap="round"></path>
+                  </svg>
+                ) : (
+                  // Wand / Sparkle Icon
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72Z"/><path d="m14 7 3 3"/><path d="M5 6v4"/><path d="M19 14v4"/><path d="M10 2v2"/><path d="M7 8H3"/><path d="M21 16h-4"/><path d="M11 3H9"/></svg>
+                )}
+              </button>
+            </div>
           </div>
+
           <div className="space-y-1 text-left">
             <label className="text-[10px] font-black text-green-500 uppercase tracking-widest ml-1">Meaning</label>
             <input 

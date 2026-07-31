@@ -465,7 +465,7 @@ export default function PostCard({
         </div>
       )}
 
-      {/* 7. COMMENTS SECTION */}
+      {/* 🔥 7. COMMENTS SECTION (UPDATED FOR IMAGE COMMENTS) 🔥 */}
       <div className="px-5 mt-2 pt-3 border-t border-gray-50 pb-5">
         <button onClick={() => setShowComments(true)} className="text-[13px] font-playful font-bold text-gray-500 mb-1 hover:text-[#E01A76] transition-colors">
           View all {post.comments?.length || 0} comments
@@ -475,8 +475,20 @@ export default function PostCard({
           <span className="font-bold text-gray-900 whitespace-nowrap shrink-0">
             {displayComments[activeCommentIdx]?.name}
           </span>
-          <span className="text-gray-600 truncate font-medium">
-            {displayComments[activeCommentIdx]?.text}
+          <span className="text-gray-600 truncate font-medium flex items-center gap-1">
+            {/* Logic to show Text or Photo status */}
+            {displayComments[activeCommentIdx]?.text ? (
+              <>
+                {displayComments[activeCommentIdx].text}
+                {displayComments[activeCommentIdx].image && <span className="opacity-60 text-[10px]">📷</span>}
+              </>
+            ) : displayComments[activeCommentIdx]?.image ? (
+              <span className="italic opacity-80 flex items-center gap-1">
+                <span className="text-[10px]">📷</span> Shared an image
+              </span>
+            ) : (
+              ""
+            )}
           </span>
         </div>
       </div>

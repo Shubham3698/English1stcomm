@@ -28,6 +28,9 @@ export default function EnglishAppMyPosts() {
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [isCropping, setIsCropping] = useState(true);
+  
+  // 🔥 NEW STATE FOR AI MAGIC TRACKING
+  const [aiLoading, setAiLoading] = useState(null);
 
   const navigate = useNavigate();
   const API_URL = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
@@ -56,6 +59,80 @@ export default function EnglishAppMyPosts() {
       }
     } catch (err) { console.error(err); }
     finally { setTranslating(null); }
+  };
+
+  // 🔥 NEW AI MAGIC FUNCTION (Meaning, Sentence, Image auto-fetch) 🔥
+  const handleAiMagic = async (word, vIdx) => {
+    if (!word || word.trim().length < 2) {
+      return toast.error("Pehle ek word likho magic ke liye! ✍️");
+    }
+    
+    setAiLoading(vIdx);
+    const userEmail = localStorage.getItem("eng_userEmail") || "guest_user@gmail.com";
+
+    try {
+      // 1. Get Word Data from AI
+      const res = await fetch(`${API_URL}/api/words/define`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: word.trim(), userId: userEmail, getAlternative: false }),
+      });
+      const resData = await res.json();
+
+      if (res.ok && resData.success && resData.data) {
+        const aiData = resData.data;
+        
+        // 2. Map Meaning & Sentence
+        updateVocabValue(vIdx, "meaning", aiData.meaning);
+        updateVocabValue(vIdx, "sentence", aiData.sentences); 
+        
+        // 3. Handle Image
+        let imgUrlToUse = "";
+        if (aiData.imageUrls && aiData.imageUrls.length > 0) {
+          imgUrlToUse = aiData.imageUrls[0];
+        } else if (aiData.imageUrl) {
+          imgUrlToUse = aiData.imageUrl;
+        } else {
+          toast("Generating visual context...", { icon: '🎨' });
+          try {
+            const imgRes = await fetch(`${API_URL}/api/image/generate`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phrase: word, actionType: "normal", userId: userEmail })
+            });
+            const imgData = await imgRes.json();
+            if (imgRes.ok && imgData.imageUrl) {
+              imgUrlToUse = imgData.imageUrl;
+            }
+          } catch(err) {
+             console.log("Auto image gen failed", err);
+          }
+        }
+
+        // 4. Attach Image to Media Gallery automatically
+        if (imgUrlToUse) {
+          setMediaItems(prev => {
+            const newItems = [...prev];
+            const emptySlotIdx = newItems.findIndex(m => m.vocabIndex === vIdx && m.mode === "select");
+            if (emptySlotIdx !== -1) {
+              newItems[emptySlotIdx] = { type: 'image', value: imgUrlToUse, mode: 'url', vocabIndex: vIdx };
+            } else {
+              newItems.push({ type: 'image', value: imgUrlToUse, mode: 'url', vocabIndex: vIdx });
+            }
+            return newItems;
+          });
+        }
+        
+        toast.success("AI Magic Applied Successfully! 🪄✨");
+      } else {
+        toast.error("AI failed to find this word.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network issue with AI engine!");
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   const startEdit = (post) => {
@@ -147,7 +224,6 @@ export default function EnglishAppMyPosts() {
     };
   };
 
-  // 🔥 UPDATED SUBMIT FUNCTION WITH SQUAD BROADCAST 🔥
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if(!deckTitle.trim()){
@@ -167,12 +243,11 @@ export default function EnglishAppMyPosts() {
     try {
       const url = editingId ? `${API_URL}/api/english-posts/update/${editingId}` : `${API_URL}/api/english-posts/create`;
       const res = await fetch(url, { method: editingId ? "PUT" : "POST", body: data });
-      const postResponseData = await res.json(); // Data capture kiya 
+      const postResponseData = await res.json(); 
 
       if (res.ok) { 
         toast.success("Deck Saved Successfully! 🎉"); 
 
-        // 🔥 AUTO SHARE TO SQUADS (Only on New Post creation) 🔥
         if (!editingId) {
           try {
             const squadsRes = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
@@ -318,6 +393,9 @@ export default function EnglishAppMyPosts() {
                     setTempImage={setTempImage} 
                     setActiveMediaIndex={setActiveMediaIndex}
                     setIsCropping={setIsCropping} 
+                    // 🔥 NAYE PROPS YAHAN PASS KIYE HAIN 🔥
+                    handleAiMagic={handleAiMagic}
+                    aiLoading={aiLoading}
                   />
                 </div>
               ))}

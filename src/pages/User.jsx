@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast"; 
 import PremiumSoundFeature from "../components/PremiumSoundFeature";
 import WordMatchGame from "../components/WordMatchGame";
+import { Capacitor } from '@capacitor/core'; // 👈 YEH IMPORT ADD KIYA
 import { 
   Play, 
   Volume2, 
@@ -33,8 +34,10 @@ export default function EnglishAppUser() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCat, setNewCat] = useState("");
 
-  const API_URL = window.location.hostname === "localhost"
-    ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+  // 👇 NAYA API URL LOGIC: Phone me ho toh seedha Render pe bhejo
+  const API_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   const fetchVault = async (email) => {
     if (!email) return;

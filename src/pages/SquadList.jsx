@@ -2,11 +2,16 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, PlusCircle, Users, X, Loader2, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
+import { Capacitor } from '@capacitor/core'; // 👈 Capacitor Import Kiya
 
 export default function SquadList() {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("eng_userEmail") || "guest@gmail.com";
-  const API_URL = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+  
+  // 👇 NAYA API URL LOGIC: Mobile app seedha live server ko hit karegi
+  const API_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   const [squads, setSquads] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");

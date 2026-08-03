@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
@@ -114,9 +114,10 @@ export default function VocabPage() {
     return () => clearTimeout(timer);
   }, [placeholderText, isDeleting, loopNum]);
 
-  const API_URL = window.location.hostname === "localhost"
-      ? "http://localhost:3000"
-      : "https://serdeptry1st.onrender.com";
+  // 🔥 SMART URL LOGIC (Using .env with Fallback)
+  const API_URL = import.meta.env.DEV 
+    ? "http://localhost:3000" 
+    : "https://serdeptry1st.onrender.com";
 
   useEffect(() => {
     const loggedInUserEmail = localStorage.getItem("eng_userEmail");
@@ -151,9 +152,28 @@ export default function VocabPage() {
                  post.word?.toLowerCase().includes(query) ||
                  (Array.isArray(post.vocabData) && post.vocabData.some(v => v.word?.toLowerCase().includes(query)));
         });
-        setRelatedPosts(matchedPosts);
 
-        const existingPost = matchedPosts.find(p => p.userEmail === userEmail && p.word?.toLowerCase() === query);
+        // 🔥 RANKING ALGORITHM START 🔥
+        const rankedPosts = matchedPosts.sort((a, b) => {
+          const scoreA = (a.voteCount || 0) * 1 + 
+                         ((a.comments?.length) || 0) * 3 + 
+                         ((a.savedBy?.length) || 0) * 5;
+                         
+          const scoreB = (b.voteCount || 0) * 1 + 
+                         ((b.comments?.length) || 0) * 3 + 
+                         ((b.savedBy?.length) || 0) * 5;
+          
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA; 
+          }
+          
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        });
+        // 🔥 RANKING ALGORITHM END 🔥
+
+        setRelatedPosts(rankedPosts);
+
+        const existingPost = rankedPosts.find(p => p.userEmail === userEmail && p.word?.toLowerCase() === query);
         if (existingPost) {
           setSharedPostId(existingPost._id);
         } else {
@@ -170,7 +190,8 @@ export default function VocabPage() {
   const fetchHistoryFromDB = async (isFirstLoad = false) => {
     if (!userEmail) return;
     try {
-      const response = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}`);
+      // 🔥 FIX: Add ?t=${Date.now()} to bypass WebView App Caching
+      const response = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(userEmail)}?t=${Date.now()}`);
       const resData = await response.json();
       if (response.ok && resData.success) {
         const fetchedHistory = resData.data;
@@ -287,9 +308,8 @@ export default function VocabPage() {
     }
   };
 
-  // 🔥 THIS WAS MISSING! FIXES SQUAD CLICK NOT WORKING
   const toggleSquadSelection = (squadId) => {
-    if (sentSquads.has(squadId)) return; // Already sent, cannot select
+    if (sentSquads.has(squadId)) return; 
     
     setSelectedSquads(prev => {
       const newSet = new Set(prev);
@@ -305,7 +325,6 @@ export default function VocabPage() {
     setIsSendingMultiple(true);
     
     try {
-      // Create/Update the global post first
       const postId = await ensurePostExists();
       if (!postId) {
         toast.error("Failed to prepare flashcard for sharing.");
@@ -313,13 +332,11 @@ export default function VocabPage() {
         return;
       }
 
-      // If global was selected, mark it as sent 
       if (isGlobalSelected) {
         setIsGlobalSent(true);
         setIsGlobalSelected(false);
       }
 
-      // If squads were selected, send direct messages to those chats
       if (selectedSquads.size > 0) {
         const sendPromises = Array.from(selectedSquads).map(squadId => 
           fetch(`${API_URL}/api/squads/${squadId}/message`, {
@@ -431,6 +448,51 @@ export default function VocabPage() {
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = ""; 
+    }
+  };
+
+  // 🔥 Handle Web Import (Auto Search or Paste URL)
+  const handleWebImport = async (selectedImageUrl) => {
+    if (!selectedImageUrl) return;
+    setIsImageLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/image/import-web`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          word: activeWord, 
+          userId: userEmail, 
+          imageUrl: selectedImageUrl 
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.imageUrl) {
+        toast.success("Image Saved to Collection! 🌍✨");
+        const updatedGallery = [...imageGallery, data.imageUrl];
+        setImageGallery(updatedGallery);
+        setIsImageExpanded(true);
+        fetchHistoryFromDB();
+        
+        if (sharedPostId) handleUpdateCommunityPost(meaning, sentences, updatedGallery);
+        
+        try {
+          await fetch(`${API_URL}/api/words/update-images`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ word: activeWord, userId: userEmail, imageUrls: updatedGallery })
+          });
+        } catch(err) {}
+        
+      } else {
+        toast.error(data.error || "Web import fail ho gaya.");
+      }
+    } catch (err) {
+      toast.error("Network error during web import.");
+    } finally {
+      setIsImageLoading(false);
     }
   };
 
@@ -939,7 +1001,7 @@ export default function VocabPage() {
                         </div>
                       </div>
 
-                      {/* Visual Component */}
+                      {/* 🔥 VISUAL COMPONENT UPDATED WITH handleWebImport */}
                       <div className="pt-2">
                          <VisualAnchor 
                            activeWord={activeWord}
@@ -951,6 +1013,7 @@ export default function VocabPage() {
                            handleGenerateImage={handleGenerateImage}
                            handleCustomImageUpload={handleCustomImageUpload}
                            handleRemoveImage={handleRemoveImage}
+                           handleWebImport={handleWebImport} 
                            fileInputRef={fileInputRef}
                          />
                       </div>
@@ -1122,7 +1185,7 @@ export default function VocabPage() {
                      <p className="text-[11px] text-gray-400 mt-1">Create a squad in Community tab to share privately!</p>
                    </div>
                  ) : (
-                   <div className="pb-16"> {/* Extra padding so last item isn't hidden by sticky button */}
+                   <div className="pb-16">
                      {userSquads.map(squad => {
                        const isSent = sentSquads.has(squad._id);
                        const isSelected = selectedSquads.has(squad._id);

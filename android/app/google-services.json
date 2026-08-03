@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "41659771794",
+    "project_id": "my-english-community",
+    "storage_bucket": "my-english-community.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41659771794:android:0403f51e1040be6328af4b",
+        "android_client_info": {
+          "package_name": "com.learnigglish.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "41659771794-h0ggb1rmvriiq5us32lvilvti0c6pbd2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.learnigglish.app",
+            "certificate_hash": "eb5a80c4ba0f5702989c6fc428395aa82d0d488e"
+          }
+        },
+        {
+          "client_id": "41659771794-u95tcl6vlvduisoqukcu7dv64cpf0oet.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArSf_hj__IVcgdpLcL1MzJJ7a8FVZmjyY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "41659771794-u95tcl6vlvduisoqukcu7dv64cpf0oet.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

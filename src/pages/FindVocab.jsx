@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom"; 
 import toast, { Toaster } from "react-hot-toast";
+import { Capacitor } from '@capacitor/core';
 import { 
   Swords, 
   Target, 
@@ -13,10 +14,11 @@ import {
   Flame,
   BrainCircuit,
   Eye,
-  Search 
+  Search,
+  Bot 
 } from "lucide-react";
 
-// 🔥 NAYA COMPONENT 1: Cash Count / Rolling Number Animation
+// Cash Count / Rolling Number Animation
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(value);
 
@@ -45,7 +47,7 @@ const AnimatedNumber = ({ value }) => {
   return <span>{displayValue}</span>;
 };
 
-// 🔥 NAYA COMPONENT 2: Slot Machine / Scramble Text Animation
+// Slot Machine / Scramble Text Animation
 const ScrambleText = ({ text }) => {
   const [displayText, setDisplayText] = useState("");
 
@@ -106,7 +108,15 @@ export default function PracticePage() {
   const [randomWordInfo, setRandomWordInfo] = useState(null);
   const [showRandomAnswer, setShowRandomAnswer] = useState(false);
 
-  // 🔥 State & function to handle flip effect on Arsenal stack
+  // AI TUTOR STATES
+  const [userAttempt, setUserAttempt] = useState("");
+  const [aiExplanation, setAiExplanation] = useState("");
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+
+  // 🔥 PREMIUM AUDIO REF (Perfectly manage play/pause)
+  const activeAudioRef = useRef(null);
+
   const [flippedCards, setFlippedCards] = useState({});
   const toggleFlip = (id) => {
     setFlippedCards((prev) => ({
@@ -115,9 +125,9 @@ export default function PracticePage() {
     }));
   };
 
-  const API_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" 
-    : "https://serdeptry1st.onrender.com";
+  const API_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   useEffect(() => {
     const loggedInUserEmail = localStorage.getItem("eng_userEmail");
@@ -126,6 +136,11 @@ export default function PracticePage() {
     } else {
       setUserEmail("guest_user@gmail.com");
     }
+
+    // Component unmount hone par audio stop karne ke liye
+    return () => {
+      stopPremiumAudio();
+    };
   }, []);
 
   const fetchAllData = async () => {
@@ -165,8 +180,21 @@ export default function PracticePage() {
     fetchAllData();
   }, [userEmail, API_URL]);
 
+  // Premium audio stop karne ka helper function
+  const stopPremiumAudio = () => {
+    if (activeAudioRef.current) {
+      activeAudioRef.current.pause();
+      activeAudioRef.current.currentTime = 0;
+      activeAudioRef.current = null;
+    }
+    setIsAiSpeaking(false);
+  };
+
   const playAudio = (text) => {
+    stopPremiumAudio(); // AI bol raha ho toh use chup karao
+
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop default TTS 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
@@ -174,6 +202,45 @@ export default function PracticePage() {
       window.speechSynthesis.speak(utterance);
     } else {
       toast.error("Audio not supported in this browser!");
+    }
+  };
+
+  // 🔥 NAYA FUNCTION: Backend Se MP3 Audio Manga Kar Play Karega (Gemini Style)
+  const playAiVoice = async (text) => {
+    stopPremiumAudio(); // Purana clear karo
+    setIsAiSpeaking(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/words/speak`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      
+      const data = await response.json();
+
+      if (data.success && data.audioBase64) {
+        // MP3 Base64 ko audio object me load karo
+        const audio = new Audio("data:audio/mp3;base64," + data.audioBase64);
+        activeAudioRef.current = audio;
+        
+        audio.play();
+
+        audio.onended = () => {
+          setIsAiSpeaking(false);
+          activeAudioRef.current = null;
+        };
+        
+        audio.onerror = () => {
+          setIsAiSpeaking(false);
+          toast.error("Audio load nahi ho payi!");
+        };
+      } else {
+        setIsAiSpeaking(false);
+      }
+    } catch (error) {
+      console.error("Premium Audio fetch error:", error);
+      setIsAiSpeaking(false);
     }
   };
 
@@ -279,6 +346,12 @@ export default function PracticePage() {
     setCurrentChallenge(sentenceObj);
     setIsCorrect(null);
     setSelectedWords([]);
+    
+    // Naya question aane par AI Explanation clear aur audio cancel
+    setAiExplanation("");
+    setUserAttempt("");
+    stopPremiumAudio();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
     const cleanSentence = sentenceObj.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g,"").toLowerCase().trim();
     const correctWordsArr = cleanSentence.split(/\s+/).filter(w => w);
@@ -304,6 +377,7 @@ export default function PracticePage() {
     const correctSentenceClean = currentChallenge.englishSentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"']/g,"").trim().toLowerCase();
 
     const isAnswerCorrect = userSentence === correctSentenceClean;
+    setUserAttempt(userSentence); 
 
     if (isAnswerCorrect) {
       setIsCorrect(true);
@@ -374,6 +448,40 @@ export default function PracticePage() {
     } catch (err) {}
   };
 
+  // 🔥 AI EXPLANATION FETCH & SPEAK
+  const fetchAiExplanation = async () => {
+    if (!currentChallenge || !userAttempt) return;
+    
+    setIsExplaining(true);
+    setAiExplanation("");
+    stopPremiumAudio();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+    try {
+      const response = await fetch(`${API_URL}/api/words/grammar-explain`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          correctSentence: currentChallenge.englishSentence,
+          userSentence: userAttempt
+        })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        setAiExplanation(data.explanation);
+        // Jaise hi data aaye, Backend Route se Premium Voice play karo
+        playAiVoice(data.explanation); 
+      } else {
+        toast.error("AI is busy right now.");
+      }
+    } catch (error) {
+      toast.error("Failed to fetch explanation.");
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
   const handleAnkiReview = async (grade) => {
     try {
       await fetch(`${API_URL}/api/words/srs/review`, {
@@ -392,6 +500,13 @@ export default function PracticePage() {
   };
 
   const handleNextSentence = () => {
+    // 👈 NAYA TARGET AANE PAR CHUP KARA DO
+    stopPremiumAudio();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+    setAiExplanation("");
+    setUserAttempt("");
+
     if (currentSentenceIndex + 1 < practiceSentences.length) {
       const nextIndex = currentSentenceIndex + 1;
       setCurrentSentenceIndex(nextIndex);
@@ -415,7 +530,6 @@ export default function PracticePage() {
     : 0;
 
   return (
-    // 🔥 PREMIUM THEME: Murrey (#F2EFE7) Light Base with Bold Alabaster (#8B004A) Design
     <>
       <style>
         {`
@@ -453,7 +567,7 @@ export default function PracticePage() {
               </p>
             </div>
 
-            {/* 🔥 SCOREBOARD - Premium Solid White Card */}
+            {/* SCOREBOARD */}
             <div className="w-full bg-white border-2 border-gray-100 rounded-[2rem] p-6 mb-8 shadow-xl shadow-gray-200/50">
               <div className="flex justify-between items-center gap-2">
                 <div className="text-center flex-1 border-r-2 border-gray-100">
@@ -491,8 +605,7 @@ export default function PracticePage() {
           {/* SCREEN 1: DASHBOARD LAYOUT */}
           {!selectedWordObj && !isRandomMode && (
             <div className="space-y-6 animate-fade-in">
-              
-              {/* SRS Active Banner - Premium Alabaster Box */}
+              {/* SRS Active Banner */}
               <div className="bg-[#8B004A] border-4 border-white/40 p-5 rounded-3xl flex justify-between items-center shadow-lg shadow-[#8B004A]/20">
                  <div className="flex-1 mr-2">
                     <h3 className="text-white font-black text-base mb-1 flex items-center gap-2 tracking-wide">
@@ -511,7 +624,7 @@ export default function PracticePage() {
                  </button>
               </div>
 
-              {/* TAB NAVIGATION - Clean & Minimal */}
+              {/* TAB NAVIGATION */}
               <div className="flex bg-white p-1.5 rounded-2xl border-2 border-gray-100 shadow-sm mt-4">
                 <button 
                   onClick={() => setActiveTab("words")}
@@ -528,7 +641,7 @@ export default function PracticePage() {
                 </button>
               </div>
 
-              {/* VIEW A: WORDS LIST (🔥 ALWAYS OPEN PREMIUM TARGET STACK - NOW WITH COMPACT STRIP FLIP) */}
+              {/* VIEW A: WORDS LIST */}
               {activeTab === "words" && (
                 <div className="space-y-5 pt-2">
                   <button 
@@ -554,17 +667,16 @@ export default function PracticePage() {
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
                           {historyWords.map((item, i) => (
-                            // 📦 MAIN STRIP CONTAINER (Static)
                             <div key={item._id || i} className="flex items-center gap-2 bg-white border-2 border-gray-100 rounded-2xl p-1.5 shadow-sm hover:border-[#8B004A]/30 hover:shadow-md transition-shadow w-full">
                               
-                              {/* 🔄 FLIP AREA (Only this left part flips) */}
+                              {/* FLIP AREA */}
                               <div 
                                 className="flip-card flex-1 h-[56px] cursor-pointer"
                                 onClick={() => toggleFlip(item._id || item.word)}
                               >
                                 <div className={`flip-card-inner w-full h-full relative ${flippedCards[item._id || item.word] ? 'flip-card-flipped' : ''}`}>
                                   
-                                  {/* FRONT: English Word */}
+                                  {/* FRONT */}
                                   <div className="flip-card-front absolute w-full h-full bg-[#F2EFE7] hover:bg-[#E01A76]/10 rounded-xl px-4 flex items-center justify-between border border-transparent transition-colors">
                                     <span className="text-gray-900 text-sm font-black tracking-wide truncate">
                                       {item.word} {item.imageUrl && "🖼️"}
@@ -574,7 +686,7 @@ export default function PracticePage() {
                                     </span>
                                   </div>
 
-                                  {/* BACK: Hindi Meaning */}
+                                  {/* BACK */}
                                   <div className="flip-card-back absolute w-full h-full bg-[#8B004A] text-white rounded-xl px-3 flex items-center justify-center shadow-inner">
                                     <span className="text-xs font-bold text-center line-clamp-2 leading-tight w-full">
                                       {item.meaning || "Ready for training"}
@@ -583,12 +695,11 @@ export default function PracticePage() {
                                 </div>
                               </div>
 
-                              {/* 🛑 STATIC ACTIONS AREA (Right Side - Never flips) */}
+                              {/* STATIC ACTIONS AREA */}
                               <div className="flex flex-row gap-1.5 flex-shrink-0">
                                 <button
                                   onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    // Redirect to /home and pass state so VocabPage searches this word
                                     navigate('/home', { state: { targetWord: item.word } }); 
                                   }}
                                   className="bg-gray-50 hover:bg-[#8B004A] text-[#8B004A] hover:text-white h-[56px] w-[46px] rounded-xl transition-all shadow-sm active:scale-95 border border-gray-100 flex items-center justify-center group"
@@ -615,7 +726,6 @@ export default function PracticePage() {
                       )}
                     </div>
                   </div>
-
                 </div>
               )}
 
@@ -677,7 +787,7 @@ export default function PracticePage() {
               <div className="flex flex-col gap-4 bg-white rounded-[2rem] p-5 border-2 border-gray-100 shadow-xl shadow-gray-200/50">
                 <div className="flex justify-between items-center w-full">
                   <button 
-                    onClick={() => { setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); setIsClearMode(false); fetchAllData(); }}
+                    onClick={() => { stopPremiumAudio(); setSelectedWordObj(null); setCurrentChallenge(null); setIsReviewMode(false); setIsClearMode(false); fetchAllData(); }}
                     className="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-[#8B004A] border border-gray-200 px-4 py-2 rounded-xl font-black uppercase tracking-widest transition-colors shadow-sm active:scale-95"
                   >
                     ◀ Abort
@@ -765,15 +875,49 @@ export default function PracticePage() {
                   </button>
                 )}
 
+                {/* 🔥 AI EXPLANATION / ERROR BLOCK */}
                 {isCorrect === false && (
                   <div className="bg-white border-[3px] border-red-100 rounded-3xl p-6 text-center shadow-xl animate-fade-in">
                      <p className="text-red-500 text-xs font-black uppercase tracking-[0.2em] mb-4 flex justify-center items-center gap-2"><XCircle size={20} strokeWidth={3} /> Syntax Error</p>
+                     
                      <div className="flex items-center justify-center gap-3 bg-red-50 py-4 px-5 rounded-2xl mb-6 border border-red-100 shadow-inner">
                        <p className="text-lg text-gray-900 font-black break-words w-full text-center">{currentChallenge.englishSentence}</p>
-                       <button onClick={() => playAudio(currentChallenge.englishSentence)} className="p-2.5 rounded-full bg-white border border-red-100 hover:bg-red-100 text-red-500 shadow-sm transition-colors">
+                       <button onClick={() => playAudio(currentChallenge.englishSentence)} className="p-2.5 rounded-full bg-white border border-red-100 hover:bg-red-100 text-red-500 shadow-sm transition-colors shrink-0">
                          <Volume2 size={18} strokeWidth={2.5} />
                        </button>
                      </div>
+
+                     {/* AI TUTOR SECTION */}
+                     {aiExplanation ? (
+                       <div className="bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded-2xl mb-6 text-sm text-left flex gap-3 shadow-sm animate-fade-in relative overflow-hidden">
+                         <div className="relative shrink-0 mt-0.5">
+                           <Bot size={24} className={`transition-colors ${isAiSpeaking ? 'text-blue-600' : 'text-blue-400'}`} />
+                           {/* Sound wave dot indicator when AI is speaking */}
+                           {isAiSpeaking && (
+                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                             </span>
+                           )}
+                         </div>
+                         <div>
+                           <p className="font-black text-blue-700 mb-1 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                             AI Tutor Explanation {isAiSpeaking && <span className="text-[9px] lowercase italic text-blue-400 font-medium">(Speaking...)</span>}
+                           </p>
+                           <p className="font-medium leading-relaxed">{aiExplanation}</p>
+                         </div>
+                       </div>
+                     ) : (
+                       <button 
+                         onClick={fetchAiExplanation}
+                         disabled={isExplaining}
+                         className="mb-6 w-full bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-sm active:scale-95"
+                       >
+                         {isExplaining ? <RefreshCw className="animate-spin" size={16} /> : <Bot size={18} />}
+                         {isExplaining ? "Analyzing Error..." : "Ask AI Tutor"}
+                       </button>
+                     )}
+
                      <button 
                        onClick={handleNextSentence} 
                        className="w-full bg-red-500 hover:bg-red-600 text-white border-none py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-md"
@@ -825,7 +969,7 @@ export default function PracticePage() {
             </div>
           )}
 
-          {/* 🔥 SCREEN 3: RANDOM FLASHCARD ZONE */}
+          {/* SCREEN 3: RANDOM FLASHCARD ZONE */}
           {isRandomMode && randomWordInfo && (
             <div className="space-y-6 animate-fade-in w-full max-w-xl mx-auto mt-6">
               <div className="flex justify-between items-center bg-white rounded-2xl p-4 border-2 border-gray-100 shadow-md">
@@ -846,7 +990,6 @@ export default function PracticePage() {
               </div>
 
               <div className="bg-white border-2 border-gray-100 rounded-[3rem] p-8 md:p-12 text-center shadow-2xl min-h-[380px] flex flex-col justify-center items-center relative overflow-hidden">
-                
                 <div className="relative z-10 flex flex-col items-center w-full">
                   <h2 className="text-5xl md:text-6xl font-black text-[#8B004A] tracking-wider mb-6 capitalize drop-shadow-sm">
                     <ScrambleText text={randomWordInfo.word} />
@@ -889,7 +1032,7 @@ export default function PracticePage() {
                           className="mt-8 w-full max-w-[280px] bg-gray-900 hover:bg-black text-white py-4.5 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all transform active:scale-95 flex justify-center items-center gap-2.5 shadow-xl border-none"
                       >
                           <RefreshCw size={16} strokeWidth={2.5} /> Next Target
-                      </button>
+                      </button> 
                     </div>
                   )}
                 </div>

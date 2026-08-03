@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination } from 'swiper/modules'; 
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+
+// 🔥 NAYA IMPORT: Capacitor TextToSpeech (Smart Audio ke liye)
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { Capacitor } from '@capacitor/core';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -46,6 +49,7 @@ export default function PostCard({
   const [showComments, setShowComments] = useState(false);
   const [showStats, setShowStats] = useState(false); 
   const [currentVocabIdx, setCurrentVocabIdx] = useState(0); 
+  const [globalSlideIndex, setGlobalSlideIndex] = useState(0); // Track for smart dots
   const [playingIndex, setPlayingIndex] = useState({}); 
   const [searchParams] = useSearchParams(); 
   const swiperRef = useRef(null);
@@ -197,14 +201,46 @@ export default function PostCard({
     } catch (err) { toast.error("Error!"); }
   };
 
-  const speakWord = (word) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(word);
-      u.lang = 'en-US'; u.rate = 0.85; u.pitch = 1.1; 
-      window.speechSynthesis.speak(u);
+  // 🔥 SIRF YEH CHANGE HUA HAI: SMART PRONUNCIATION LOGIC (NATIVE + WEB) 🔥
+  const speakWord = useCallback(async (word) => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // 📱 MOBILE APP KE LIYE (Native TTS)
+        await TextToSpeech.speak({
+          text: word,
+          lang: 'en-US',
+          rate: 0.85,
+          pitch: 1.1,
+          volume: 1.0,
+        });
+      } else {
+        // 💻 WEB BROWSER KE LIYE (Purana Web Speech API)
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(word);
+          u.lang = 'en-US'; 
+          u.rate = 0.85; 
+          u.pitch = 1.1; 
+          window.speechSynthesis.speak(u);
+        }
+      }
+    } catch (err) {
+      console.error("Audio Playback Error:", err);
+      toast.error("Audio error. Make sure volume is up.");
     }
-  };
+  }, []);
+
+  // 🔥 Jese hi pill/word change hoga auto pronounce karega
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return; 
+    }
+    if (deck[currentVocabIdx]?.word) {
+      speakWord(deck[currentVocabIdx].word);
+    }
+  }, [currentVocabIdx, deck, speakWord]);
 
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
@@ -225,9 +261,15 @@ export default function PostCard({
     } catch (err) { toast.error("Error!"); }
   };
 
+  // 🔥 RENDER MEDIA EK DUM ORIGINAL JAISE TUMNE BHEJA THA 🔥
   const renderMediaInternal = () => {
     if (mediaItems.length === 0) return null;
     const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
+
+    // 🔥 SMART PAGINATION LOGIC 🔥
+    const currentPillMediaCount = mediaItems.filter(m => m.vocabIndex === currentVocabIdx).length;
+    const firstSlideOfCurrentPill = slideToVocabMap.indexOf(currentVocabIdx);
+    const localSlideIndex = globalSlideIndex - firstSlideOfCurrentPill;
 
     return (
       <div className="relative group w-full bg-gray-50 border-y border-gray-100 overflow-hidden" onDoubleClick={handleVote}>
@@ -235,6 +277,7 @@ export default function PostCard({
           <p className="text-[10px] font-playful font-bold text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
         </div>
 
+        {/* Original SVG arrows restored for playing videos */}
         {mediaItems.length > 1 && isAnyVideoPlaying && (
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none animate-in fade-in duration-300">
             <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
@@ -243,13 +286,16 @@ export default function PostCard({
         )}
 
         <Swiper 
-          onSwiper={(s) => (swiperRef.current = s)}
-          modules={[Pagination]} 
-          pagination={mediaItems.length > 1 ? { clickable: true } : false} 
+          onSwiper={(s) => {
+            swiperRef.current = s;
+            setGlobalSlideIndex(s.activeIndex);
+          }}
+          modules={[]} 
           autoHeight={true} 
           onSlideChange={(s) => {
             const item = mediaItems[s.activeIndex];
             if (item) setCurrentVocabIdx(item.vocabIndex);
+            setGlobalSlideIndex(s.activeIndex);
             setPlayingIndex({}); 
           }}
           className="w-full flex items-center justify-center"
@@ -272,7 +318,6 @@ export default function PostCard({
                     ) : (
                       <div className="relative w-full h-full flex items-center justify-center cursor-pointer group" onClick={() => setPlayingIndex({[post._id]: idx})}>
                         <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="video-thumb" />
-                        {/* Play button with just a subtle yellow touch */}
                         <div className="absolute w-14 h-14 bg-[#E01A76]/90 backdrop-blur-sm border-2 border-white/80 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
                           <Play fill="white" className="w-6 h-6 ml-1" />
                         </div>
@@ -288,12 +333,28 @@ export default function PostCard({
             );
           })}
         </Swiper>
+
+        {/* 🔥 DOTS UI FIX - Sirf active pill ki images ke count ke barabar dots dikhenge 🔥 */}
+        {currentPillMediaCount > 1 && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-1.5 z-[10] pointer-events-none">
+            {Array.from({ length: currentPillMediaCount }).map((_, i) => (
+              <div
+                key={i}
+                className={`transition-all duration-300 rounded-full shadow-sm ${
+                  localSlideIndex === i
+                    ? 'w-6 h-1.5 bg-[#FFB800] border border-[#8B004A]/30' 
+                    : 'w-1.5 h-1.5 bg-white/90 border border-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
+
   return (
-    // Clean, aesthetic card container
     <div ref={cardRef} id={post._id} className="mb-10 mx-auto w-full max-w-[440px] bg-white border border-gray-200 rounded-[2rem] shadow-sm hover:shadow-md font-body transition-all duration-300 overflow-hidden">
       
       {/* 1. HEADER */}
@@ -325,7 +386,7 @@ export default function PostCard({
       {/* 2. MEDIA CONTAINER */}
       {renderMediaInternal()}
 
-      {/* 3. INTERACTION BAR (Clean flat icons, scale on tap) */}
+      {/* 3. INTERACTION BAR */}
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-4 text-gray-600">
           <button onClick={handleVote} className={`transition-transform active:scale-90 ${isVoted ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
@@ -354,7 +415,7 @@ export default function PostCard({
         <span className="text-[13px] font-playful font-bold text-gray-900 cursor-pointer">{currentVocab.voteCount || 0} Vibes</span>
       </div>
 
-      {/* 4. EXPANDABLE STATS (Soft buttons) */}
+      {/* 4. EXPANDABLE STATS */}
       <div className={`transition-all duration-300 overflow-hidden ${showStats ? "max-h-[200px] opacity-100 mb-4" : "max-h-0 opacity-0 mb-0"}`}>
         <div className="px-5">
           <div className="grid grid-cols-4 gap-2 bg-[#f8f9fa] p-2 rounded-xl border border-gray-100">
@@ -403,7 +464,6 @@ export default function PostCard({
           viewport={{ once: false, amount: 0.5 }}
           onClick={() => setIsFlipped(!isFlipped)}
         >
-          {/* Hint indicator */}
           <div className="absolute top-1.5 right-2 flex items-center gap-1 opacity-40">
              <RefreshCcw size={10} className="text-gray-500" />
              <span className="text-[7px] font-playful font-bold uppercase tracking-widest text-gray-500">Tap</span>
@@ -411,7 +471,6 @@ export default function PostCard({
 
           <AnimatePresence mode="wait">
             {!isFlipped ? (
-              // FRONT FACE
               <motion.div
                 key="front"
                 initial={{ rotateX: 90, opacity: 0 }}
@@ -423,7 +482,6 @@ export default function PostCard({
                 <h3 className="text-[1.6rem] leading-none font-playful font-bold text-[#8B004A] tracking-tight capitalize">
                   {currentVocab.word}
                 </h3>
-                {/* Yellow Speaker Button - Subtle accent */}
                 <div onClick={(e) => e.stopPropagation()}>
                   <PremiumSoundFeature isPremiumUser={isPremiumUser} userEmail={userEmail}>
                     <button onClick={() => speakWord(currentVocab.word)} className="text-[#FFB800] hover:bg-[#FFB800] hover:text-white transition-colors active:scale-90 bg-[#FFB800]/10 p-1.5 rounded-full">
@@ -433,7 +491,6 @@ export default function PostCard({
                 </div>
               </motion.div>
             ) : (
-              // BACK FACE
               <motion.div
                 key="back"
                 initial={{ rotateX: 90, opacity: 0 }}
@@ -476,7 +533,6 @@ export default function PostCard({
             {displayComments[activeCommentIdx]?.name}
           </span>
           <span className="text-gray-600 truncate font-medium flex items-center gap-1">
-            {/* Logic to show Text or Photo status */}
             {displayComments[activeCommentIdx]?.text ? (
               <>
                 {displayComments[activeCommentIdx].text}

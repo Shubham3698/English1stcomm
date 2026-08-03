@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">learnigglish</string>
+    <string name="title_activity_main">learnigglish</string>
+    <string name="package_name">com.learnigglish.app</string>
+    <string name="custom_url_scheme">com.learnigglish.app</string>
+    <!-- Zaroori: Yahan apna Web Client ID paste karna hai -->
+    <string name="server_client_id">41659771794-u95tcl6vlvduisoqukcu7dv64cpf0oet.apps.googleusercontent.com</string>
+</resources>

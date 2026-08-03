@@ -50,9 +50,10 @@ export default function CommunityPost() {
   const userEmail = localStorage.getItem("eng_userEmail");
   const isPremiumUser = localStorage.getItem("eng_isPremium") === "true";
   
-  const API_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+  // 🔥 SMART URL LOGIC (Using .env with Fallback)
 
+  const API_URL = "https://serdeptry1st.onrender.com";
+ 
   // ==========================================
   // API CALLS & LOGIC
   // ==========================================
@@ -330,7 +331,6 @@ const filteredPosts = useMemo(() => {
                    <div className="flex gap-2">
                      <input type="text" placeholder="Squad Name..." value={newSquadName} onChange={e=>setNewSquadName(e.target.value)} className="flex-1 bg-gray-50 border-2 border-gray-200 rounded-xl px-3 text-sm font-bold outline-none focus:border-[#E01A76]" />
                      
-                     {/* ✅ FIXED BUTTON: handleCreateSquad call hogi yahan */}
                      <button onClick={handleCreateSquad} className="bg-[#8B004A] text-white px-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md">Create</button>
                    </div>
                  </div>
@@ -340,7 +340,6 @@ const filteredPosts = useMemo(() => {
                     <UserPlus className="text-[#8B004A] w-6 h-6" />
                     <input type="email" placeholder="Add member by email..." value={newMemberEmail} onChange={e=>setNewMemberEmail(e.target.value)} className="flex-1 bg-transparent border-b-2 border-gray-100 px-1 py-1 text-sm font-bold outline-none focus:border-[#E01A76] placeholder-gray-400" />
                     
-                    {/* ✅ FIXED BUTTON: handleAddMember call hogi yahan */}
                     <button onClick={handleAddMember} className="bg-[#FFB800]/20 text-[#8B004A] p-2 rounded-lg hover:bg-[#FFB800]/40 transition-all">
                       <Send className="w-4 h-4" />
                     </button>

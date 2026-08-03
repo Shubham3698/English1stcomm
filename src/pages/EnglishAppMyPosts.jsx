@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { Capacitor } from '@capacitor/core'; // 🔥 Capacitor Import Kiya
 import { 
   Plus, 
   Save, 
@@ -9,7 +10,10 @@ import {
   Layers, 
   Compass,
   RefreshCw,
-  Wand2
+  Wand2,
+  History, // 🔥 Naya icon import kiya
+  CheckSquare, // 🔥 Naya icon
+  Square // 🔥 Naya icon
 } from "lucide-react";
 
 import DesignEditor from "../myuploadComponents/DesignEditor";
@@ -29,11 +33,20 @@ export default function EnglishAppMyPosts() {
   const [editingId, setEditingId] = useState(null);
   const [isCropping, setIsCropping] = useState(true);
   
-  // 🔥 NEW STATE FOR AI MAGIC TRACKING
   const [aiLoading, setAiLoading] = useState(null);
 
+  // 🔥 NAYE STATES HISTORY IMPORT KE LIYE 🔥
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [userHistory, setUserHistory] = useState([]);
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState(new Set());
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+
   const navigate = useNavigate();
-  const API_URL = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+
+  // 👇 NAYA API URL LOGIC: Mobile app seedha live server ko hit karegi
+  const API_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   useEffect(() => { fetchMyPosts(); }, []);
 
@@ -45,6 +58,86 @@ export default function EnglishAppMyPosts() {
       const data = await res.json();
       setMyPosts(Array.isArray(data) ? data : []);
     } catch (err) { console.error(err); }
+  };
+
+  // 🔥 FETCH HISTORY (STACK) FROM DB 🔥
+  const fetchHistoryForImport = async () => {
+    const email = localStorage.getItem("eng_userEmail");
+    if (!email) {
+        toast.error("Please login to see history!");
+        return;
+    }
+    setIsFetchingHistory(true);
+    setShowHistoryModal(true);
+    try {
+      const res = await fetch(`${API_URL}/api/words/history/${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUserHistory(data.data);
+      } else {
+        toast.error("Could not fetch history");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error fetching stack!");
+    } finally {
+      setIsFetchingHistory(false);
+    }
+  };
+
+  // 🔥 TOGGLE SELECTION IN HISTORY MODAL 🔥
+  const toggleHistorySelection = (id) => {
+    setSelectedHistoryIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  // 🔥 MAGIC IMPORT FUNCTION: HISTORY SE DIRECT DECK ME LAANA 🔥
+  const handleImportSelectedHistory = () => {
+    if (selectedHistoryIds.size === 0) {
+        toast.error("Please select at least one word!");
+        return;
+    }
+
+    const selectedItems = userHistory.filter(item => selectedHistoryIds.has(item._id));
+    
+    let currentVocabList = [...vocabItems];
+    let currentMediaList = [...mediaItems];
+
+    // Agar pehla card khaali hai, toh usko remove kardo taaki import clean ho
+    if (currentVocabList.length === 1 && !currentVocabList[0].word && !currentVocabList[0].meaning) {
+        currentVocabList = [];
+    }
+
+    selectedItems.forEach((item) => {
+        const vIdx = currentVocabList.length;
+        
+        // 1. Add Word Data
+        currentVocabList.push({
+            word: item.word || "",
+            meaning: item.meaning || "",
+            sentence: item.sentences || "", // History me sentences hota hai backend se
+            title: deckTitle
+        });
+
+        // 2. Add Media Data automatically
+        if (item.imageUrls && item.imageUrls.length > 0) {
+            item.imageUrls.forEach(url => {
+                currentMediaList.push({ type: 'image', value: url, mode: 'url', vocabIndex: vIdx });
+            });
+        } else if (item.imageUrl) {
+            currentMediaList.push({ type: 'image', value: item.imageUrl, mode: 'url', vocabIndex: vIdx });
+        }
+    });
+
+    setVocabItems(currentVocabList);
+    setMediaItems(currentMediaList);
+    setShowHistoryModal(false);
+    setSelectedHistoryIds(new Set()); // reset selection
+    toast.success(`${selectedItems.length} words imported successfully! 🎉`);
   };
 
   const handleAutoTranslate = async (word, index) => {
@@ -61,7 +154,6 @@ export default function EnglishAppMyPosts() {
     finally { setTranslating(null); }
   };
 
-  // 🔥 NEW AI MAGIC FUNCTION (Meaning, Sentence, Image auto-fetch) 🔥
   const handleAiMagic = async (word, vIdx) => {
     if (!word || word.trim().length < 2) {
       return toast.error("Pehle ek word likho magic ke liye! ✍️");
@@ -71,7 +163,6 @@ export default function EnglishAppMyPosts() {
     const userEmail = localStorage.getItem("eng_userEmail") || "guest_user@gmail.com";
 
     try {
-      // 1. Get Word Data from AI
       const res = await fetch(`${API_URL}/api/words/define`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -81,18 +172,13 @@ export default function EnglishAppMyPosts() {
 
       if (res.ok && resData.success && resData.data) {
         const aiData = resData.data;
-        
-        // 2. Map Meaning & Sentence
         updateVocabValue(vIdx, "meaning", aiData.meaning);
         updateVocabValue(vIdx, "sentence", aiData.sentences); 
         
-        // 3. Handle Image
         let imgUrlToUse = "";
-        if (aiData.imageUrls && aiData.imageUrls.length > 0) {
-          imgUrlToUse = aiData.imageUrls[0];
-        } else if (aiData.imageUrl) {
-          imgUrlToUse = aiData.imageUrl;
-        } else {
+        if (aiData.imageUrls && aiData.imageUrls.length > 0) imgUrlToUse = aiData.imageUrls[0];
+        else if (aiData.imageUrl) imgUrlToUse = aiData.imageUrl;
+        else {
           toast("Generating visual context...", { icon: '🎨' });
           try {
             const imgRes = await fetch(`${API_URL}/api/image/generate`, {
@@ -104,12 +190,9 @@ export default function EnglishAppMyPosts() {
             if (imgRes.ok && imgData.imageUrl) {
               imgUrlToUse = imgData.imageUrl;
             }
-          } catch(err) {
-             console.log("Auto image gen failed", err);
-          }
+          } catch(err) {}
         }
 
-        // 4. Attach Image to Media Gallery automatically
         if (imgUrlToUse) {
           setMediaItems(prev => {
             const newItems = [...prev];
@@ -122,13 +205,11 @@ export default function EnglishAppMyPosts() {
             return newItems;
           });
         }
-        
         toast.success("AI Magic Applied Successfully! 🪄✨");
       } else {
         toast.error("AI failed to find this word.");
       }
     } catch (err) {
-      console.error(err);
       toast.error("Network issue with AI engine!");
     } finally {
       setAiLoading(null);
@@ -247,35 +328,26 @@ export default function EnglishAppMyPosts() {
 
       if (res.ok) { 
         toast.success("Deck Saved Successfully! 🎉"); 
-
         if (!editingId) {
           try {
             const squadsRes = await fetch(`${API_URL}/api/squads/user/${userEmail}`);
             const squadsData = await squadsRes.json();
-
             if (squadsData.success && squadsData.squads.length > 0) {
               const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
-
               if (newPostId) {
                 squadsData.squads.forEach(async (squad) => {
                   await fetch(`${API_URL}/api/squads/${squad._id}/message`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      senderEmail: userEmail,
-                      type: "post",
-                      postId: newPostId,
-                      text: `Hey squad! I just added a new deck: ${deckTitle}`
+                      senderEmail: userEmail, type: "post", postId: newPostId, text: `Hey squad! I just added a new deck: ${deckTitle}`
                     }),
                   });
                 });
               }
             }
-          } catch (squadErr) {
-            console.error("Failed to broadcast to squads:", squadErr);
-          }
+          } catch (squadErr) {}
         }
-
         resetForm(); 
         fetchMyPosts(); 
       } else {
@@ -293,34 +365,18 @@ export default function EnglishAppMyPosts() {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
-          
-          .font-playful {
-            font-family: 'Kalam', cursive !important;
-          }
-          
-          /* Hide Scrollbar for Swiper */
-          .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
+          .font-playful { font-family: 'Kalam', cursive !important; }
+          .hide-scrollbar::-webkit-scrollbar { display: none; }
+          .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}
       </style>
 
-      <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-sans transition-colors duration-500 pb-28 overflow-x-hidden w-full">
+      <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-sans transition-colors duration-500 pb-28 overflow-x-hidden w-full relative">
         
         <Toaster 
           position="top-center" 
           toastOptions={{
-            style: {
-              background: '#8B004A',
-              color: '#F2EFE7',
-              border: 'none',
-              fontWeight: 'bold',
-              borderRadius: '1rem'
-            }
+            style: { background: '#8B004A', color: '#F2EFE7', border: 'none', fontWeight: 'bold', borderRadius: '1rem' }
           }}
         />
 
@@ -344,12 +400,7 @@ export default function EnglishAppMyPosts() {
             </div>
             
             {editingId && (
-              <button 
-                type="button" 
-                onClick={resetForm} 
-                className="bg-[#F2EFE7] hover:bg-red-500 text-red-500 hover:text-white p-3 rounded-full transition-all border-2 border-transparent active:scale-90 shadow-sm"
-                title="Cancel Editing"
-              >
+              <button onClick={resetForm} className="bg-[#F2EFE7] hover:bg-red-500 text-red-500 hover:text-white p-3 rounded-full transition-all border-2 border-transparent active:scale-90 shadow-sm">
                 <X size={20} strokeWidth={3} />
               </button>
             )}
@@ -357,7 +408,7 @@ export default function EnglishAppMyPosts() {
 
           <form onSubmit={handleFinalSubmit} className="space-y-6">
             
-            {/* 🔥 ULTIMATE DECK TITLE INPUT 🔥 */}
+            {/* Title Input */}
             <div className="px-1 group">
               <label className="text-[10px] font-black text-[#8B004A]/70 uppercase tracking-[0.2em] ml-2 mb-2 block flex items-center gap-1.5">
                 <Wand2 size={12} /> Ultimate Deck Title
@@ -372,14 +423,24 @@ export default function EnglishAppMyPosts() {
               />
             </div>
 
+            {/* 🔥 NEW: IMPORT FROM STACK BUTTON 🔥 */}
+            {!editingId && (
+                <div className="px-1">
+                    <button 
+                        type="button" 
+                        onClick={fetchHistoryForImport}
+                        className="w-full bg-indigo-50 border-[2px] border-indigo-200 text-indigo-700 hover:bg-indigo-600 hover:text-white py-3.5 rounded-[1rem] font-black uppercase text-[11px] tracking-widest shadow-sm active:scale-95 transition-all flex justify-center items-center gap-2"
+                    >
+                        <History size={16} strokeWidth={2.5} /> Pull Words From Stack (History)
+                    </button>
+                </div>
+            )}
+
             {/* MAIN SWIPER */}
             <div className="flex overflow-x-auto gap-5 pb-6 pt-2 px-1 snap-x snap-mandatory hide-scrollbar items-center">
               
               {vocabItems.map((vItem, vIdx) => (
-                <div 
-                  key={vIdx} 
-                  className="w-[85vw] max-w-[340px] shrink-0 snap-center h-[680px] bg-white rounded-[2rem] shadow-xl overflow-hidden border-[3px] border-[#8B004A]/20 transition-all hover:border-[#E01A76] relative group"
-                >
+                <div key={vIdx} className="w-[85vw] max-w-[340px] shrink-0 snap-center h-[680px] bg-white rounded-[2rem] shadow-xl overflow-hidden border-[3px] border-[#8B004A]/20 transition-all hover:border-[#E01A76] relative group">
                   <VocabCard 
                     vItem={vItem} 
                     vIdx={vIdx} 
@@ -393,7 +454,6 @@ export default function EnglishAppMyPosts() {
                     setTempImage={setTempImage} 
                     setActiveMediaIndex={setActiveMediaIndex}
                     setIsCropping={setIsCropping} 
-                    // 🔥 NAYE PROPS YAHAN PASS KIYE HAIN 🔥
                     handleAiMagic={handleAiMagic}
                     aiLoading={aiLoading}
                   />
@@ -402,37 +462,22 @@ export default function EnglishAppMyPosts() {
 
               {/* Add New Card Button */}
               <div className="w-[85vw] max-w-[340px] shrink-0 snap-center h-[680px] flex py-2">
-                <button 
-                  type="button" 
-                  onClick={() => setVocabItems([...vocabItems, { word: "", meaning: "", sentence: "" }])} 
-                  className="w-full h-full bg-white border-[3px] border-dashed border-[#8B004A]/30 rounded-[2.5rem] text-[12px] font-black text-[#8B004A] uppercase tracking-widest hover:text-white hover:border-transparent hover:bg-[#8B004A] transition-all flex flex-col items-center justify-center gap-4 shadow-sm active:scale-95 group"
-                >
+                <button type="button" onClick={() => setVocabItems([...vocabItems, { word: "", meaning: "", sentence: "" }])} className="w-full h-full bg-white border-[3px] border-dashed border-[#8B004A]/30 rounded-[2.5rem] text-[12px] font-black text-[#8B004A] uppercase tracking-widest hover:text-white hover:border-transparent hover:bg-[#8B004A] transition-all flex flex-col items-center justify-center gap-4 shadow-sm active:scale-95 group">
                   <div className="w-16 h-16 rounded-full bg-[#F2EFE7] group-hover:bg-white group-hover:text-[#8B004A] flex items-center justify-center shadow-md text-[#8B004A] transition-colors border-2 border-transparent group-hover:border-[#8B004A]/10">
                     <Plus size={32} strokeWidth={3} />
                   </div>
                   Add New Card
                 </button>
               </div>
-
             </div>
 
             {/* Submit Button */}
             <div className="pt-2 px-1">
-              <button 
-                disabled={uploading} 
-                className="w-full bg-[#8B004A] hover:bg-[#E01A76] text-white py-5 rounded-full font-black uppercase text-xs tracking-widest shadow-xl shadow-[#8B004A]/30 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed border-none transition-all flex justify-center items-center gap-2"
-              >
-                {uploading ? (
-                  <><RefreshCw size={18} className="animate-spin" /> Processing...</>
-                ) : editingId ? (
-                  <><Save size={18} strokeWidth={2.5} /> Update Smart Deck</>
-                ) : (
-                  <><Save size={18} strokeWidth={2.5} /> Save Smart Deck</>
-                )}
+              <button disabled={uploading} className="w-full bg-[#8B004A] hover:bg-[#E01A76] text-white py-5 rounded-full font-black uppercase text-xs tracking-widest shadow-xl shadow-[#8B004A]/30 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed border-none transition-all flex justify-center items-center gap-2">
+                {uploading ? ( <><RefreshCw size={18} className="animate-spin" /> Processing...</> ) : editingId ? ( <><Save size={18} strokeWidth={2.5} /> Update Smart Deck</> ) : ( <><Save size={18} strokeWidth={2.5} /> Save Smart Deck</> )}
               </button>
             </div>
           </form>
-
         </div>
 
         {/* Your Memories Section */}
@@ -466,6 +511,68 @@ export default function EnglishAppMyPosts() {
           )}
         </div>
       </div>
+
+      {/* 🔥 HISTORY SELECTION MODAL 🔥 */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center">
+            <div className="bg-white w-full sm:max-w-md h-[80vh] sm:h-[70vh] sm:rounded-3xl rounded-t-3xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-10">
+                <div className="flex justify-between items-center p-5 border-b border-gray-100">
+                    <h3 className="font-playful text-xl font-bold text-[#8B004A] flex items-center gap-2">
+                        <History size={20} className="text-[#E01A76]" /> Select Words
+                    </h3>
+                    <button onClick={() => setShowHistoryModal(false)} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 active:scale-90">
+                        <X size={18} />
+                    </button>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3">
+                    {isFetchingHistory ? (
+                        <div className="flex justify-center items-center h-full text-[#E01A76]">
+                            <RefreshCw className="animate-spin" size={32} />
+                        </div>
+                    ) : userHistory.length === 0 ? (
+                        <div className="text-center text-gray-400 font-bold mt-10">
+                            No search history found! 
+                        </div>
+                    ) : (
+                        userHistory.map(item => {
+                            const isSelected = selectedHistoryIds.has(item._id);
+                            return (
+                                <div 
+                                    key={item._id} 
+                                    onClick={() => toggleHistorySelection(item._id)}
+                                    className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all cursor-pointer ${isSelected ? 'bg-indigo-50 border-indigo-400 shadow-sm' : 'bg-gray-50 border-transparent hover:border-gray-200'}`}
+                                >
+                                    <div className={`text-${isSelected ? 'indigo-600' : 'gray-400'}`}>
+                                        {isSelected ? <CheckSquare size={24} /> : <Square size={24} />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-gray-900 capitalize text-[15px] truncate">{item.word}</p>
+                                        <p className="text-[11px] text-gray-500 font-medium truncate">{item.meaning}</p>
+                                    </div>
+                                    {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && (
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                                            <img src={item.imageUrl || item.imageUrls[0]} alt="thumb" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })
+                    )}
+                </div>
+
+                <div className="p-4 border-t border-gray-100 bg-gray-50 sm:rounded-b-3xl">
+                    <button 
+                        onClick={handleImportSelectedHistory}
+                        disabled={selectedHistoryIds.size === 0}
+                        className="w-full bg-indigo-600 text-white font-black py-4 rounded-xl uppercase tracking-wider active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100"
+                    >
+                        Import {selectedHistoryIds.size} Words
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </>
   );
 }

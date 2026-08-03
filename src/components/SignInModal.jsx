@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup // 👈 Popup use karenge refresh se bachne ke liye
+  signInWithCredential,
+  signInWithPopup
 } from "firebase/auth";
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 export default function SignInModal({ onClose }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,9 +21,10 @@ export default function SignInModal({ onClose }) {
   
   const navigate = useNavigate();
 
-  const API_BASE_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" 
-    : "https://serdeptry1st.onrender.com";
+  // 👇 NAYA API URL LOGIC: Ab phone seedha Render (live server) pe data bhejega
+  const API_BASE_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   // --- 🔄 BACKEND SYNC FUNCTION ---
   const syncToBackend = async (uName, uEmail, uUid) => {
@@ -44,26 +48,52 @@ export default function SignInModal({ onClose }) {
       }
     } catch (err) {
       console.error("Sync Error:", err);
+      // 👇 Desi Alert: Agar ab koi error aaya toh screen par dikh jayega
+      alert("Backend Sync Error: " + err.message); 
       setError("Database sync failed!");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- 🔑 GOOGLE LOGIN (POPUP METHOD) ---
+  // --- 🚀 PLUGIN INITIALIZATION ---
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: '41659771794-u95tcl6vlvduisoqukcu7dv64cpf0oet.apps.googleusercontent.com', 
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    }
+  }, []);
+
+  // --- 🔑 SMART GOOGLE LOGIN (APP + WEB) ---
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError("");
-    const provider = new GoogleAuthProvider();
     
     try {
-      // 🚀 Refresh nahi hoga, seedha window khulegi
-      const result = await signInWithPopup(auth, provider);
-      if (result?.user) {
-        await syncToBackend(result.user.displayName, result.user.email, result.user.uid);
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        const result = await signInWithCredential(auth, credential);
+        
+        if (result?.user) {
+          await syncToBackend(result.user.displayName, result.user.email, result.user.uid);
+        }
+
+      } else {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        
+        if (result?.user) {
+          await syncToBackend(result.user.displayName, result.user.email, result.user.uid);
+        }
       }
     } catch (err) {
-      console.error("Google Auth Error:", err);
+      console.error("Asli Google Auth Error:", JSON.stringify(err));
+      alert("Asli Error: " + JSON.stringify(err)); 
+      
       setError("Google Login Failed. Please try again.");
     } finally {
       setLoading(false);

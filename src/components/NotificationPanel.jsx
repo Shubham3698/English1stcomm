@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { X, Bell, Trash2 } from 'lucide-react';
 
+// 🔥 NAYA IMPORT: System Notifications aur App Environment check ke liye
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
+
 export default function NotificationPanel({ onClose }) {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
@@ -11,12 +15,25 @@ export default function NotificationPanel({ onClose }) {
   // 👤 Current User email
   const userEmail = localStorage.getItem("eng_userEmail");
 
-  // 🔥 DYNAMIC API URL LOGIC
-  const API_BASE = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" 
-    : "https://serdeptry1st.onrender.com"; 
+  // 🔥 DYNAMIC API URL LOGIC (Mobile ke liye seedha Render par jayega)
+  const API_BASE = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
-  // 🔄 Fetch Notifications
+  // 🔔 1. PERMISSION MANGNE WALA EFFECT
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (Capacitor.isNativePlatform()) {
+        const permStatus = await LocalNotifications.requestPermissions();
+        if (permStatus.display !== 'granted') {
+          console.warn('User denied notifications permission');
+        }
+      }
+    };
+    requestPermissions();
+  }, []);
+
+  // 🔄 2. Fetch Notifications & Show System Notification
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
@@ -25,6 +42,23 @@ export default function NotificationPanel({ onClose }) {
         
         if (data.success) {
           setNotifications(data.notifications);
+
+          // 🔥 ASLI ANDROID NOTIFICATION TRIGGER 🔥
+          if (data.notifications.length > 0 && Capacitor.isNativePlatform()) {
+            const latestSignal = data.notifications[0]; // Sabse naya wala signal
+            
+            await LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: latestSignal.title || "Intelligence Brief 📡",
+                  body: `From @${latestSignal.userName}: "${latestSignal.word}"`,
+                  id: new Date().getTime(), // Unique ID taaki purani se clash na ho
+                  schedule: { at: new Date(Date.now() + 1000) }, // 1 second baad aayega
+                  smallIcon: "ic_stat_icon_config_sample", // Android icon
+                }
+              ]
+            });
+          }
         }
       } catch (err) {
         console.error("Error fetching signals:", err);

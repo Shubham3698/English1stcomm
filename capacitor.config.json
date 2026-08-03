@@ -1,0 +1,12 @@
+{
+  "appId": "com.learnigglish.app",
+  "appName": "learnigglish",
+  "webDir": "dist",
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": ["profile", "email"],
+      "serverClientId": "41659771794-u95tcl6vlvduisoqukcu7dv64cpf0oet.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
+}

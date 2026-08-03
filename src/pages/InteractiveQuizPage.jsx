@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines } from "lucide-react";
+import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, Bot } from "lucide-react";
 import toast from "react-hot-toast";
 import 'regenerator-runtime/runtime';
 
-export default function AIVoiceTutor({ userEmail, API_URL }) {
+export default function AIVoiceTutor({ userEmail }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [chatHistory, setChatHistory] = useState([
-    { role: "ai", text: "Hello! I am your AI English coach. Tap the mic and let's practice!" }
+const [chatHistory, setChatHistory] = useState([
+    { role: "ai", text: "Namaste! Main aapka AI English coach hoon. Mic par tap karo aur chalo practice shuru karte hain!" }
   ]);
-
   const {
     transcript,
     listening,
@@ -23,7 +22,17 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory, transcript]);
+  }, [chatHistory, transcript, isProcessing]);
+
+  // Clean up audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
 
   if (!browserSupportsSpeechRecognition) {
     return (
@@ -45,7 +54,10 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
       }
     } else {
       resetTranscript();
-      if (audioRef.current) audioRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
       setIsPlayingAudio(false);
       SpeechRecognition.startListening({ continuous: true, language: 'en-IN' });
     }
@@ -53,11 +65,13 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
 
   const sendToGemini = async (userText) => {
     setIsProcessing(true);
-    setChatHistory(prev => [...prev, { role: "user", text: userText }]);
+    
+    // Naya message history me add karo
+    const updatedHistory = [...chatHistory, { role: "user", text: userText }];
+    setChatHistory(updatedHistory);
     resetTranscript();
 
     try {
-      // 🌟 DYNAMIC URL LOGIC 🌟
       const currentHost = window.location.hostname;
       let BACKEND_URL = "https://serdeptry1st.onrender.com"; 
 
@@ -67,38 +81,47 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
         BACKEND_URL = `http://${currentHost}:3000`; 
       }
 
-      const response = await fetch(`${BACKEND_URL}/api/ai-tutor/gemini-voice`, {
+      const response = await fetch(`${BACKEND_URL}/api/words/voice-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userText, email: userEmail })
+        body: JSON.stringify({ 
+          message: userText, 
+          history: updatedHistory 
+        })
       });
 
       const data = await response.json();
       
       if (response.ok && data.reply) {
-        setChatHistory(prev => [...prev, { role: "ai", text: data.reply }]);
+        // 🔥 HISTORY ME AUDIO BASE64 BHI SAVE KAR RAHE HAIN 🔥
+        setChatHistory(prev => [...prev, { role: "ai", text: data.reply, audioBase64: data.audioBase64 }]);
         
-        if (data.audioUrl) {
-          playAudioResponse(data.audioUrl);
+        if (data.audioBase64) {
+          playAudioResponse("data:audio/mp3;base64," + data.audioBase64);
         } else {
           fallbackSpeak(data.reply);
         }
       } else {
-        toast.error("Gemini failed to respond.");
+        toast.error("Tutor failed to respond.");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Chat Error:", error);
       toast.error("Network connection error!");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const playAudioResponse = (url) => {
+  const playAudioResponse = (audioSrc) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
     setIsPlayingAudio(true);
-    const audio = new Audio(url);
+    const audio = new Audio(audioSrc);
     audioRef.current = audio;
     audio.play();
+    
     audio.onended = () => setIsPlayingAudio(false);
     audio.onerror = () => {
       setIsPlayingAudio(false);
@@ -110,8 +133,9 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
+      utterance.rate = 0.95;
+      utterance.pitch = 1.0;
+      utterance.lang = 'en-IN';
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -149,7 +173,7 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
           </div>
           <div className="flex items-center gap-1.5 bg-[#FFB800]/15 px-3 py-1.5 rounded-xl border-2 border-[#FFB800]/30 shadow-sm">
             <Sparkles size={12} className="text-[#8B004A]" />
-            <span className="text-[10px] font-playful font-bold text-[#8B004A] uppercase tracking-wider">Gemini 1.5</span>
+            <span className="text-[10px] font-playful font-bold text-[#8B004A] uppercase tracking-wider">Gemini Audio</span>
           </div>
         </div>
 
@@ -160,21 +184,39 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
               
               {chat.role === "ai" && (
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FFB800] to-[#f0ad00] flex items-center justify-center text-[#4A0027] flex-shrink-0 shadow-sm border border-white z-10">
-                  <Sparkles size={14} strokeWidth={2.5} />
+                  <Bot size={16} strokeWidth={2.5} />
                 </div>
               )}
 
-              <div className={`max-w-[80%] p-4 text-[14px] font-bold leading-relaxed shadow-sm relative ${
+              {/* 🔥 BUBBLE WRAPPER FOR REPLAY BUTTON 🔥 */}
+              <div className={`max-w-[80%] p-4 text-[14px] font-bold leading-relaxed shadow-sm relative group ${
                 chat.role === "user" 
                   ? "bg-gradient-to-br from-[#8B004A] to-[#E01A76] text-white rounded-3xl rounded-br-sm" 
-                  : "bg-white text-gray-800 border-2 border-gray-100 rounded-3xl rounded-bl-sm"
+                  : "bg-white text-gray-800 border-2 border-gray-100 rounded-3xl rounded-bl-sm pr-12"
               }`}>
                 {chat.text}
+
+                {/* AI REPLAY BUTTON */}
+                {chat.role === "ai" && (
+                  <button 
+                    onClick={() => {
+                      if (chat.audioBase64) {
+                        playAudioResponse("data:audio/mp3;base64," + chat.audioBase64);
+                      } else {
+                        fallbackSpeak(chat.text);
+                      }
+                    }}
+                    className="absolute bottom-2 right-2 p-2 bg-gray-50 text-gray-400 hover:text-[#8B004A] hover:bg-[#8B004A]/10 rounded-full transition-all active:scale-90"
+                    title="Play Audio"
+                  >
+                    <Volume2 size={16} strokeWidth={2.5} />
+                  </button>
+                )}
               </div>
 
               {chat.role === "user" && (
                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 flex-shrink-0 shadow-sm border border-white z-10">
-                  {userEmail !== "guest_user@gmail.com" ? (
+                  {userEmail && userEmail !== "guest_user@gmail.com" ? (
                     <span className="font-playful font-bold text-xs uppercase">{userEmail.charAt(0)}</span>
                   ) : (
                     <User size={16} strokeWidth={2.5} />
@@ -231,19 +273,17 @@ export default function AIVoiceTutor({ userEmail, API_URL }) {
           {/* PLAYFUL 3D MIC BUTTON */}
           <button 
             onClick={handleMicClick}
-            disabled={isProcessing}
+            disabled={isProcessing || isPlayingAudio}
             className={`relative flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 outline-none ${
               listening 
                 ? "bg-[#E01A76] text-white scale-[1.05]" 
                 : "bg-[#8B004A] text-white hover:bg-[#E01A76] active:scale-95"
             } disabled:opacity-50 disabled:active:scale-100 disabled:bg-gray-400 border-4 border-white shadow-xl`}
           >
-            {/* Glowing Rings when listening */}
             {listening && (
               <>
                 <div className="absolute inset-0 bg-[#E01A76] rounded-full animate-ping opacity-40"></div>
                 <div className="absolute -inset-3 border-2 border-[#E01A76]/30 rounded-full animate-pulse"></div>
-                <div className="absolute -inset-6 border border-[#E01A76]/10 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
               </>
             )}
             {listening ? <MicOff size={32} strokeWidth={2.5} /> : <Mic size={32} strokeWidth={2.5} />}

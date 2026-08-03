@@ -180,7 +180,6 @@ export default function PracticePage() {
     fetchAllData();
   }, [userEmail, API_URL]);
 
-  // Premium audio stop karne ka helper function
   const stopPremiumAudio = () => {
     if (activeAudioRef.current) {
       activeAudioRef.current.pause();
@@ -191,10 +190,9 @@ export default function PracticePage() {
   };
 
   const playAudio = (text) => {
-    stopPremiumAudio(); // AI bol raha ho toh use chup karao
-
+    stopPremiumAudio(); 
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel(); // Stop default TTS 
+      window.speechSynthesis.cancel(); 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
@@ -205,9 +203,8 @@ export default function PracticePage() {
     }
   };
 
-  // 🔥 NAYA FUNCTION: Backend Se MP3 Audio Manga Kar Play Karega (Gemini Style)
   const playAiVoice = async (text) => {
-    stopPremiumAudio(); // Purana clear karo
+    stopPremiumAudio(); 
     setIsAiSpeaking(true);
 
     try {
@@ -220,7 +217,6 @@ export default function PracticePage() {
       const data = await response.json();
 
       if (data.success && data.audioBase64) {
-        // MP3 Base64 ko audio object me load karo
         const audio = new Audio("data:audio/mp3;base64," + data.audioBase64);
         activeAudioRef.current = audio;
         
@@ -448,8 +444,14 @@ export default function PracticePage() {
     } catch (err) {}
   };
 
-  // 🔥 AI EXPLANATION FETCH & SPEAK
+  // 🔥 AI EXPLANATION FETCH & REPLAY SYSTEM
   const fetchAiExplanation = async () => {
+    // Agar text pehle se fetched hai, toh bas dobara play kar do (API call mat karo)
+    if (aiExplanation) {
+      playAiVoice(aiExplanation);
+      return;
+    }
+
     if (!currentChallenge || !userAttempt) return;
     
     setIsExplaining(true);
@@ -470,7 +472,6 @@ export default function PracticePage() {
       
       if (data.success) {
         setAiExplanation(data.explanation);
-        // Jaise hi data aaye, Backend Route se Premium Voice play karo
         playAiVoice(data.explanation); 
       } else {
         toast.error("AI is busy right now.");
@@ -500,7 +501,6 @@ export default function PracticePage() {
   };
 
   const handleNextSentence = () => {
-    // 👈 NAYA TARGET AANE PAR CHUP KARA DO
     stopPremiumAudio();
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
@@ -889,10 +889,9 @@ export default function PracticePage() {
 
                      {/* AI TUTOR SECTION */}
                      {aiExplanation ? (
-                       <div className="bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded-2xl mb-6 text-sm text-left flex gap-3 shadow-sm animate-fade-in relative overflow-hidden">
+                       <div className="bg-blue-50 border border-blue-200 text-blue-900 p-4 rounded-2xl mb-6 text-sm text-left flex gap-3 shadow-sm animate-fade-in relative overflow-hidden items-start">
                          <div className="relative shrink-0 mt-0.5">
                            <Bot size={24} className={`transition-colors ${isAiSpeaking ? 'text-blue-600' : 'text-blue-400'}`} />
-                           {/* Sound wave dot indicator when AI is speaking */}
                            {isAiSpeaking && (
                              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -900,12 +899,22 @@ export default function PracticePage() {
                              </span>
                            )}
                          </div>
-                         <div>
+                         <div className="flex-1">
                            <p className="font-black text-blue-700 mb-1 text-[10px] uppercase tracking-wider flex items-center gap-1.5">
                              AI Tutor Explanation {isAiSpeaking && <span className="text-[9px] lowercase italic text-blue-400 font-medium">(Speaking...)</span>}
                            </p>
                            <p className="font-medium leading-relaxed">{aiExplanation}</p>
                          </div>
+                         
+                         {/* 🔥 NAYA REPLAY BUTTON 🔥 */}
+                         <button 
+                           onClick={() => playAiVoice(aiExplanation)}
+                           disabled={isAiSpeaking}
+                           className={`shrink-0 p-2.5 rounded-full transition-all shadow-sm ${isAiSpeaking ? 'bg-blue-200 text-blue-400' : 'bg-white border border-blue-200 hover:bg-blue-100 text-blue-600 active:scale-90'}`}
+                           title="Replay Audio"
+                         >
+                           <Volume2 size={18} strokeWidth={2.5} />
+                         </button>
                        </div>
                      ) : (
                        <button 

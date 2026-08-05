@@ -386,33 +386,36 @@ export default function PostCard({
       {/* 2. MEDIA CONTAINER */}
       {renderMediaInternal()}
 
-      {/* 3. INTERACTION BAR */}
+      {/* 3. INTERACTION BAR (🔥 UPDATED LIKES & COMMENTS UI 🔥) */}
       <div className="flex items-center justify-between px-5 py-4">
-        <div className="flex items-center gap-4 text-gray-600">
-          <button onClick={handleVote} className={`transition-transform active:scale-90 ${isVoted ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
-            <Heart className="w-7 h-7" fill={isVoted ? "currentColor" : "none"} strokeWidth="2" />
+        <div className="flex items-center gap-6 text-gray-800">
+          
+          {/* Likes with Count */}
+          <button onClick={handleVote} className={`flex items-center gap-1.5 transition-transform active:scale-90 ${isVoted ? "text-[#E01A76]" : "hover:text-[#8B004A]"}`}>
+            <Heart className="w-[26px] h-[26px]" fill={isVoted ? "currentColor" : "none"} strokeWidth="2.5" />
+            <span className="text-[15px] font-playful font-bold">{currentVocab.voteCount || 0}</span>
           </button>
           
-          <button onClick={() => setShowComments(true)} className="transition-transform active:scale-90 hover:text-[#8B004A]">
-             <MessageCircle className="w-7 h-7" strokeWidth="2" />
+          {/* Comments with Count */}
+          <button onClick={() => setShowComments(true)} className="flex items-center gap-1.5 transition-transform active:scale-90 hover:text-[#8B004A]">
+             <MessageCircle className="w-[26px] h-[26px]" strokeWidth="2.5" />
+             <span className="text-[15px] font-playful font-bold">{post.comments?.length || 0}</span>
           </button>
           
-          <button onClick={handleShare} className="transition-transform active:scale-90 hover:text-[#8B004A]">
-             <Share2 className="w-6 h-6" strokeWidth="2" />
+          {/* Share */}
+          <button onClick={handleShare} className="flex items-center gap-1.5 transition-transform active:scale-90 hover:text-[#8B004A]">
+             <Share2 className="w-[24px] h-[24px]" strokeWidth="2.5" />
           </button>
           
-          <button onClick={() => setShowStats(!showStats)} className={`transition-transform active:scale-90 ml-1 ${showStats ? "text-[#FFB800]" : "hover:text-[#8B004A]"}`}>
-             <Sparkles className="w-6 h-6" strokeWidth="2" />
+          {/* Stats Button */}
+          <button onClick={() => setShowStats(!showStats)} className={`flex items-center gap-1.5 transition-transform active:scale-90 ${showStats ? "text-[#FFB800]" : "hover:text-[#8B004A]"}`}>
+             <Sparkles className="w-[24px] h-[24px]" strokeWidth="2.5" />
           </button>
         </div>
         
         <button onClick={handleSavePost} className={`transition-transform active:scale-90 ${isSaved ? "text-[#8B004A]" : "text-gray-300 hover:text-[#8B004A]"}`}>
-          <Bookmark className="w-6 h-6" fill={isSaved ? "currentColor" : "none"} strokeWidth="2" />
+          <Bookmark className="w-[26px] h-[26px]" fill={isSaved ? "currentColor" : "none"} strokeWidth="2.5" />
         </button>
-      </div>
-
-      <div className="px-5 mb-3">
-        <span className="text-[13px] font-playful font-bold text-gray-900 cursor-pointer">{currentVocab.voteCount || 0} Vibes</span>
       </div>
 
       {/* 4. EXPANDABLE STATS */}

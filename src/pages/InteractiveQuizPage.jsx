@@ -1,84 +1,148 @@
 import React, { useState, useEffect, useRef } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, Bot } from "lucide-react";
+import { SpeechRecognition as CapSpeech } from "@capacitor-community/speech-recognition";
+// 🔥 NAYA IMPORT: Native TTS Plugin jisse aawaz 100% bajegi
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { Capacitor } from "@capacitor/core";
+import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, Bot, Send } from "lucide-react";
 import toast from "react-hot-toast";
 import 'regenerator-runtime/runtime';
 
 export default function AIVoiceTutor({ userEmail }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-const [chatHistory, setChatHistory] = useState([
+  
+  const [inputText, setInputText] = useState("");
+
+  const [isNativeListening, setIsNativeListening] = useState(false);
+
+  const [chatHistory, setChatHistory] = useState([
     { role: "ai", text: "Namaste! Main aapka AI English coach hoon. Mic par tap karo aur chalo practice shuru karte hain!" }
   ]);
+
   const {
-    transcript,
-    listening,
-    resetTranscript,
+    transcript: webTranscript,
+    listening: webListening,
+    resetTranscript: resetWebTranscript,
     browserSupportsSpeechRecognition
   } = useSpeechRecognition();
 
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
+  const isApp = Capacitor.isNativePlatform();
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory, transcript, isProcessing]);
+  }, [chatHistory, isProcessing, inputText]);
 
-  // Clean up audio on unmount
   useEffect(() => {
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
       }
+      if (isApp) {
+        CapSpeech.removeAllListeners();
+      }
     };
-  }, []);
+  }, [isApp]);
 
-  if (!browserSupportsSpeechRecognition) {
-    return (
-      <div className="p-6 bg-red-50 border-2 border-red-200 rounded-3xl text-center m-4">
-        <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
-          <MicOff size={24} />
-        </div>
-        <h3 className="font-playful font-bold text-red-600 text-lg mb-1">Browser Not Supported</h3>
-        <p className="font-body text-sm text-red-500 font-medium">Please use Google Chrome for voice features.</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isApp && webListening && webTranscript) {
+      setInputText(webTranscript);
+    }
+  }, [webTranscript, webListening, isApp]);
 
-  const handleMicClick = () => {
-    if (listening) {
-      SpeechRecognition.stopListening();
-      if (transcript.trim()) {
-        sendToGemini(transcript);
+  const toggleMic = async () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlayingAudio(false);
+    }
+
+    const currentlyListening = isApp ? isNativeListening : webListening;
+
+    if (currentlyListening) {
+      if (isApp) {
+        setIsNativeListening(false);
+        CapSpeech.stop().catch(err => console.log("Stop error:", err));
+        CapSpeech.removeAllListeners();
+      } else {
+        SpeechRecognition.stopListening();
       }
     } else {
-      resetTranscript();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
+      setInputText(""); 
+      
+      if (isApp) {
+        try {
+          const { speechRecognition } = await CapSpeech.requestPermissions();
+          if (speechRecognition !== 'granted') {
+            return toast.error("Mic permission denied!");
+          }
+
+          setIsNativeListening(true);
+          
+          await CapSpeech.start({
+            language: "en-IN",
+            partialResults: true,
+            popup: false 
+          });
+
+          CapSpeech.addListener("partialResults", (data) => {
+            if (data.matches && data.matches.length > 0) {
+              const text = data.matches[0];
+              if (text && text.trim().length > 0) {
+                setInputText(text); 
+              }
+            }
+          });
+        } catch (error) {
+          setIsNativeListening(false);
+          toast.error("Phone mic error!");
+        }
+      } else {
+        if (!browserSupportsSpeechRecognition) {
+          return toast.error("Your browser doesn't support speech recognition.");
+        }
+        resetWebTranscript();
+        SpeechRecognition.startListening({ continuous: true, language: 'en-IN' });
       }
-      setIsPlayingAudio(false);
-      SpeechRecognition.startListening({ continuous: true, language: 'en-IN' });
     }
+  };
+
+  const handleSendMessage = () => {
+    const textToSend = inputText.trim();
+    if (!textToSend) return;
+
+    if (isApp && isNativeListening) {
+      setIsNativeListening(false);
+      CapSpeech.stop().catch(e => console.log(e));
+      CapSpeech.removeAllListeners();
+    } else if (!isApp && webListening) {
+      SpeechRecognition.stopListening();
+    }
+
+    sendToGemini(textToSend);
   };
 
   const sendToGemini = async (userText) => {
     setIsProcessing(true);
+    setInputText(""); 
+    if (!isApp) resetWebTranscript(); 
     
-    // Naya message history me add karo
     const updatedHistory = [...chatHistory, { role: "user", text: userText }];
     setChatHistory(updatedHistory);
-    resetTranscript();
 
     try {
-      const currentHost = window.location.hostname;
       let BACKEND_URL = "https://serdeptry1st.onrender.com"; 
 
-      if (currentHost === "localhost" || currentHost === "127.0.0.1") {
-        BACKEND_URL = "http://localhost:3000"; 
-      } else if (currentHost.startsWith("192.168.")) {
-        BACKEND_URL = `http://${currentHost}:3000`; 
+      if (!isApp) {
+        const currentHost = window.location.hostname;
+        if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+          BACKEND_URL = "http://localhost:3000"; 
+        } else if (currentHost.startsWith("192.168.")) {
+          BACKEND_URL = `http://${currentHost}:3000`; 
+        }
       }
 
       const response = await fetch(`${BACKEND_URL}/api/words/voice-chat`, {
@@ -93,11 +157,11 @@ const [chatHistory, setChatHistory] = useState([
       const data = await response.json();
       
       if (response.ok && data.reply) {
-        // 🔥 HISTORY ME AUDIO BASE64 BHI SAVE KAR RAHE HAIN 🔥
         setChatHistory(prev => [...prev, { role: "ai", text: data.reply, audioBase64: data.audioBase64 }]);
         
+        // 🔥 AUDIO FIX: Send actual text fallback if base64 fails
         if (data.audioBase64) {
-          playAudioResponse("data:audio/mp3;base64," + data.audioBase64);
+          playAudioResponse("data:audio/mp3;base64," + data.audioBase64, data.reply);
         } else {
           fallbackSpeak(data.reply);
         }
@@ -112,7 +176,8 @@ const [chatHistory, setChatHistory] = useState([
     }
   };
 
-  const playAudioResponse = (audioSrc) => {
+  // 🔥 NAYA AUDIO PLAY LOGIC (Blocks handle karega)
+  const playAudioResponse = (audioSrc, fallbackText) => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -120,25 +185,49 @@ const [chatHistory, setChatHistory] = useState([
     setIsPlayingAudio(true);
     const audio = new Audio(audioSrc);
     audioRef.current = audio;
-    audio.play();
+    
+    // Agar Android Webview Block karde autoplay, to catch me jakar native awaz nikalo
+    audio.play().catch(err => {
+      console.error("Audio playback blocked by Android:", err);
+      setIsPlayingAudio(false);
+      fallbackSpeak(fallbackText);
+    });
     
     audio.onended = () => setIsPlayingAudio(false);
     audio.onerror = () => {
       setIsPlayingAudio(false);
-      fallbackSpeak(chatHistory[chatHistory.length - 1]?.text);
+      fallbackSpeak(fallbackText);
     };
   };
 
-  const fallbackSpeak = (text) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      utterance.lang = 'en-IN';
-      window.speechSynthesis.speak(utterance);
+  // 🔥 YEH HAI MASTER NATIVE FALLBACK (Phone ki direct aawaz)
+  const fallbackSpeak = async (text) => {
+    if (!text) return;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await TextToSpeech.speak({
+          text: text,
+          lang: 'en-IN',
+          rate: 0.95, // Thoda fast aur natural
+          pitch: 1.0,
+          volume: 1.0,
+        });
+      } else {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.95;
+          utterance.pitch = 1.0;
+          utterance.lang = 'hi-IN'; 
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+    } catch (err) {
+      console.error("TTS Fallback Error:", err);
     }
   };
+
+  const isMicActive = isApp ? isNativeListening : webListening;
 
   return (
     <>
@@ -147,19 +236,20 @@ const [chatHistory, setChatHistory] = useState([
           @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap');
           .font-body { font-family: 'Nunito', sans-serif; }
           .font-playful { font-family: 'Fredoka', sans-serif; }
-          .bg-dots {
-            background-image: radial-gradient(#E01A76 1px, transparent 1px);
-            background-size: 20px 20px;
-            background-color: #F9F8F6;
-            opacity: 0.8;
+          .bg-chat-pattern {
+            background-color: #F2EFE7;
+            background-image: radial-gradient(#E01A76 0.75px, transparent 0.75px);
+            background-size: 15px 15px;
           }
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}
       </style>
 
-      <div className="w-full max-w-[420px] mx-auto bg-white border-4 border-white rounded-[2.5rem] shadow-2xl shadow-[#8B004A]/10 flex flex-col overflow-hidden h-[580px] relative font-body">
+      <div className="w-full sm:max-w-md mx-auto bg-white flex flex-col h-screen relative font-body shadow-2xl overflow-hidden">
         
         {/* HEADER */}
-        <div className="bg-white px-5 py-4 flex items-center justify-between border-b-2 border-gray-100 z-10 relative shadow-sm">
+        <div className="bg-white px-5 py-4 flex items-center justify-between border-b-2 border-gray-100 z-20 shadow-sm shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-gradient-to-tr from-[#8B004A] to-[#E01A76] rounded-[1rem] flex items-center justify-center text-white shadow-md rotate-3">
               <Sparkles size={22} strokeWidth={2.5} />
@@ -172,13 +262,13 @@ const [chatHistory, setChatHistory] = useState([
             </div>
           </div>
           <div className="flex items-center gap-1.5 bg-[#FFB800]/15 px-3 py-1.5 rounded-xl border-2 border-[#FFB800]/30 shadow-sm">
-            <Sparkles size={12} className="text-[#8B004A]" />
-            <span className="text-[10px] font-playful font-bold text-[#8B004A] uppercase tracking-wider">Gemini Audio</span>
+            <Bot size={12} className="text-[#8B004A]" />
+            <span className="text-[10px] font-playful font-bold text-[#8B004A] uppercase tracking-wider">Coach</span>
           </div>
         </div>
 
         {/* CHAT FEED */}
-        <div className="flex-1 overflow-y-auto p-5 bg-dots space-y-5 custom-scrollbar relative z-0">
+        <div className="flex-1 overflow-y-auto p-5 bg-chat-pattern space-y-5 no-scrollbar relative z-0">
           {chatHistory.map((chat, idx) => (
             <div key={idx} className={`flex ${chat.role === "user" ? "justify-end" : "justify-start"} items-end gap-2 w-full`}>
               
@@ -188,8 +278,7 @@ const [chatHistory, setChatHistory] = useState([
                 </div>
               )}
 
-              {/* 🔥 BUBBLE WRAPPER FOR REPLAY BUTTON 🔥 */}
-              <div className={`max-w-[80%] p-4 text-[14px] font-bold leading-relaxed shadow-sm relative group ${
+              <div className={`max-w-[80%] p-3.5 px-4 text-[14px] font-bold leading-relaxed shadow-sm relative group ${
                 chat.role === "user" 
                   ? "bg-gradient-to-br from-[#8B004A] to-[#E01A76] text-white rounded-3xl rounded-br-sm" 
                   : "bg-white text-gray-800 border-2 border-gray-100 rounded-3xl rounded-bl-sm pr-12"
@@ -201,7 +290,7 @@ const [chatHistory, setChatHistory] = useState([
                   <button 
                     onClick={() => {
                       if (chat.audioBase64) {
-                        playAudioResponse("data:audio/mp3;base64," + chat.audioBase64);
+                        playAudioResponse("data:audio/mp3;base64," + chat.audioBase64, chat.text);
                       } else {
                         fallbackSpeak(chat.text);
                       }
@@ -226,15 +315,6 @@ const [chatHistory, setChatHistory] = useState([
             </div>
           ))}
 
-          {/* LIVE TRANSCRIPT BUBBLE */}
-          {listening && transcript && (
-            <div className="flex justify-end items-end gap-2 opacity-80 animate-in fade-in slide-in-from-bottom-2">
-               <div className="max-w-[80%] p-3 px-4 rounded-3xl rounded-br-sm text-[13px] font-medium bg-gray-800 text-white shadow-sm italic">
-                {transcript}<span className="animate-pulse">...</span>
-              </div>
-            </div>
-          )}
-
           {/* TYPING INDICATOR */}
           {isProcessing && (
             <div className="flex justify-start items-end gap-2 animate-in fade-in">
@@ -251,43 +331,55 @@ const [chatHistory, setChatHistory] = useState([
           <div ref={chatEndRef} className="h-2" />
         </div>
 
-        {/* FOOTER CONTROLS */}
-        <div className="p-5 bg-white border-t-2 border-gray-100 flex flex-col items-center gap-4 z-10 relative shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
-          
-          <div className="flex items-center justify-center h-5 w-full">
-            {isPlayingAudio ? (
-              <div className="flex items-center gap-2 text-[#E01A76] bg-[#E01A76]/10 px-4 py-1 rounded-full">
-                <AudioLines size={14} className="animate-pulse" />
-                <span className="text-[10px] font-playful font-bold uppercase tracking-widest">Tutor is speaking...</span>
-              </div>
-            ) : listening ? (
-              <div className="flex items-center gap-2 text-[#8B004A] bg-[#8B004A]/10 px-4 py-1 rounded-full">
-                <span className="w-2 h-2 rounded-full bg-[#E01A76] animate-ping"></span>
-                <span className="text-[10px] font-playful font-bold uppercase tracking-widest">Listening... Tap to send</span>
-              </div>
-            ) : (
-              <span className="text-[11px] font-playful font-bold text-gray-400 uppercase tracking-widest">Tap the mic to start speaking</span>
+        {/* STATUS BAR */}
+        {isPlayingAudio && (
+          <div className="bg-[#E01A76]/10 py-1.5 flex justify-center items-center gap-2 text-[#E01A76] shrink-0 border-t border-[#E01A76]/10">
+            <AudioLines size={14} className="animate-pulse" />
+            <span className="text-[10px] font-playful font-bold uppercase tracking-widest">Tutor is speaking...</span>
+          </div>
+        )}
+        {isMicActive && !isPlayingAudio && (
+          <div className="bg-[#8B004A]/10 py-1.5 flex justify-center items-center gap-2 text-[#8B004A] shrink-0 border-t border-[#8B004A]/10">
+            <span className="w-2 h-2 rounded-full bg-[#E01A76] animate-ping"></span>
+            <span className="text-[10px] font-playful font-bold uppercase tracking-widest">Listening... You can edit before sending</span>
+          </div>
+        )}
+
+        {/* INPUT AREA */}
+        <div className="p-3 bg-white border-t-2 border-gray-100 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-20 pb-safe">
+          <div className="flex items-end gap-2 bg-[#F9F8F6] p-1.5 rounded-3xl border border-gray-200 focus-within:border-[#8B004A]/30 focus-within:bg-white transition-colors shadow-inner">
+            
+            <button 
+              onClick={toggleMic}
+              disabled={isProcessing || isPlayingAudio}
+              className={`p-3 rounded-full transition-all duration-300 outline-none shrink-0 ${
+                isMicActive 
+                  ? "bg-[#E01A76] text-white shadow-md animate-pulse" 
+                  : "bg-transparent text-gray-500 hover:bg-gray-200"
+              } disabled:opacity-50`}
+            >
+              {isMicActive ? <MicOff size={22} strokeWidth={2.5} /> : <Mic size={22} strokeWidth={2.5} />}
+            </button>
+
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Tap mic to speak, or type here..."
+              className="flex-1 max-h-24 bg-transparent outline-none resize-none py-3 px-2 text-sm font-bold text-gray-800 placeholder:text-gray-400 no-scrollbar"
+              rows={Math.min(3, inputText.split('\n').length)}
+              disabled={isProcessing}
+            />
+
+            {inputText.trim().length > 0 && (
+              <button 
+                onClick={handleSendMessage}
+                disabled={isProcessing}
+                className="p-3 bg-[#8B004A] text-white rounded-full transition-transform active:scale-90 hover:bg-[#E01A76] shadow-md shrink-0 mb-[2px] mr-[2px]"
+              >
+                <Send size={20} strokeWidth={2.5} className="ml-0.5" />
+              </button>
             )}
           </div>
-
-          {/* PLAYFUL 3D MIC BUTTON */}
-          <button 
-            onClick={handleMicClick}
-            disabled={isProcessing || isPlayingAudio}
-            className={`relative flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 outline-none ${
-              listening 
-                ? "bg-[#E01A76] text-white scale-[1.05]" 
-                : "bg-[#8B004A] text-white hover:bg-[#E01A76] active:scale-95"
-            } disabled:opacity-50 disabled:active:scale-100 disabled:bg-gray-400 border-4 border-white shadow-xl`}
-          >
-            {listening && (
-              <>
-                <div className="absolute inset-0 bg-[#E01A76] rounded-full animate-ping opacity-40"></div>
-                <div className="absolute -inset-3 border-2 border-[#E01A76]/30 rounded-full animate-pulse"></div>
-              </>
-            )}
-            {listening ? <MicOff size={32} strokeWidth={2.5} /> : <Mic size={32} strokeWidth={2.5} />}
-          </button>
         </div>
 
       </div>

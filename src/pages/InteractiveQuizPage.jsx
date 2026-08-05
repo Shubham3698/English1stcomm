@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { SpeechRecognition as CapSpeech } from "@capacitor-community/speech-recognition";
-// 🔥 NAYA IMPORT: Native TTS Plugin jisse aawaz 100% bajegi
+// 🔥 NAYA IMPORT: Native TTS Plugin jisse aawaz 100% bajegi (Fallback ke liye)
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { Capacitor } from "@capacitor/core";
 import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, Bot, Send } from "lucide-react";
@@ -31,11 +31,26 @@ export default function AIVoiceTutor({ userEmail }) {
   const audioRef = useRef(null);
   const isApp = Capacitor.isNativePlatform();
 
+  // Backend URL Generator
+  const getBackendUrl = () => {
+    let BACKEND_URL = "https://serdeptry1st.onrender.com"; 
+    if (!isApp) {
+      const currentHost = window.location.hostname;
+      if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+        BACKEND_URL = "http://localhost:3000"; 
+      } else if (currentHost.startsWith("192.168.")) {
+        BACKEND_URL = `http://${currentHost}:3000`; 
+      }
+    }
+    return BACKEND_URL;
+  };
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory, isProcessing, inputText]);
 
   useEffect(() => {
+    audioRef.current = new Audio(); // Component load hote hi audio setup
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -53,7 +68,17 @@ export default function AIVoiceTutor({ userEmail }) {
     }
   }, [webTranscript, webListening, isApp]);
 
+  // 🔥 THE MAGIC UNLOCKER: Ye browser/OS ko trick karega ki user ne play allow kar diya hai
+  const unlockAudioEngine = () => {
+    if (audioRef.current) {
+      audioRef.current.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
   const toggleMic = async () => {
+    unlockAudioEngine(); // Tap karte hi audio engine unlock
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
@@ -111,6 +136,8 @@ export default function AIVoiceTutor({ userEmail }) {
   };
 
   const handleSendMessage = () => {
+    unlockAudioEngine(); // Message bhejte waqt bhi unlock ensure karein
+
     const textToSend = inputText.trim();
     if (!textToSend) return;
 
@@ -134,17 +161,7 @@ export default function AIVoiceTutor({ userEmail }) {
     setChatHistory(updatedHistory);
 
     try {
-      let BACKEND_URL = "https://serdeptry1st.onrender.com"; 
-
-      if (!isApp) {
-        const currentHost = window.location.hostname;
-        if (currentHost === "localhost" || currentHost === "127.0.0.1") {
-          BACKEND_URL = "http://localhost:3000"; 
-        } else if (currentHost.startsWith("192.168.")) {
-          BACKEND_URL = `http://${currentHost}:3000`; 
-        }
-      }
-
+      const BACKEND_URL = getBackendUrl();
       const response = await fetch(`${BACKEND_URL}/api/words/voice-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -159,12 +176,9 @@ export default function AIVoiceTutor({ userEmail }) {
       if (response.ok && data.reply) {
         setChatHistory(prev => [...prev, { role: "ai", text: data.reply, audioBase64: data.audioBase64 }]);
         
-        // 🔥 AUDIO FIX: Send actual text fallback if base64 fails
-        if (data.audioBase64) {
-          playAudioResponse("data:audio/mp3;base64," + data.audioBase64, data.reply);
-        } else {
-          fallbackSpeak(data.reply);
-        }
+        // 🔥 AUDIO FIX: Ab directly Premium Player Use hoga!
+        playPremiumAudio(data.reply, data.audioBase64);
+        
       } else {
         toast.error("Tutor failed to respond.");
       }
@@ -176,31 +190,58 @@ export default function AIVoiceTutor({ userEmail }) {
     }
   };
 
-  // 🔥 NAYA AUDIO PLAY LOGIC (Blocks handle karega)
-  const playAudioResponse = (audioSrc, fallbackText) => {
+  // 🔥 MASTER PREMIUM AUDIO PLAYER (Always uses API voice)
+  const playPremiumAudio = async (textToSpeak, base64Audio = null) => {
+    if (!textToSpeak) return;
+
     if (audioRef.current) {
       audioRef.current.pause();
     }
     
     setIsPlayingAudio(true);
-    const audio = new Audio(audioSrc);
-    audioRef.current = audio;
-    
-    // Agar Android Webview Block karde autoplay, to catch me jakar native awaz nikalo
-    audio.play().catch(err => {
-      console.error("Audio playback blocked by Android:", err);
+
+    try {
+      let finalAudioSrc = "";
+
+      // Agar /voice-chat route se direct base64 audio aa gaya hai
+      if (base64Audio) {
+        finalAudioSrc = "data:audio/mp3;base64," + base64Audio;
+      } 
+      // Agar base64 nahi hai (Jaise Namaste wala pehla message) toh premium API hit karo
+      else {
+        const BACKEND_URL = getBackendUrl();
+        const res = await fetch(`${BACKEND_URL}/api/words/speak`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textToSpeak })
+        });
+        const data = await res.json();
+        
+        if (data.success && data.audioBase64) {
+          finalAudioSrc = "data:audio/mp3;base64," + data.audioBase64;
+        } else {
+          throw new Error("Failed to fetch premium voice from backend");
+        }
+      }
+
+      audioRef.current.src = finalAudioSrc;
+      
+      audioRef.current.onended = () => setIsPlayingAudio(false);
+      audioRef.current.onerror = () => {
+        setIsPlayingAudio(false);
+        fallbackSpeak(textToSpeak); // Agar file corrupt ho
+      };
+
+      await audioRef.current.play();
+
+    } catch (error) {
+      console.error("Premium Audio Error, falling back to basic:", error);
       setIsPlayingAudio(false);
-      fallbackSpeak(fallbackText);
-    });
-    
-    audio.onended = () => setIsPlayingAudio(false);
-    audio.onerror = () => {
-      setIsPlayingAudio(false);
-      fallbackSpeak(fallbackText);
-    };
+      fallbackSpeak(textToSpeak);
+    }
   };
 
-  // 🔥 YEH HAI MASTER NATIVE FALLBACK (Phone ki direct aawaz)
+  // 🔥 YEH HAI MASTER NATIVE FALLBACK (Robotic aawaz sirf internet crash hone par)
   const fallbackSpeak = async (text) => {
     if (!text) return;
     try {
@@ -208,7 +249,7 @@ export default function AIVoiceTutor({ userEmail }) {
         await TextToSpeech.speak({
           text: text,
           lang: 'en-IN',
-          rate: 0.95, // Thoda fast aur natural
+          rate: 0.95, 
           pitch: 1.0,
           volume: 1.0,
         });
@@ -285,16 +326,10 @@ export default function AIVoiceTutor({ userEmail }) {
               }`}>
                 {chat.text}
 
-                {/* AI REPLAY BUTTON */}
+                {/* AI REPLAY BUTTON - Ab yahan direct playPremiumAudio call hoga */}
                 {chat.role === "ai" && (
                   <button 
-                    onClick={() => {
-                      if (chat.audioBase64) {
-                        playAudioResponse("data:audio/mp3;base64," + chat.audioBase64, chat.text);
-                      } else {
-                        fallbackSpeak(chat.text);
-                      }
-                    }}
+                    onClick={() => playPremiumAudio(chat.text, chat.audioBase64)}
                     className="absolute bottom-2 right-2 p-2 bg-gray-50 text-gray-400 hover:text-[#8B004A] hover:bg-[#8B004A]/10 rounded-full transition-all active:scale-90"
                     title="Play Audio"
                   >

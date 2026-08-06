@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import toast from 'react-hot-toast';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { useSearchParams } from "react-router-dom";
+// 🔥 UPDATED: useParams import add kiya hai
+import { useSearchParams, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 // 🔥 NAYA IMPORT: Capacitor TextToSpeech (Smart Audio ke liye)
@@ -52,6 +53,10 @@ export default function PostCard({
   const [globalSlideIndex, setGlobalSlideIndex] = useState(0); // Track for smart dots
   const [playingIndex, setPlayingIndex] = useState({}); 
   const [searchParams] = useSearchParams(); 
+  
+  // 🔥 NEW: Path se ID nikalne ke liye
+  const { postId: urlParamId } = useParams();
+
   const swiperRef = useRef(null);
   const cardRef = useRef(null); 
 
@@ -131,20 +136,32 @@ export default function PostCard({
     }
   }, [slideToVocabMap]);
 
+  // ✨ UPDATED: SCROLL EFFECT (Smart Scroll Logic) ✨
   useEffect(() => {
-    const urlPostId = searchParams.get("postId");
+    // Check karo ki user Feed me hai (query param) ya Single Post View me (url param)
+    const feedPostId = searchParams.get("postId");
+    const urlPostId = feedPostId || urlParamId;
+    const isFeedView = !!feedPostId; // Agar query param hai, matlab ye feed page hai
+
     if (urlPostId === post._id) {
       setTimeout(() => {
         if (cardRef.current) {
-          cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          
+          // 🛑 BADI UPDATE: Sirf tabhi scroll karega jab feed me ho. 
+          // Preview page pe no scroll, taaki ajeeb jump na ho!
+          if (isFeedView) {
+            cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+
+          // 🌟 Glow effect dono jagah kaam karega taaki post highlight ho
           cardRef.current.classList.add("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
           setTimeout(() => {
             cardRef.current.classList.remove("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
           }, 3000);
         }
-      }, 800);
+      }, 300); 
     }
-  }, [searchParams, post._id]);
+  }, [searchParams, urlParamId, post._id]);
 
   useEffect(() => {
     const urlHighlight = searchParams.get("highlight");
@@ -242,10 +259,14 @@ export default function PostCard({
     }
   }, [currentVocabIdx, deck, speakWord]);
 
+  // ✨ UPDATED: Share URL to point to Single Post View ✨
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
     const wordName = currentVocab.word.replace(/"/g, '');
-    const shareUrl = `${window.location.origin}/community?postId=${post._id}&highlight=${encodeURIComponent(wordName)}`;
+    
+    // Naya format jo aapke route /post/:postId par hit karega
+    const shareUrl = `${window.location.origin}/post/${post._id}?highlight=${encodeURIComponent(wordName)}`;
+    
     if (navigator.share) await navigator.share({ title: `Learn ${wordName}`, url: shareUrl });
     else { navigator.clipboard.writeText(shareUrl); toast.success("Copied! 📋"); }
   };

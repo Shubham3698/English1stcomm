@@ -5,6 +5,8 @@ import NotificationPanel from "./NotificationPanel";
 import toast from "react-hot-toast";
 import { Bell, Menu, X, User } from "lucide-react";
 
+import { Capacitor } from '@capacitor/core';
+
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
@@ -12,7 +14,15 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  
+  // 🔥 RED DOT STATE
+  const [hasUnread, setHasUnread] = useState(false);
+  
   const navigate = useNavigate();
+
+  const API_BASE = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   // 🔄 Sync User State
   useEffect(() => {
@@ -28,12 +38,35 @@ export default function Navbar() {
     return () => window.removeEventListener('storage', checkUser);
   }, []);
 
+  // 📡 BACKGROUND NOTIFICATION CHECKER (Directly from Backend)
+  useEffect(() => {
+    const fetchUnreadStatus = async () => {
+      if (!userEmail) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/notifications/latest?email=${userEmail}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          // Backend ab khud batayega ki Red Dot dikhana hai ya nahi
+          setHasUnread(data.hasUnread); 
+        }
+      } catch (err) {
+        console.error("Signal check failed:", err);
+      }
+    };
+
+    fetchUnreadStatus();
+    const interval = setInterval(fetchUnreadStatus, 30000); 
+    return () => clearInterval(interval);
+  }, [userEmail, API_BASE]);
+
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
     setIsPremiumUser(false);
     setUserEmail("");
     setIsMenuOpen(false);
+    setHasUnread(false);
     toast.success("Logged Out! 🚪");
     navigate("/");
   };
@@ -47,11 +80,36 @@ export default function Navbar() {
     setIsMenuOpen(false);
   };
 
+  // 🔥 BELL CLICK HONE PAR BACKEND KO "MARK READ" BOLO
+  const handleBellClick = async () => {
+    if (isLoggedIn) {
+      setShowNotifications(!showNotifications);
+      
+      if (hasUnread) {
+        setHasUnread(false); // UI me turant band karo
+        
+        // Backend ko batao ki maine padh liya
+        try {
+          await fetch(`${API_BASE}/api/notifications/mark-read`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: userEmail })
+          });
+        } catch (err) {
+          console.error("Failed to mark as read");
+        }
+      }
+    } else { 
+      setShowSignIn(true); 
+      toast.error("Sign in to check signals! 📡"); 
+    }
+  };
+
   const isVIP = isPremiumUser || userEmail === "pandey0shubhm3698@gmail.com";
 
   return (
     <>
-      {/* 🔥 TOP NAVBAR: untouched as requested */}
+      {/* 🔥 TOP NAVBAR */}
       <nav className="bg-[#F2EFE7]/95 px-4 md:px-6 py-4 flex justify-between items-center sticky top-0 z-[100] border-b-2 border-[#8B004A]/10 shadow-lg shadow-[#8B004A]/5 backdrop-blur-md transition-colors duration-500">
         
         {/* 🔴 BRAND LOGO */}
@@ -69,16 +127,18 @@ export default function Navbar() {
           
           {/* 🔔 NOTIFICATION BELL */}
           <div 
-            onClick={() => {
-              if (isLoggedIn) setShowNotifications(!showNotifications);
-              else { setShowSignIn(true); toast.error("Sign in to check signals! 📡"); }
-            }}
+            onClick={handleBellClick}
             className={`relative w-10 h-10 flex items-center justify-center rounded-xl cursor-pointer transition-all active:scale-95 border-2 shadow-sm
             ${isLoggedIn 
               ? (showNotifications ? 'border-[#8B004A] bg-[#8B004A]/10 text-[#8B004A] shadow-[0_0_15px_rgba(139,0,74,0.2)]' : 'border-gray-200 bg-white text-gray-500 hover:text-[#8B004A] hover:border-[#8B004A]') 
               : 'border-gray-200 bg-gray-100 text-gray-400 opacity-60'}`}
           >
             <Bell size={18} className={showNotifications ? "fill-[#8B004A]/20" : ""} />
+            
+            {/* 🔥 RED DOT INDICATOR 🔥 */}
+            {hasUnread && (
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full animate-pulse z-10 shadow-sm"></span>
+            )}
           </div>
 
           {/* 👤 USER PROFILE */}
@@ -122,7 +182,7 @@ export default function Navbar() {
         className={`fixed inset-0 bg-[#4A0027]/40 backdrop-blur-sm z-[110] transition-opacity duration-500 ${isMenuOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} 
       />
 
-      {/* 📱 SIDEBAR (Clean & Normal Style) */}
+      {/* 📱 SIDEBAR */}
       <div className={`fixed top-0 right-0 h-full w-[85%] max-w-[320px] bg-[#F2EFE7] border-l-[6px] border-[#8B004A] z-[120] transform transition-transform duration-500 cubic-bezier(0.4, 0, 0.2, 1) flex flex-col shadow-2xl ${isMenuOpen ? "translate-x-0" : "translate-x-full"}`}>
         
         {/* CLOSE BUTTON */}
@@ -135,7 +195,7 @@ export default function Navbar() {
             </button>
         </div>
 
-        {/* NAVIGATION LINKS (Normal Text Style) */}
+        {/* NAVIGATION LINKS */}
         <div className="flex-1 px-8 space-y-4 mt-2 overflow-y-auto custom-scrollbar">
           {[
             { label: "Home", path: "/home" },
@@ -160,7 +220,7 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* FOOTER SECTION (Clean Buttons) */}
+        {/* FOOTER SECTION */}
         <div className="p-6 space-y-3 border-t-2 border-[#8B004A]/10 bg-white/60">
             <button 
                 onClick={() => { navigate("/upgrade"); setIsMenuOpen(false); }}

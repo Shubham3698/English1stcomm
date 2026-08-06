@@ -32,6 +32,10 @@ export default function CommentModal({ post, userEmail, onClose, API_URL, onRefr
       const formData = new FormData();
       formData.append("name", currentUser);
       formData.append("text", comment);
+      
+      // 🔥 FIX: Naye Notification System ke liye email bhej rahe hain
+      formData.append("email", userEmail || "anonymous@learner.com"); 
+
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -49,6 +53,10 @@ export default function CommentModal({ post, userEmail, onClose, API_URL, onRefr
         toast.success("Reaction sent! 🚀", {
           style: { background: '#8B004A', color: '#F2EFE7' }
         });
+      } else {
+        // Backend se koi specific error aane par
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed");
       }
     } catch (err) { 
       console.error(err); 

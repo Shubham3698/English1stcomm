@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { X, Bell, Trash2 } from 'lucide-react';
 
-// 🔥 NAYA IMPORT: System Notifications aur App Environment check ke liye
+// 🔥 System Notifications aur App Environment check (Android/iOS ke liye)
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 
@@ -106,11 +106,12 @@ export default function NotificationPanel({ onClose }) {
     }
   };
 
+  // 🚀 PROFESSIONAL NAVIGATION LOGIC UPDATE
   const handleSignalClick = (n) => {
-    if (n && n.postId && n.word) {
-      const cleanWord = n.word.trim().replace(/"/g, '');
-      navigate(`/?postId=${n.postId}&highlight=${encodeURIComponent(cleanWord)}`);
-      onClose();
+    if (n && n.postId) {
+      // Feed me scroll karne ke bajaye ab direct Single Post Page par jayega
+      navigate(`/post/${n.postId}`);
+      onClose(); // Panel band kar dega click hone ke baad
     }
   };
 

@@ -106,12 +106,18 @@ export default function NotificationPanel({ onClose }) {
     }
   };
 
-  // 🚀 PROFESSIONAL NAVIGATION LOGIC UPDATE
+// 🚀 PROFESSIONAL NAVIGATION LOGIC UPDATE
   const handleSignalClick = (n) => {
     if (n && n.postId) {
-      // Feed me scroll karne ke bajaye ab direct Single Post Page par jayega
-      navigate(`/post/${n.postId}`);
-      onClose(); // Panel band kar dega click hone ke baad
+      if (n.type === 'CHAT') {
+        // Agar notification chat ki hai, toh seedha Squad Chat me bhejo
+        const squadName = n.title.replace(' 💬', '');
+        navigate(`/squad-chat`, { state: { squad: { _id: n.postId, name: squadName, members: [] } } });
+      } else {
+        // Agar like/comment ki hai, toh Single Post view me bhejo
+        navigate(`/post/${n.postId}`);
+      }
+      onClose(); 
     }
   };
 

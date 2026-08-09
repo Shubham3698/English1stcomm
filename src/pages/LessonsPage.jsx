@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -41,10 +42,12 @@ export default function LessonsPage() {
   const intervalRef = useRef(null);
   const recognitionRef = useRef(null); 
 
-  // 🔥 DYNAMIC API URL SETUP (Works for Local & Production)
-// 🔥 DYNAMIC API URL (Bina kisi .env file ke, 100% kaam karega)
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const API_BASE_URL = isLocalhost ? 'http://localhost:3000' : 'https://serdeptry1st.onrender.com';
+  // 🔥 YAHAN URL FIX HAI: App me humesha Live Server chalega!
+  const isApp = Capacitor.isNativePlatform();
+  const API_BASE_URL = isApp 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
+
   useEffect(() => {
     const fetchSyllabus = async () => {
       try {

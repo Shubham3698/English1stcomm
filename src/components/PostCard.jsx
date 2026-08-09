@@ -573,7 +573,7 @@ export default function PostCard({
         </div>
       </div>
 
-      {showComments && <CommentModal post={post} userEmail={userEmail} API_URL={API_URL} onClose={() => setShowComments(false)} onRefresh={onRefresh} />}
+      {showComments && <CommentModal post={post} activeVocab={currentVocab} userEmail={userEmail} API_URL={API_URL} onClose={() => setShowComments(false)} onRefresh={onRefresh} />}
     </div>
   );
 }

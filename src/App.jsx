@@ -98,14 +98,20 @@ export default function App() {
 
   const showToastNotification = (title, body) => {
     toast((t) => (
-      <div className="flex flex-col">
-        <span className="font-black text-[12px] uppercase italic text-blue-400">{title}</span>
-        <span className="text-[10px] font-bold text-white">{body}</span>
+      <div className="flex flex-col gap-1">
+        <span className="font-black text-[12px] uppercase text-[#FFC800] tracking-widest" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</span>
+        <span className="text-[13px] font-bold text-white" style={{ fontFamily: "'Inter', sans-serif" }}>{body}</span>
       </div>
     ), {
-      icon: '📡',
+      icon: '🔔',
       duration: 5000,
-      style: { background: '#0d0d0f', border: '1px solid #1e1e24', padding: '12px', borderRadius: '15px' },
+      style: { 
+        background: '#8B004A', 
+        border: '2px solid #E01A76', 
+        padding: '16px', 
+        borderRadius: '1.2rem',
+        boxShadow: '0 10px 25px -5px rgba(139, 0, 74, 0.3)'
+      },
     });
   };
 
@@ -115,11 +121,22 @@ export default function App() {
         position="top-center" 
         reverseOrder={false} 
         toastOptions={{
-          duration: 2000,
-          style: { background: '#121c2d', color: '#fff', fontSize: '14px', fontWeight: 'bold', borderRadius: '10px', border: '1px solid #1e293b' }
+          duration: 2500,
+          style: { 
+            background: 'rgba(255, 255, 255, 0.9)', 
+            backdropFilter: 'blur(16px)', 
+            color: '#8B004A', 
+            fontSize: '14px', 
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: '800', 
+            borderRadius: '20px', 
+            border: '2px solid rgba(139,0,74,0.2)',
+            boxShadow: '0 10px 25px -5px rgba(139, 0, 74, 0.15)'
+          }
         }}
       />
-      <div onContextMenu={(e) => e.preventDefault()} style={{ background: "#0b101a", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}>
+      {/* 🔥 FIX: Changed background from #0b101a to #F2EFE7 */}
+      <div onContextMenu={(e) => e.preventDefault()} style={{ background: "#F2EFE7", minHeight: "100vh", paddingBottom: "80px", position: "relative" }}>
         <Navbar />
         <Routes>
           <Route path="/" element={<CommunityPost />} />

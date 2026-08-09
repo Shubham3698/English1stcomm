@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; 
 import PostCard from "../components/PostCard"; 
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { Search, Loader2, Globe, Users, UserPlus, Plus, Send, Filter, X, Check, ChevronDown, MessageCircle } from "lucide-react"; 
+import { Search, Loader2, Globe, Users, UserPlus, Plus, Send, Filter, X, Check, MessageCircle, ChevronDown } from "lucide-react"; 
 import toast from 'react-hot-toast'; 
 
 export default function CommunityPost() {
@@ -16,10 +16,8 @@ export default function CommunityPost() {
 
   // 🔥 UI TOGGLES
   const [showFilterSheet, setShowFilterSheet] = useState(false); 
+  const [isTopMenuOpen, setIsTopMenuOpen] = useState(false); 
   
-  // 🔥 MASTER SCROLL STATE
-  const [uiState, setUiState] = useState("expanded");
-
   // 🔥 STATES FOR GROUPS / SQUADS
   const [activeView, setActiveView] = useState("community"); 
   const [squads, setSquads] = useState([]); 
@@ -28,32 +26,51 @@ export default function CommunityPost() {
   const [isCreatingSquad, setIsCreatingSquad] = useState(false);
   const [newSquadName, setNewSquadName] = useState("");
 
+  // 🔥 SMOOTH STABLE SCROLL ENGINE
+  const [isHidden, setIsHidden] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const { scrollY } = useScroll();
 
-  // 🚀 Scroll Engine
+  // Page mount hone ke turant baad scroll listener ko lock rakho
+  useEffect(() => {
+    setIsMounted(false);
+    const timer = setTimeout(() => setIsMounted(true), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   useMotionValueEvent(scrollY, "change", (latest) => {
+    if (!isMounted) return;
     const previous = scrollY.getPrevious();
-    const diff = latest - previous;
     
-    if (latest < 20) {
-        setUiState("expanded");
-        return;
+    if (latest <= 60) {
+      setIsHidden(false);
+      return;
     }
-    if (diff > 10 && uiState !== "hidden") {
-        setUiState("hidden"); 
-    } 
-    else if (diff < -10 && uiState === "hidden") {
-        setUiState("peek");
+    
+    if (isTopMenuOpen || showFilterSheet) return;
+
+    const diff = latest - previous;
+    if (diff > 12) {
+      setIsHidden(true); 
+    } else if (diff < -12) {
+      setIsHidden(false);
     }
   });
 
+  // 🔥 SCROLL LOCK EFFECT FOR MODALS
+  useEffect(() => {
+    if (isTopMenuOpen || showFilterSheet) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => { document.body.style.overflow = "auto"; };
+  }, [isTopMenuOpen, showFilterSheet]);
+
   const userEmail = localStorage.getItem("eng_userEmail");
   const isPremiumUser = localStorage.getItem("eng_isPremium") === "true";
-  
-  // 🔥 SMART URL LOGIC (Using .env with Fallback)
-
   const API_URL = "https://serdeptry1st.onrender.com";
- 
+
   // ==========================================
   // API CALLS & LOGIC
   // ==========================================
@@ -71,7 +88,6 @@ export default function CommunityPost() {
     }
   }, [API_URL, activeView]);
 
-  // ✅ 1. REAL API SE SQUADS FETCH KARNA
   const fetchSquads = useCallback(async () => {
     if (!userEmail) return;
     try {
@@ -80,7 +96,7 @@ export default function CommunityPost() {
       if (data.success) {
         setSquads(data.squads);
         if (data.squads.length > 0 && !activeSquadId) {
-          setActiveSquadId(data.squads[0]._id);
+          setActiveSquadId("all"); 
         }
       }
     } catch (err) {
@@ -95,7 +111,6 @@ export default function CommunityPost() {
     return () => clearInterval(interval);
   }, [fetchPosts, fetchSquads, activeView]);
 
-  // ✅ 2. REAL SQUAD CREATE KARNA
   const handleCreateSquad = async () => {
     if (!newSquadName.trim()) return toast.error("Enter a squad name!");
     try {
@@ -109,17 +124,16 @@ export default function CommunityPost() {
         toast.success(`Squad '${newSquadName}' created!`);
         setIsCreatingSquad(false);
         setNewSquadName("");
-        fetchSquads(); // Refresh list
+        fetchSquads(); 
       }
     } catch (err) {
       toast.error("Failed to create squad");
     }
   };
 
-  // ✅ 3. SQUAD ME MEMBER ADD KARNA
   const handleAddMember = async () => {
     if (!newMemberEmail.trim()) return toast.error("Enter an email!");
-    if (!activeSquadId) return toast.error("Select a squad first!");
+    if (!activeSquadId || activeSquadId === "all") return toast.error("Select a specific squad first!");
     
     try {
       const res = await fetch(`${API_URL}/api/squads/${activeSquadId}/add-member`, {
@@ -131,38 +145,39 @@ export default function CommunityPost() {
       if (data.success) {
         toast.success(`${newMemberEmail} added to squad!`);
         setNewMemberEmail("");
-        fetchSquads(); // Refresh list to get updated members
+        fetchSquads(); 
       }
     } catch (err) {
       toast.error("Failed to add member");
     }
   };
 
-  // ✅ 4. SQUAD FEED FILTER LOGIC (Member post karega toh group mein dikhega)
   const activeSquadPosts = useMemo(() => {
     if (!activeSquadId || squads.length === 0 || !dbPosts) return [];
     
-    const activeSquad = squads.find((s) => s._id === activeSquadId);
-    if (!activeSquad) return [];
-    
-    const memberEmails = activeSquad.members.map(e => e.toLowerCase().trim());
+    let memberEmails = [];
+
+    if (activeSquadId === "all") {
+      const allMembers = squads.flatMap(s => s.members);
+      memberEmails = [...new Set(allMembers)].map(e => e.toLowerCase().trim());
+    } else {
+      const activeSquad = squads.find((s) => s._id === activeSquadId);
+      if (!activeSquad) return [];
+      memberEmails = activeSquad.members.map(e => e.toLowerCase().trim());
+    }
 
     return dbPosts.filter(post => {
-      // Handle different possible key names for author email from your DB
       const postAuthor = (post.userEmail || post.email || post.createdBy || "").toLowerCase().trim();
       return memberEmails.includes(postAuthor);
     });
   }, [activeSquadId, squads, dbPosts]);
 
-const filteredPosts = useMemo(() => {
+  const filteredPosts = useMemo(() => {
     if (!dbPosts || !Array.isArray(dbPosts)) return [];
     
-    // currentUser setup safely
     const currentUser = userEmail ? userEmail.trim().toLowerCase() : "";
 
     return dbPosts.filter((post) => {
-      
-      // 🔥 1. SEARCH LOGIC
       const query = searchQuery ? searchQuery.toLowerCase().trim() : "";
       const matchesSearch = 
         query === "" || 
@@ -173,8 +188,6 @@ const filteredPosts = useMemo(() => {
       if (!matchesSearch) return false;
       if (activeFilter === "all") return true;
 
-      // 🔥 2. CHECK STATS (Easy/Hard/DailyUse) -> ACTUAL "VOTED"
-      // Helper function to check if user exists in the stats array
       const hasGivenStat = (stats) => {
         return Array.isArray(stats) && stats.some(stat => stat?.email?.toLowerCase().trim() === currentUser);
       };
@@ -183,17 +196,15 @@ const filteredPosts = useMemo(() => {
         hasGivenStat(post.userStats) || 
         (Array.isArray(post.vocabData) && post.vocabData.some(v => hasGivenStat(v.wordStats)));
 
-      // 🔥 3. CHECK LIKES (Hearts) & SAVES (Bookmarks) -> "LIKED / SAVED"
       const isLiked = 
         (Array.isArray(post.savedBy) && post.savedBy.some(email => email?.toLowerCase().trim() === currentUser)) ||
         (Array.isArray(post.votedBy) && post.votedBy.some(email => email?.toLowerCase().trim() === currentUser)) ||
         (Array.isArray(post.vocabData) && post.vocabData.some(v => Array.isArray(v.votedBy) && v.votedBy.some(email => email?.toLowerCase().trim() === currentUser)));
 
-      // 🔥 4. APPLY EXACT FILTER
       switch (activeFilter) {
-        case "voted": return isVoted;      // Sirf easy/hard wale
-        case "unvoted": return !isVoted;   // Jisme stat update nahi kiya
-        case "liked": return isLiked;      // Hearts ya saved wale
+        case "voted": return isVoted;      
+        case "unvoted": return !isVoted;   
+        case "liked": return isLiked;      
         default: return true;
       }
     });
@@ -204,121 +215,172 @@ const filteredPosts = useMemo(() => {
     setShowFilterSheet(false);
   };
 
-  // ==========================================
-  // RENDER
-  // ==========================================
+  const selectedSquad = squads.find(s => s._id === activeSquadId);
+  const selectedSquadName = selectedSquad ? selectedSquad.name : "";
 
   return (
     <div className="flex justify-center bg-[#F2EFE7] min-h-screen font-sans overflow-x-hidden pb-24 relative">
       <div className="w-full max-w-[450px] relative">
         
-        {/* 🔥 THE "ATAK GAYA" PEEK TAB */}
-        <motion.button
-          className="fixed top-[64px] left-1/2 -translate-x-1/2 z-[60] bg-white border-b-[3px] border-x-[3px] border-[#8B004A]/20 px-8 py-1 rounded-b-[1rem] shadow-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 active:scale-95"
-          initial={{ y: -50 }}
-          animate={{ y: uiState === "peek" ? 4 : -50 }}
-          transition={{ type: "spring", stiffness: 600, damping: 12 }} 
-          onClick={() => setUiState("expanded")}
-        >
-          <div className="w-6 h-1 bg-gray-200 rounded-full mb-0.5"></div>
-          <ChevronDown className="w-4 h-4 text-[#8B004A]" />
-        </motion.button>
+        {/* 🔥 MENU BACKDROP */}
+        <AnimatePresence>
+          {isTopMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsTopMenuOpen(false)}
+              className="fixed inset-0 bg-[#4A0027]/60 backdrop-blur-md z-[40] pointer-events-auto"
+            />
+          )}
+        </AnimatePresence>
 
-        {/* 🔥 MAIN HEADER 🔥 */}
+        {/* 🔥 MAIN HEADER BUTTON / SHUTTER */}
         <motion.div 
-          initial={{ y: 0, opacity: 1 }}
-          animate={{ 
-            y: uiState === "expanded" ? 0 : -200, 
-            opacity: uiState === "expanded" ? 1 : 0 
-          }} 
-          transition={{ type: "spring", stiffness: 180, damping: 22 }} 
-          style={{ top: "64px" }} 
-          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pt-3 pb-6 bg-gradient-to-b from-[#F2EFE7] via-[#F2EFE7]/90 to-transparent backdrop-blur-md pointer-events-none"
+          initial={{ y: 0 }}
+          animate={{ y: isHidden ? -180 : 0 }} 
+          transition={{ duration: 0.25, ease: "easeInOut" }} 
+          style={{ top: "76px" }} 
+          className="fixed left-0 right-0 max-w-[450px] mx-auto z-[50] px-4 pointer-events-none"
         >
-          <div className="bg-white rounded-[1.5rem] shadow-xl shadow-[#8B004A]/5 border-[3px] border-[#8B004A]/10 p-3 space-y-3 pointer-events-auto">
-            
-            {/* VIEW TOGGLE */}
-            <div className="flex bg-gray-100/80 p-1 rounded-xl border border-gray-200">
-              <button 
-                onClick={() => setActiveView("community")}
-                className={`flex-1 flex items-center justify-center py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeView === "community" ? "bg-white text-[#8B004A] shadow-sm border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+          <AnimatePresence mode="wait">
+            {!isTopMenuOpen ? (
+              <motion.div 
+                key="pill"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="flex justify-center w-full pointer-events-auto mt-2"
               >
-                <Globe className="w-3.5 h-3.5 mr-1.5" /> Global
-              </button>
-              <button 
-                onClick={() => setActiveView("squads")}
-                className={`flex-1 flex items-center justify-center py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeView === "squads" ? "bg-white text-[#8B004A] shadow-sm border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
-              >
-                <Users className="w-3.5 h-3.5 mr-1.5" /> My Squads
-              </button>
-            </div>
-
-            {/* SEARCH & FILTER BUTTON */}
-            {activeView === "community" && (
-              <div className="flex items-center gap-2">
-                <div className="relative group flex-1">
-                  <input 
-                    type="text"
-                    placeholder="Search hub..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-[#F2EFE7] border-2 border-gray-200 rounded-xl py-2.5 px-10 text-sm font-bold tracking-wide outline-none focus:bg-white focus:border-[#E01A76] focus:shadow-[0_0_15px_rgba(224,26,118,0.1)] transition-all text-gray-900 placeholder-gray-400"
-                  />
-                  <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
-                </div>
-                
-                <button
-                  onClick={() => setShowFilterSheet(true)}
-                  className={`relative flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-all duration-300 active:scale-95 ${
-                    activeFilter !== "all" 
-                    ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
-                    : "bg-[#F2EFE7] text-gray-500 border-gray-200 hover:text-[#8B004A] hover:border-[#8B004A]/30"
-                  }`}
+                <button 
+                  onClick={() => setIsTopMenuOpen(true)}
+                  className="bg-white/95 backdrop-blur-md border-[3px] border-[#8B004A]/10 shadow-lg shadow-[#8B004A]/10 rounded-full px-6 py-2.5 flex items-center gap-2 text-[#8B004A] hover:bg-white transition-all active:scale-95"
                 >
-                  <Filter className="w-4 h-4" />
-                  {activeFilter !== "all" && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full"></span>
+                  <Search size={16} strokeWidth={2.5} />
+                  <span className="text-[11px] font-black uppercase tracking-widest">Search & Squads</span>
+                  {(activeFilter !== "all" || activeView === "squads") && (
+                    <span className="w-2 h-2 bg-[#E01A76] rounded-full animate-pulse ml-1"></span>
                   )}
+                  <ChevronDown size={14} strokeWidth={2.5} className="ml-1 opacity-60" />
                 </button>
-              </div>
-            )}
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="menu"
+                initial={{ opacity: 0, y: -15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="bg-white/95 backdrop-blur-md rounded-[1.5rem] shadow-2xl shadow-[#8B004A]/10 border-[3px] border-[#8B004A]/10 p-3 space-y-3 pointer-events-auto mt-2"
+              >
+                {/* CLOSE BUTTON */}
+                <div className="flex justify-between items-center px-1 pb-1">
+                  <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest">Explore Menu</span>
+                  <button onClick={() => setIsTopMenuOpen(false)} className="bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 p-1.5 rounded-full transition-all active:scale-90">
+                    <X size={16} strokeWidth={2.5} />
+                  </button>
+                </div>
 
-            {/* SQUADS HEADER UI */}
-            {activeView === "squads" && (
-              <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 items-center">
-                <button onClick={() => setIsCreatingSquad(!isCreatingSquad)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border-2 border-dashed border-[#8B004A]/40 text-[#8B004A] hover:bg-[#8B004A]/10 transition-all">
-                  <Plus className="w-5 h-5" />
-                </button>
-                {squads.map((squad) => (
-                  <div key={squad._id} className="flex-shrink-0 flex items-center bg-white border-2 border-gray-100 rounded-xl p-0.5 shadow-sm transition-all">
+                {/* VIEW TOGGLE */}
+                <div className="flex bg-gray-100/80 p-1 rounded-xl border border-gray-200">
+                  <button 
+                    onClick={() => setActiveView("community")}
+                    className={`flex-1 flex items-center justify-center py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeView === "community" ? "bg-white text-[#8B004A] shadow-sm border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    <Globe className="w-3.5 h-3.5 mr-1.5" /> Global
+                  </button>
+                  <button 
+                    onClick={() => setActiveView("squads")}
+                    className={`flex-1 flex items-center justify-center py-2 text-[11px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${activeView === "squads" ? "bg-white text-[#8B004A] shadow-sm border border-gray-200" : "text-gray-400 hover:text-gray-600"}`}
+                  >
+                    <Users className="w-3.5 h-3.5 mr-1.5" /> My Squads
+                  </button>
+                </div>
+
+                {/* SEARCH & FILTER BUTTON */}
+                {activeView === "community" && (
+                  <div className="flex items-center gap-2">
+                    <div className="relative group flex-1">
+                      <input 
+                        type="text"
+                        placeholder="Search hub..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-[#F2EFE7] border-2 border-gray-200 rounded-xl py-2.5 px-10 text-sm font-bold tracking-wide outline-none focus:bg-white focus:border-[#E01A76] focus:shadow-[0_0_15px_rgba(224,26,118,0.1)] transition-all text-gray-900 placeholder-gray-400"
+                      />
+                      <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#8B004A] transition-transform group-focus-within:scale-110" />
+                    </div>
+                    
                     <button
-                      onClick={() => setActiveSquadId(squad._id)}
-                      className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
-                        activeSquadId === squad._id 
-                        ? "bg-[#8B004A] text-white" 
-                        : "text-gray-500 hover:text-[#8B004A]"
+                      onClick={() => { setShowFilterSheet(true); setIsTopMenuOpen(false); }}
+                      className={`relative flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border-2 transition-all duration-300 active:scale-95 ${
+                        activeFilter !== "all" 
+                        ? "bg-[#8B004A] text-white border-[#8B004A] shadow-md" 
+                        : "bg-[#F2EFE7] text-gray-500 border-gray-200 hover:text-[#8B004A] hover:border-[#8B004A]/30"
                       }`}
                     >
-                      {squad.name}
-                    </button>
-
-                    {/* 🚀 CHAT PE JANE WALA BUTTON 🚀 */}
-                    <button
-                      onClick={() => navigate('/squad-chat', { state: { squad } })}
-                      className="p-2 mx-0.5 rounded-lg bg-[#8B004A]/10 text-[#8B004A] hover:bg-[#8B004A] hover:text-white transition-all group"
-                      title="Open Chat"
-                    >
-                      <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      <Filter className="w-4 h-4" />
+                      {activeFilter !== "all" && (
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full"></span>
+                      )}
                     </button>
                   </div>
-                ))}
-              </div>
+                )}
+
+                {/* SQUADS HEADER UI */}
+                {activeView === "squads" && (
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 items-center">
+                    <button onClick={() => setIsCreatingSquad(!isCreatingSquad)} className="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border-2 border-dashed border-[#8B004A]/40 text-[#8B004A] hover:bg-[#8B004A]/10 transition-all">
+                      <Plus className="w-5 h-5" />
+                    </button>
+
+                    {squads.length > 0 && (
+                      <div className="flex-shrink-0 flex items-center bg-white border-2 border-gray-100 rounded-xl p-0.5 shadow-sm transition-all">
+                        <button
+                          onClick={() => setActiveSquadId("all")}
+                          className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                            activeSquadId === "all" 
+                            ? "bg-[#8B004A] text-white" 
+                            : "text-gray-500 hover:text-[#8B004A]"
+                          }`}
+                        >
+                          All Squads
+                        </button>
+                      </div>
+                    )}
+
+                    {squads.map((squad) => (
+                      <div key={squad._id} className="flex-shrink-0 flex items-center bg-white border-2 border-gray-100 rounded-xl p-0.5 shadow-sm transition-all">
+                        <button
+                          onClick={() => setActiveSquadId(squad._id)}
+                          className={`px-3 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                            activeSquadId === squad._id 
+                            ? "bg-[#8B004A] text-white" 
+                            : "text-gray-500 hover:text-[#8B004A]"
+                          }`}
+                        >
+                          {squad.name}
+                        </button>
+
+                        <button
+                          onClick={() => navigate('/squad-chat', { state: { squad } })}
+                          className="p-2 mx-0.5 rounded-lg bg-[#8B004A]/10 text-[#8B004A] hover:bg-[#8B004A] hover:text-white transition-all group"
+                          title="Open Chat"
+                        >
+                          <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </motion.div>
 
         {/* LIST CONTENT */}
-        <div className="px-3 space-y-6 pt-[165px]"> 
+        <div className="px-3 space-y-6 pt-[76px]"> 
           {activeView === "community" && !loading && filteredPosts.map((post) => (
             <PostCard key={post._id} post={post} userEmail={userEmail} isPremiumUser={isPremiumUser} activeIndex={activeIndex} setActiveIndex={setActiveIndex} onRefresh={() => fetchPosts(true)} API_URL={API_URL} />
           ))}
@@ -335,10 +397,16 @@ const filteredPosts = useMemo(() => {
                    </div>
                  </div>
               ) : (
-                squads.length > 0 && activeSquadId && (
+                squads.length > 0 && activeSquadId && activeSquadId !== "all" && (
                   <div className="bg-white p-4 rounded-[1.5rem] border-[3px] border-[#8B004A]/10 mb-6 shadow-sm flex items-center gap-3">
                     <UserPlus className="text-[#8B004A] w-6 h-6" />
-                    <input type="email" placeholder="Add member by email..." value={newMemberEmail} onChange={e=>setNewMemberEmail(e.target.value)} className="flex-1 bg-transparent border-b-2 border-gray-100 px-1 py-1 text-sm font-bold outline-none focus:border-[#E01A76] placeholder-gray-400" />
+                    <input 
+                      type="email" 
+                      placeholder={`Add more members in ${selectedSquadName}...`} 
+                      value={newMemberEmail} 
+                      onChange={e=>setNewMemberEmail(e.target.value)} 
+                      className="flex-1 bg-transparent border-b-2 border-gray-100 px-1 py-1 text-sm font-bold outline-none focus:border-[#E01A76] placeholder-gray-400" 
+                    />
                     
                     <button onClick={handleAddMember} className="bg-[#FFB800]/20 text-[#8B004A] p-2 rounded-lg hover:bg-[#FFB800]/40 transition-all">
                       <Send className="w-4 h-4" />
@@ -368,7 +436,7 @@ const filteredPosts = useMemo(() => {
           )}
         </div>
 
-        {/* BOTTOM SHEET FOR FILTERS */}
+        {/* 🔥 BOTTOM SHEET FOR FILTERS (iPhone Frosted Glass Vibe) 🔥 */}
         <AnimatePresence>
           {showFilterSheet && (
             <>
@@ -384,16 +452,16 @@ const filteredPosts = useMemo(() => {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed bottom-0 left-0 right-0 max-w-[450px] mx-auto bg-white rounded-t-[2rem] shadow-2xl z-[101] border-t-2 border-gray-100 pb-8"
+                className="fixed bottom-0 left-0 right-0 max-w-[450px] mx-auto bg-[#F2EFE7]/85 backdrop-blur-2xl rounded-t-[2.5rem] shadow-[0_-10px_50px_rgba(0,0,0,0.15)] z-[101] border-t border-white/60 pb-8"
               >
                 <div className="w-full flex justify-center py-4">
-                  <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
+                  <div className="w-12 h-1.5 bg-gray-400/30 rounded-full" />
                 </div>
                 <div className="px-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-lg font-black text-gray-900">Filter Posts</h2>
-                    <button onClick={() => setShowFilterSheet(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 active:scale-95 transition-transform">
-                      <X className="w-5 h-5 text-gray-600" />
+                    <h2 className="text-xl font-black text-gray-900 tracking-tight drop-shadow-sm">Filter Hub</h2>
+                    <button onClick={() => setShowFilterSheet(false)} className="p-2.5 bg-white/50 backdrop-blur-md rounded-full hover:bg-white/80 border border-white/50 active:scale-90 transition-all">
+                      <X className="w-5 h-5 text-gray-600" strokeWidth={2.5} />
                     </button>
                   </div>
                   <div className="flex flex-col gap-3">
@@ -406,21 +474,23 @@ const filteredPosts = useMemo(() => {
                       <button
                         key={filter.id}
                         onClick={() => handleApplyFilter(filter.id)}
-                        className={`flex items-center justify-between w-full p-4 rounded-2xl border-2 transition-all duration-300 active:scale-95 ${
+                        className={`flex items-center justify-between w-full p-4 rounded-[1.5rem] border transition-all duration-300 active:scale-95 ${
                           activeFilter === filter.id 
-                          ? "bg-[#8B004A]/5 border-[#8B004A] text-[#8B004A]" 
-                          : "bg-white border-gray-100 text-gray-700 hover:border-gray-300"
+                          ? "bg-white/95 backdrop-blur-xl border-[#8B004A]/30 shadow-[0_8px_20px_rgba(139,0,74,0.08)] text-[#8B004A]" 
+                          : "bg-white/40 backdrop-blur-md border-white/50 text-gray-700 hover:bg-white/60"
                         }`}
                       >
                         <div className="flex flex-col items-start text-left">
-                          <span className="font-bold text-sm">{filter.label}</span>
-                          <span className="text-[11px] font-medium text-gray-400 mt-0.5">{filter.desc}</span>
+                          <span className={`font-bold text-[15px] ${activeFilter === filter.id ? 'text-[#8B004A]' : 'text-gray-800'}`}>
+                            {filter.label}
+                          </span>
+                          <span className={`text-[11px] font-semibold mt-0.5 ${activeFilter === filter.id ? 'text-[#8B004A]/70' : 'text-gray-500'}`}>
+                            {filter.desc}
+                          </span>
                         </div>
-                        {activeFilter === filter.id && (
-                          <div className="bg-[#8B004A] text-white p-1 rounded-full shadow-sm">
-                            <Check className="w-4 h-4" />
-                          </div>
-                        )}
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${activeFilter === filter.id ? 'bg-[#8B004A] border-[#8B004A]' : 'border-gray-300'}`}>
+                           {activeFilter === filter.id && <Check size={14} className="text-white" strokeWidth={3} />}
+                        </div>
                       </button>
                     ))}
                   </div>

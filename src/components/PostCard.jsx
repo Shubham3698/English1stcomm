@@ -66,6 +66,25 @@ export default function PostCard({
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasHintPlayed, setHasHintPlayed] = useState(false);
 
+  // 🔥 SMART DOTS FADE LOGIC STATES 🔥
+  const [showDots, setShowDots] = useState(false);
+  const dotsTimerRef = useRef(null);
+
+  const triggerDotsVisibility = useCallback(() => {
+    setShowDots(true);
+    if (dotsTimerRef.current) clearTimeout(dotsTimerRef.current);
+    dotsTimerRef.current = setTimeout(() => {
+      setShowDots(false);
+    }, 2000); // 2 seconds ke baad smoothly gayab ho jayega
+  }, []);
+
+  // Cleanup dots timer on unmount
+  useEffect(() => {
+    return () => {
+      if (dotsTimerRef.current) clearTimeout(dotsTimerRef.current);
+    };
+  }, []);
+
   const deck = useMemo(() => {
     return post.vocabData && post.vocabData.length > 0 
       ? post.vocabData 
@@ -128,32 +147,62 @@ export default function PostCard({
     }
   }, [totalComments]);
 
+  // 🔥 SIRF YEH CHANGE HUA HAI: SMART PRONUNCIATION LOGIC (NATIVE + WEB) 🔥
+  const speakWord = useCallback(async (word) => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await TextToSpeech.speak({
+          text: word,
+          lang: 'en-US',
+          rate: 0.85,
+          pitch: 1.1,
+          volume: 1.0,
+        });
+      } else {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(word);
+          u.lang = 'en-US'; 
+          u.rate = 0.85; 
+          u.pitch = 1.1; 
+          window.speechSynthesis.speak(u);
+        }
+      }
+    } catch (err) {
+      console.error("Audio Playback Error:", err);
+      toast.error("Audio error. Make sure volume is up.");
+    }
+  }, []);
+
+  // ✅ BUG FIX: Yahan auto-play useEffect delete kar diya gaya hai! Ab bhoot nahi bolega!
+
   const handleWordSelect = useCallback((idx) => {
     setCurrentVocabIdx(idx);
     const firstSlideOfWord = slideToVocabMap.indexOf(idx);
+    
     if (firstSlideOfWord !== -1 && swiperRef.current) {
       swiperRef.current.slideTo(firstSlideOfWord, 500);
+      triggerDotsVisibility(); // Tab change hone pe bhi dots dikhenge
     }
-  }, [slideToVocabMap]);
+
+    // 🔥 BUG FIX: Sirf tabhi bolega jab user click/tap karega 🔥
+    if (deck[idx]?.word) {
+      speakWord(deck[idx].word);
+    }
+  }, [slideToVocabMap, triggerDotsVisibility, deck, speakWord]);
 
   // ✨ UPDATED: SCROLL EFFECT (Smart Scroll Logic) ✨
   useEffect(() => {
-    // Check karo ki user Feed me hai (query param) ya Single Post View me (url param)
     const feedPostId = searchParams.get("postId");
     const urlPostId = feedPostId || urlParamId;
-    const isFeedView = !!feedPostId; // Agar query param hai, matlab ye feed page hai
+    const isFeedView = !!feedPostId; 
 
     if (urlPostId === post._id) {
       setTimeout(() => {
         if (cardRef.current) {
-          
-          // 🛑 BADI UPDATE: Sirf tabhi scroll karega jab feed me ho. 
-          // Preview page pe no scroll, taaki ajeeb jump na ho!
           if (isFeedView) {
             cardRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
           }
-
-          // 🌟 Glow effect dono jagah kaam karega taaki post highlight ho
           cardRef.current.classList.add("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
           setTimeout(() => {
             cardRef.current.classList.remove("border-[#E01A76]", "shadow-[0_0_20px_rgba(224,26,118,0.2)]");
@@ -218,53 +267,9 @@ export default function PostCard({
     } catch (err) { toast.error("Error!"); }
   };
 
-  // 🔥 SIRF YEH CHANGE HUA HAI: SMART PRONUNCIATION LOGIC (NATIVE + WEB) 🔥
-  const speakWord = useCallback(async (word) => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        // 📱 MOBILE APP KE LIYE (Native TTS)
-        await TextToSpeech.speak({
-          text: word,
-          lang: 'en-US',
-          rate: 0.85,
-          pitch: 1.1,
-          volume: 1.0,
-        });
-      } else {
-        // 💻 WEB BROWSER KE LIYE (Purana Web Speech API)
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(word);
-          u.lang = 'en-US'; 
-          u.rate = 0.85; 
-          u.pitch = 1.1; 
-          window.speechSynthesis.speak(u);
-        }
-      }
-    } catch (err) {
-      console.error("Audio Playback Error:", err);
-      toast.error("Audio error. Make sure volume is up.");
-    }
-  }, []);
-
-  // 🔥 Jese hi pill/word change hoga auto pronounce karega
-  const hasMounted = useRef(false);
-  useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      return; 
-    }
-    if (deck[currentVocabIdx]?.word) {
-      speakWord(deck[currentVocabIdx].word);
-    }
-  }, [currentVocabIdx, deck, speakWord]);
-
-  // ✨ UPDATED: Share URL to point to Single Post View ✨
   const handleShare = async (e) => {
     if (e) e.stopPropagation();
     const wordName = currentVocab.word.replace(/"/g, '');
-    
-    // Naya format jo aapke route /post/:postId par hit karega
     const shareUrl = `${window.location.origin}/post/${post._id}?highlight=${encodeURIComponent(wordName)}`;
     
     if (navigator.share) await navigator.share({ title: `Learn ${wordName}`, url: shareUrl });
@@ -287,22 +292,24 @@ export default function PostCard({
     if (mediaItems.length === 0) return null;
     const isAnyVideoPlaying = playingIndex[post._id] !== undefined;
 
-    // 🔥 SMART PAGINATION LOGIC 🔥
     const currentPillMediaCount = mediaItems.filter(m => m.vocabIndex === currentVocabIdx).length;
     const firstSlideOfCurrentPill = slideToVocabMap.indexOf(currentVocabIdx);
     const localSlideIndex = globalSlideIndex - firstSlideOfCurrentPill;
 
     return (
-      <div className="relative group w-full bg-gray-50 border-y border-gray-100 overflow-hidden" onDoubleClick={handleVote}>
+      <div 
+        className="relative group w-full bg-gray-50 border-y border-gray-100 overflow-hidden" 
+        onDoubleClick={handleVote}
+        onMouseEnter={triggerDotsVisibility}
+      >
         <div className="absolute top-3 right-3 z-[2] bg-white/90 backdrop-blur-sm border border-gray-200 px-3 py-1 rounded-xl pointer-events-none shadow-sm">
           <p className="text-[10px] font-playful font-bold text-[#8B004A] tracking-wider">{currentVocabIdx + 1} / {deck.length}</p>
         </div>
 
-        {/* Original SVG arrows restored for playing videos */}
         {mediaItems.length > 1 && isAnyVideoPlaying && (
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-[60] pointer-events-none animate-in fade-in duration-300">
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
-            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slidePrev(); triggerDotsVisibility(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeWidth="3" /></svg></button>
+            <button onClick={(e) => { e.stopPropagation(); swiperRef.current?.slideNext(); triggerDotsVisibility(); }} className="pointer-events-auto w-8 h-8 bg-white/90 rounded-full flex items-center justify-center text-[#8B004A] border border-gray-200 shadow-md active:scale-95 transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth="3" /></svg></button>
           </div>
         )}
 
@@ -310,14 +317,18 @@ export default function PostCard({
           onSwiper={(s) => {
             swiperRef.current = s;
             setGlobalSlideIndex(s.activeIndex);
+            triggerDotsVisibility(); // Component load hote hi dots dikhao
           }}
           modules={[]} 
           autoHeight={true} 
+          onTouchStart={triggerDotsVisibility} // 🔥 SWIPE SHURU HOTE HI DOTS DIKHENGE
+          onSliderMove={triggerDotsVisibility} // 🔥 SWIPE KE WAQT BHI DIKHENGE
           onSlideChange={(s) => {
             const item = mediaItems[s.activeIndex];
             if (item) setCurrentVocabIdx(item.vocabIndex);
             setGlobalSlideIndex(s.activeIndex);
             setPlayingIndex({}); 
+            triggerDotsVisibility(); // 🔥 SLIDE CHANGE HONE PE DOTS DIKHENGE PHIR GAYAB HONGE
           }}
           className="w-full flex items-center justify-center"
         >
@@ -337,7 +348,7 @@ export default function PostCard({
                     {isPlaying ? (
                       <iframe className="w-full h-full border-0" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`} allow="autoplay; encrypted-media" allowFullScreen></iframe>
                     ) : (
-                      <div className="relative w-full h-full flex items-center justify-center cursor-pointer group" onClick={() => setPlayingIndex({[post._id]: idx})}>
+                      <div className="relative w-full h-full flex items-center justify-center cursor-pointer group" onClick={() => { setPlayingIndex({[post._id]: idx}); triggerDotsVisibility(); }}>
                         <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="video-thumb" />
                         <div className="absolute w-14 h-14 bg-[#E01A76]/90 backdrop-blur-sm border-2 border-white/80 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
                           <Play fill="white" className="w-6 h-6 ml-1" />
@@ -355,9 +366,9 @@ export default function PostCard({
           })}
         </Swiper>
 
-        {/* 🔥 DOTS UI FIX - Sirf active pill ki images ke count ke barabar dots dikhenge 🔥 */}
+        {/* 🔥 OPACITY TRANSITION WALE FADING DOTS 🔥 */}
         {currentPillMediaCount > 1 && (
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-1.5 z-[10] pointer-events-none">
+          <div className={`absolute bottom-4 left-0 right-0 flex justify-center items-center gap-1.5 z-[10] pointer-events-none transition-opacity duration-700 ${showDots ? 'opacity-100' : 'opacity-0'}`}>
             {Array.from({ length: currentPillMediaCount }).map((_, i) => (
               <div
                 key={i}

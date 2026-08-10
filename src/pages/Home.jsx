@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
@@ -11,8 +11,7 @@ import { Capacitor } from '@capacitor/core';
 
 import { 
   Search, History, Volume2, RefreshCw, Sparkles, Image as ImageIcon, 
-  Upload, ChevronDown, Compass, Swords, Share2, Globe, Loader2, 
-  BookOpen, ArrowRight, Zap, X, Send, Users, Check, Bot, SearchCode
+  ChevronDown, Swords, Share2, Globe, Loader2, X, Send, Check, Bot
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -60,12 +59,6 @@ export default function VocabPage() {
   const typingSpeed = isDeleting ? 60 : 120;
 
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  
-  // 🔥 NEW: WEB SEARCH MODAL STATE
-  const [isWebSearchModalOpen, setIsWebSearchModalOpen] = useState(false);
-  const [webSearchQuery, setWebSearchQuery] = useState("");
-  const [isSearchingWeb, setIsSearchingWeb] = useState(false);
-  const [webImages, setWebImages] = useState([]);
 
   const [userSquads, setUserSquads] = useState([]);
   const [isFetchingSquads, setIsFetchingSquads] = useState(false);
@@ -118,7 +111,6 @@ export default function VocabPage() {
   }, [resultView]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    // Sirf tabhi show hoga jab AI view ho aur dismiss na kiya gaya ho
     if (latest > 380 && activeWord && resultView === "ai") {
       setShowStickyHeader(true);
     } else {
@@ -128,13 +120,13 @@ export default function VocabPage() {
 
   // Handle Overflow lock for Modals
   useEffect(() => {
-    if (isShareModalOpen || isWebSearchModalOpen) {
+    if (isShareModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
     }
     return () => { document.body.style.overflow = "auto"; };
-  }, [isShareModalOpen, isWebSearchModalOpen]);
+  }, [isShareModalOpen]);
 
   useEffect(() => {
     audioRef.current = new Audio();
@@ -465,20 +457,45 @@ export default function VocabPage() {
     }
   };
 
-  const handleWebImport = async (selectedImageUrl) => {
-    if (!selectedImageUrl) return;
+  // 🔥 SAFE WEB IMPORT LOGIC UPDATED 🔥
+  const handleWebImport = async (selectedImage) => {
+    let safeUrl = "";
+    if (typeof selectedImage === "string") {
+      safeUrl = selectedImage;
+    } else if (selectedImage && typeof selectedImage === "object") {
+      safeUrl = selectedImage.url || selectedImage.link || selectedImage.src || "";
+    }
+
+    if (!safeUrl) {
+      toast.error("Could not extract image URL.");
+      return;
+    }
+
     setIsImageLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/api/image/import-web`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, imageUrls: selectedImageUrl }),
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        // 🔥 FIX: Added 'url', 'imageUrl', and 'imageUrls' as array to satisfy ANY backend requirement 🔥
+        body: JSON.stringify({ 
+          word: activeWordRef.current, 
+          userId: userEmail, 
+          url: safeUrl, 
+          imageUrl: safeUrl,
+          imageUrls: [safeUrl] 
+        }),
       });
       const data = await response.json();
-      if (response.ok && data.imageUrl) {
+      
+      const savedImgUrl = data.imageUrl || data.url; // Backend jo bhi key wapas kare
+
+      if (response.ok && savedImgUrl) {
         toast.success("Image Saved! 🌍✨");
-        const updatedGallery = [...imageGallery, data.imageUrl];
-        setImageGallery(updatedGallery); setIsImageExpanded(true); fetchHistoryFromDB();
+        const updatedGallery = [...imageGallery, savedImgUrl];
+        setImageGallery(updatedGallery); 
+        setIsImageExpanded(true); 
+        fetchHistoryFromDB();
         if (sharedPostId) handleUpdateCommunityPost(meaning, sentences, updatedGallery);
         try {
           await fetch(`${API_URL}/api/words/update-images`, {
@@ -486,8 +503,14 @@ export default function VocabPage() {
             body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, imageUrls: updatedGallery })
           });
         } catch(err) {}
-      } else toast.error(data.error || "Web import fail.");
-    } catch (err) { toast.error("Network error."); } finally { setIsImageLoading(false); }
+      } else {
+        toast.error(data.error || "Web import fail.");
+      }
+    } catch (err) { 
+        toast.error("Network error."); 
+    } finally { 
+        setIsImageLoading(false); 
+    }
   };
 
   const handleRemoveImage = async (indexToRemove) => {
@@ -601,23 +624,11 @@ export default function VocabPage() {
     } catch (error) { toast.error("Network connection error!"); } finally { setIsChatProcessing(false); }
   };
 
-  const searchWebForImages = async () => {
-    // Implement web search image logic if needed
-  };
-
-  const onWebImageSelect = (imgUrl) => {
-      // Logic for selecting image from web
-  };
-
   const toggleFlip = (id) => setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
 
   const handleCloseShareModal = () => {
     setIsShareModalOpen(false); setSelectedSquads(new Set()); setIsGlobalSelected(false);
-  };
-  
-  const handleCloseWebSearchModal = () => {
-    setIsWebSearchModalOpen(false);
   };
 
   // 🔥 CUSTOM ANIMATION VARIANTS FOR SCROLL
@@ -979,8 +990,6 @@ export default function VocabPage() {
                          handleRemoveImage={handleRemoveImage}
                          handleWebImport={handleWebImport} 
                          fileInputRef={fileInputRef}
-                         // 🔥 NEW: Pass function to open modal from VisualAnchor
-                         onOpenWebSearch={() => setIsWebSearchModalOpen(true)}
                        />
                     </div>
                   </motion.div>
@@ -1159,102 +1168,6 @@ export default function VocabPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* --- WEB SEARCH BOTTOM SHEET MODAL --- */}
-      <AnimatePresence>
-        {isWebSearchModalOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-[#8B004A]/60 backdrop-blur-md z-[200]"
-              onClick={() => setIsWebSearchModalOpen(false)}
-            />
-            <motion.div
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 max-w-[450px] mx-auto bg-white/95 backdrop-blur-xl rounded-t-[2.5rem] z-[201] p-6 pb-8 shadow-[0_-10px_50px_rgba(139,0,74,0.3)] flex flex-col h-[85vh] border-t-4 border-[#8B004A]"
-            >
-              <div className="w-14 h-1.5 bg-gray-300 rounded-full mx-auto mb-6 shrink-0" />
-              
-              <div className="flex justify-between items-center mb-6 shrink-0">
-                 <h3 className="text-2xl font-black font-heading text-[#8B004A] flex items-center gap-2">
-                   <Globe size={24} className="text-[#E01A76]" strokeWidth={3}/> Web Search
-                 </h3>
-                 <button onClick={() => setIsWebSearchModalOpen(false)} className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 active:scale-90 transition-all border border-gray-200"><X size={20} strokeWidth={2.5}/></button>
-              </div>
-
-              <div className="relative mb-6 shrink-0 flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    placeholder={`Search web for "${activeWord}"...`}
-                    value={webSearchQuery}
-                    onChange={(e) => setWebSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") searchWebForImages(); }}
-                    className="w-full bg-gray-50 border-2 border-gray-200 rounded-[1.2rem] py-4 pl-12 pr-4 font-bold text-gray-900 font-heading outline-none focus:border-[#8B004A] transition-colors"
-                  />
-                  <Search size={22} strokeWidth={3} className="absolute left-4 top-[17px] text-gray-400" />
-                </div>
-                <button 
-                  onClick={searchWebForImages}
-                  disabled={isSearchingWeb}
-                  className="bg-[#8B004A] hover:bg-[#600033] text-white px-6 rounded-[1.2rem] font-black font-heading text-[15px] shadow-sm active:scale-95 disabled:opacity-50 border-b-4 border-[#5A0030] active:border-b-0 active:mt-1 transition-all flex items-center justify-center min-w-[80px]"
-                >
-                   {isSearchingWeb ? <Loader2 size={20} className="animate-spin" strokeWidth={3}/> : "Find"}
-                </button>
-              </div>
-
-              {/* IMAGE RESULTS CONTAINER */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar pb-10 pr-1">
-                {isSearchingWeb ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center">
-                    <div className="p-4 bg-[#8B004A]/10 rounded-full mb-4">
-                      <Loader2 className="animate-spin text-[#8B004A] w-10 h-10" strokeWidth={3} />
-                    </div>
-                    <p className="font-heading font-black text-gray-800 text-lg">Scanning the web...</p>
-                    <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">Looking for visual context</p>
-                  </div>
-                ) : webImages.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {webImages.map((imgUrl, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={() => onWebImageSelect(imgUrl)}
-                        className="relative rounded-[1.2rem] overflow-hidden aspect-square border-2 border-gray-100 hover:border-[#E01A76] cursor-pointer group shadow-sm bg-gray-50 transition-all"
-                      >
-                        <img 
-                          src={imgUrl} 
-                          alt={`Search result ${idx}`} 
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                          loading="lazy" 
-                          onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/300?text=Blocked+by+Site";
-                          }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#8B004A]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-end pb-4">
-                           <span className="bg-white text-[#8B004A] text-[11px] font-black font-heading px-4 py-2 rounded-xl shadow-lg uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                              Save to Card
-                           </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center text-gray-400">
-                    <div className="p-5 bg-gray-100 rounded-full mb-4">
-                      <Globe size={40} className="opacity-50 text-gray-500" strokeWidth={2} />
-                    </div>
-                    <p className="font-heading font-black text-gray-800 text-lg">No matches found.</p>
-                    <p className="font-body text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Try another search term.</p>
-                  </div>
-                )}
-              </div>
-
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
 
       {/* --- SHARE MODAL --- */}
       <AnimatePresence>

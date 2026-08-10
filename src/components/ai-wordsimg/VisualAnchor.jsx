@@ -10,7 +10,7 @@ import {
   Globe,
   Search,
   AlertCircle,
-  ArrowLeft // 🔥 NAYA IMPORT: Back button ke liye
+  ArrowLeft
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -26,7 +26,8 @@ export default function VisualAnchor({
   handleCustomImageUpload,
   handleRemoveImage,
   handleWebImport, 
-  fileInputRef
+  fileInputRef,
+  onOpenWebSearch // 🔥 Parent (VocabPage) se Web Search Modal kholne ka function
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -36,7 +37,7 @@ export default function VisualAnchor({
   const [isWebSearchOpen, setIsWebSearchOpen] = useState(false);
   const [isSearchingWeb, setIsSearchingWeb] = useState(false);
   const [webImages, setWebImages] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(activeWord); // User khud search refine kar sake
+  const [searchQuery, setSearchQuery] = useState(activeWord); 
 
   // Base API URL
   const API_URL = import.meta.env.DEV ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
@@ -48,7 +49,7 @@ export default function VisualAnchor({
     setCurrentIndex(0);
     setIsConfirmingDelete(false);
     setImageError(false);
-    setSearchQuery(activeWord); // Jab naya word aaye toh search query bhi update ho jaye
+    setSearchQuery(activeWord); 
   }, [activeWord]);
 
   useEffect(() => {
@@ -71,16 +72,29 @@ export default function VisualAnchor({
         toast.error("No images found online.");
       }
     } catch (err) {
-      console.error("Web Search Error");
+      console.error("Web Search Error", err);
       toast.error("Failed to connect to search.");
     } finally {
       setIsSearchingWeb(false);
     }
   };
 
-  const onWebImageSelect = (imgUrl) => {
+  // 🔥 YAHAN FIX KIYA HAI: Exact String URL Extract Karega 🔥
+  const onWebImageSelect = (imgData) => {
+    let finalUrl = "";
+    if (typeof imgData === "string") {
+      finalUrl = imgData;
+    } else if (imgData && typeof imgData === "object") {
+      finalUrl = imgData.url || imgData.link || imgData.src || imgData.original || "";
+    }
+
+    if (!finalUrl) {
+      toast.error("Invalid Image URL!");
+      return;
+    }
+
     setIsWebSearchOpen(false);
-    handleWebImport(imgUrl);
+    handleWebImport(finalUrl); // Sirf pure string URL parent ko pass hoga
   };
 
   const [touchStart, setTouchStart] = useState(null);
@@ -332,29 +346,36 @@ export default function VisualAnchor({
                 </div>
               ) : webImages.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3 pb-10">
-                  {webImages.map((imgUrl, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => onWebImageSelect(imgUrl)}
-                      className="relative rounded-[1.5rem] overflow-hidden aspect-square border-2 border-gray-100 hover:border-[#E01A76] cursor-pointer group shadow-sm bg-white transition-all hover:shadow-md"
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt={`Search result ${idx}`} 
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        loading="lazy" 
-                        onError={(e) => {
-                          e.target.src = "https://via.placeholder.com/300?text=Blocked+by+Site";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#8B004A]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4 backdrop-blur-[1px]">
-                         <span className="bg-white text-[#8B004A] text-[11px] font-black font-heading px-4 py-2 rounded-xl shadow-lg uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                           Save Anchor
-                         </span>
+                  {/* 🔥 YAHAN BHI FIX KIYA HAI: Safe Image Render 🔥 */}
+                  {webImages.map((imgItem, idx) => {
+                    const displayUrl = typeof imgItem === "string" ? imgItem : (imgItem.url || imgItem.link || imgItem.src || "");
+                    
+                    if (!displayUrl) return null; // Ignore invalid entries
+
+                    return (
+                      <div 
+                        key={idx} 
+                        onClick={() => onWebImageSelect(imgItem)}
+                        className="relative rounded-[1.5rem] overflow-hidden aspect-square border-2 border-gray-100 hover:border-[#E01A76] cursor-pointer group shadow-sm bg-white transition-all hover:shadow-md"
+                      >
+                        <img 
+                          src={displayUrl} 
+                          alt={`Search result ${idx}`} 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          loading="lazy" 
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/300?text=Blocked+by+Site";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#8B004A]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4 backdrop-blur-[1px]">
+                           <span className="bg-white text-[#8B004A] text-[11px] font-black font-heading px-4 py-2 rounded-xl shadow-lg uppercase tracking-widest transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                             Save Anchor
+                           </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center pb-20">

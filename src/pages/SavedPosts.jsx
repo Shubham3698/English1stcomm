@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import toast from 'react-hot-toast';
 import PostCard from "../components/PostCard";
+// 🔥 NAYA IMPORT: App environment check karne ke liye
+import { Capacitor } from '@capacitor/core'; 
 
 export default function SavedPosts() {
   const [posts, setPosts] = useState([]);
@@ -10,8 +12,18 @@ export default function SavedPosts() {
   const userEmail = localStorage.getItem("eng_userEmail");
   const isPremiumUser = localStorage.getItem("eng_isPremium") === "true";
 
-  const API_URL = window.location.hostname === "localhost" 
-    ? "http://localhost:3000" : "https://serdeptry1st.onrender.com";
+  // 🔥 URL FIXING LOGIC (Same as VocabPage) 🔥
+  const isApp = Capacitor.isNativePlatform();
+  let API_URL = "https://serdeptry1st.onrender.com"; // Default to production for apps
+
+  if (!isApp) {
+    const currentHost = window.location.hostname;
+    if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+      API_URL = "http://localhost:3000"; 
+    } else if (currentHost.startsWith("192.168.")) {
+      API_URL = `http://${currentHost}:3000`; 
+    }
+  }
 
   // ✅ 1. Saved Posts Fetch Karne ka Logic
   const fetchSavedPosts = async () => {

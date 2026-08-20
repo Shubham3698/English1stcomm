@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
 import VisualAnchor from "../components/ai-wordsimg/VisualAnchor"; 
+import ViewStack from "../components/ViewStack"; // 🔥 IMPORT NEW VIEW STACK
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
 // 🔥 Native Speech imports
@@ -29,9 +30,10 @@ export default function VocabPage() {
 
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
   
-  const [flippedCards, setFlippedCards] = useState({});
+  // 🔥 NEW STACK STATE
+  const [isStackOpen, setIsStackOpen] = useState(false);
+  
   const [contextBadge, setContextBadge] = useState("Active Target");
 
   const [imageGallery, setImageGallery] = useState([]);
@@ -103,28 +105,21 @@ export default function VocabPage() {
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [isStickyDismissed, setIsStickyDismissed] = useState(false); 
 
-  // Auto-reset sticky header when switching back to AI view
   useEffect(() => {
-    if (resultView === "ai") {
-      setIsStickyDismissed(false);
-    }
+    if (resultView === "ai") setIsStickyDismissed(false);
   }, [resultView]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    if (latest > 380 && activeWord && resultView === "ai") {
+    if (latest > 380 && activeWord && resultView === "ai" && !isStackOpen) {
       setShowStickyHeader(true);
     } else {
       setShowStickyHeader(false);
     }
   });
 
-  // Handle Overflow lock for Modals
   useEffect(() => {
-    if (isShareModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
+    if (isShareModalOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "auto";
     return () => { document.body.style.overflow = "auto"; };
   }, [isShareModalOpen]);
 
@@ -146,7 +141,6 @@ export default function VocabPage() {
     let timer = setTimeout(() => {
       const i = loopNum % classicWords.length;
       const fullText = classicWords[i];
-
       setPlaceholderText(
         isDeleting
           ? fullText.substring(0, placeholderText.length - 1)
@@ -160,17 +154,13 @@ export default function VocabPage() {
         setLoopNum(loopNum + 1);
       }
     }, typingSpeed);
-
     return () => clearTimeout(timer);
   }, [placeholderText, isDeleting, loopNum]);
 
   useEffect(() => {
     const loggedInUserEmail = localStorage.getItem("eng_userEmail");
-    if (loggedInUserEmail) {
-      setUserEmail(loggedInUserEmail.trim());
-    } else {
-      setUserEmail("guest_user@gmail.com"); 
-    }
+    if (loggedInUserEmail) setUserEmail(loggedInUserEmail.trim());
+    else setUserEmail("guest_user@gmail.com"); 
   }, []);
 
   const unlockAudioEngine = () => {
@@ -184,7 +174,6 @@ export default function VocabPage() {
     if (!textToSpeak) return;
     if (audioRef.current) audioRef.current.pause();
     setIsPlayingAudio(true);
-
     try {
       let finalAudioSrc = "";
       if (base64Audio) {
@@ -196,23 +185,15 @@ export default function VocabPage() {
           body: JSON.stringify({ text: textToSpeak })
         });
         const data = await res.json();
-        if (data.success && data.audioBase64) {
-          finalAudioSrc = "data:audio/mp3;base64," + data.audioBase64;
-        } else {
-          throw new Error("Failed to fetch premium voice");
-        }
+        if (data.success && data.audioBase64) finalAudioSrc = "data:audio/mp3;base64," + data.audioBase64;
+        else throw new Error("Failed to fetch premium voice");
       }
-
       audioRef.current.src = finalAudioSrc;
       audioRef.current.onended = () => setIsPlayingAudio(false);
-      audioRef.current.onerror = () => {
-        setIsPlayingAudio(false);
-        fallbackSpeak(textToSpeak);
-      };
+      audioRef.current.onerror = () => { setIsPlayingAudio(false); fallbackSpeak(textToSpeak); };
       await audioRef.current.play();
     } catch (error) {
-      setIsPlayingAudio(false);
-      fallbackSpeak(textToSpeak);
+      setIsPlayingAudio(false); fallbackSpeak(textToSpeak);
     }
   };
 
@@ -234,8 +215,7 @@ export default function VocabPage() {
 
   const fetchRelatedPosts = async (searchWord) => {
     if (!searchWord) return;
-    setIsFetchingPosts(true);
-    setRelatedPosts([]); 
+    setIsFetchingPosts(true); setRelatedPosts([]); 
     try {
       const res = await fetch(`${API_URL}/api/english-posts/all`);
       const data = await res.json();
@@ -283,9 +263,7 @@ export default function VocabPage() {
     } catch (err) { }
   };
 
-  useEffect(() => {
-    if (userEmail) fetchHistoryFromDB(true);
-  }, [userEmail]);
+  useEffect(() => { if (userEmail) fetchHistoryFromDB(true); }, [userEmail]);
 
   const fetchUserSquads = async () => {
     if (!userEmail || userEmail === "guest_user@gmail.com") return;
@@ -308,7 +286,6 @@ export default function VocabPage() {
     data.append("word", activeWordRef.current);
     data.append("meaning", meaning);
     data.append("sentence", sentences || "");
-
     const vocabData = [{ word: activeWordRef.current, meaning: meaning, sentence: sentences || "", media: imageGallery.map(url => ({ type: 'image', url })) }];
     data.append("vocabData", JSON.stringify(vocabData));
 
@@ -316,14 +293,12 @@ export default function VocabPage() {
       const mediaMetadata = imageGallery.map(url => ({ type: 'image', url: url, value: url, mode: 'url', vocabIndex: 0 }));
       data.append("mediaMetadata", JSON.stringify(mediaMetadata));
     }
-
     try {
       const res = await fetch(`${API_URL}/api/english-posts/create`, { method: "POST", body: data });
       const postResponseData = await res.json(); 
       if (res.ok) {
         const newPostId = postResponseData.post?._id || postResponseData.data?._id || postResponseData._id;
-        setSharedPostId(newPostId);
-        fetchRelatedPosts(activeWordRef.current);
+        setSharedPostId(newPostId); fetchRelatedPosts(activeWordRef.current);
         return newPostId;
       }
     } catch (e) { }
@@ -341,7 +316,6 @@ export default function VocabPage() {
 
     const vocabData = [{ word: activeWordRef.current, meaning: updatedMeaning || meaning, sentence: updatedSentences || sentences || "", media: currentImages.map(url => ({ type: 'image', url })) }];
     data.append("vocabData", JSON.stringify(vocabData));
-
     const mediaMetadata = currentImages.map((url) => ({ type: 'image', url: url, value: url, mode: 'url', vocabIndex: 0 }));
     data.append("mediaMetadata", JSON.stringify(mediaMetadata));
 
@@ -379,7 +353,6 @@ export default function VocabPage() {
             body: JSON.stringify({ senderEmail: userEmail, type: "post", postId: postId })
           }).then(res => ({ squadId, success: res.ok }))
         );
-
         const results = await Promise.all(sendPromises);
         const successfulSquads = results.filter(r => r.success).map(r => r.squadId);
 
@@ -400,8 +373,7 @@ export default function VocabPage() {
     if (!wordToGenerate || !userEmail) return;
     if (activeWordRef.current !== wordToGenerate && actionType === "normal") return;
 
-    setIsImageLoading(true);
-    setImageAction(actionType);
+    setIsImageLoading(true); setImageAction(actionType);
     if (actionType === "normal") { setImageGallery([]); setIsImageExpanded(false); }
 
     try {
@@ -421,9 +393,7 @@ export default function VocabPage() {
             });
             setIsImageExpanded(true); 
         }
-      } else {
-        if (activeWordRef.current === wordToGenerate) toast.error("Visual generation failed");
-      }
+      } else { if (activeWordRef.current === wordToGenerate) toast.error("Visual generation failed"); }
     } catch (err) { } finally {
       if (activeWordRef.current === wordToGenerate) { setIsImageLoading(false); setImageAction(""); }
     }
@@ -457,45 +427,26 @@ export default function VocabPage() {
     }
   };
 
-  // 🔥 SAFE WEB IMPORT LOGIC UPDATED 🔥
   const handleWebImport = async (selectedImage) => {
     let safeUrl = "";
-    if (typeof selectedImage === "string") {
-      safeUrl = selectedImage;
-    } else if (selectedImage && typeof selectedImage === "object") {
-      safeUrl = selectedImage.url || selectedImage.link || selectedImage.src || "";
-    }
+    if (typeof selectedImage === "string") safeUrl = selectedImage;
+    else if (selectedImage && typeof selectedImage === "object") safeUrl = selectedImage.url || selectedImage.link || selectedImage.src || "";
 
-    if (!safeUrl) {
-      toast.error("Could not extract image URL.");
-      return;
-    }
-
+    if (!safeUrl) { toast.error("Could not extract image URL."); return; }
     setIsImageLoading(true);
 
     try {
       const response = await fetch(`${API_URL}/api/image/import-web`, {
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        // 🔥 FIX: Added 'url', 'imageUrl', and 'imageUrls' as array to satisfy ANY backend requirement 🔥
-        body: JSON.stringify({ 
-          word: activeWordRef.current, 
-          userId: userEmail, 
-          url: safeUrl, 
-          imageUrl: safeUrl,
-          imageUrls: [safeUrl] 
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, url: safeUrl, imageUrl: safeUrl, imageUrls: [safeUrl] }),
       });
       const data = await response.json();
-      
-      const savedImgUrl = data.imageUrl || data.url; // Backend jo bhi key wapas kare
+      const savedImgUrl = data.imageUrl || data.url; 
 
       if (response.ok && savedImgUrl) {
         toast.success("Image Saved! 🌍✨");
         const updatedGallery = [...imageGallery, savedImgUrl];
-        setImageGallery(updatedGallery); 
-        setIsImageExpanded(true); 
-        fetchHistoryFromDB();
+        setImageGallery(updatedGallery); setIsImageExpanded(true); fetchHistoryFromDB();
         if (sharedPostId) handleUpdateCommunityPost(meaning, sentences, updatedGallery);
         try {
           await fetch(`${API_URL}/api/words/update-images`, {
@@ -503,14 +454,8 @@ export default function VocabPage() {
             body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, imageUrls: updatedGallery })
           });
         } catch(err) {}
-      } else {
-        toast.error(data.error || "Web import fail.");
-      }
-    } catch (err) { 
-        toast.error("Network error."); 
-    } finally { 
-        setIsImageLoading(false); 
-    }
+      } else { toast.error(data.error || "Web import fail."); }
+    } catch (err) { toast.error("Network error."); } finally { setIsImageLoading(false); }
   };
 
   const handleRemoveImage = async (indexToRemove) => {
@@ -529,18 +474,16 @@ export default function VocabPage() {
   const handleSearchWord = async (wordToSearch = word, isAlternative = false, isSilent = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
     if (!searchTarget && !isSilent) return toast.error("Please enter a word");
-    if (!userEmail || userEmail === "guest_user@gmail.com") {
-        if (!isSilent) return toast.error("Please login first! 🚫");
-    }
+    if (!userEmail || userEmail === "guest_user@gmail.com") { if (!isSilent) return toast.error("Please login first! 🚫"); }
 
     if (!isAlternative) setSharedPostId(null);
-    setLoading(true); setShowHistory(false); setResultView("ai"); 
+    setLoading(true); 
+    setIsStackOpen(false); // 🔥 HIDE STACK ON NEW SEARCH
+    setResultView("ai"); 
     if (!isSilent) setContextBadge("Analyzed Target");
 
     setSentSquads(new Set()); setSelectedSquads(new Set()); setIsGlobalSelected(false); setIsGlobalSent(false);
     setImageGallery([]); setIsImageExpanded(false); setFollowUpChat([]); setChatInputText("");
-    
-    // 🔥 RESET STICKY HEADER DISMISS STATE FOR NEW WORD
     setIsStickyDismissed(false); 
 
     try {
@@ -581,17 +524,14 @@ export default function VocabPage() {
     setActiveWord(item.word); activeWordRef.current = item.word; 
     setPartOfSpeech(item.partOfSpeech || "Vocabulary"); setMeaning(item.meaning); setExplanation(item.explanation);
     setSynonyms(item.synonyms); setAntonyms(item.antonyms); setSentences(item.sentences);
-    setShowHistory(false); setResultView("ai"); 
+    
+    setIsStackOpen(false); // 🔥 HIDE STACK WHEN CARD LOADED
+    setResultView("ai"); 
     setSentSquads(new Set()); setSelectedSquads(new Set()); setIsGlobalSelected(false); setIsGlobalSent(false);
     setFollowUpChat(item.chatHistory || []); setChatInputText("");
-
-    // 🔥 RESET STICKY HEADER DISMISS STATE ON HISTORY LOAD
     setIsStickyDismissed(false);
 
-    if (!isSilent) {
-      setContextBadge("Historical Target");
-      playPremiumAudio(item.word);
-    }
+    if (!isSilent) { setContextBadge("Historical Target"); playPremiumAudio(item.word); }
     fetchRelatedPosts(item.word);
     
     let historyImages = [];
@@ -624,14 +564,12 @@ export default function VocabPage() {
     } catch (error) { toast.error("Network connection error!"); } finally { setIsChatProcessing(false); }
   };
 
-  const toggleFlip = (id) => setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   const totalUniqueWords = new Set(history.map(item => item.word.toLowerCase())).size;
 
   const handleCloseShareModal = () => {
     setIsShareModalOpen(false); setSelectedSquads(new Set()); setIsGlobalSelected(false);
   };
 
-  // 🔥 CUSTOM ANIMATION VARIANTS FOR SCROLL
   const scrollVariant = {
     hidden: { opacity: 0, y: 50, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.4, duration: 0.6 } }
@@ -653,7 +591,6 @@ export default function VocabPage() {
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-          /* Glassmorphism Ultra Premium - Adjusted for F2EFE7 */
           .glass-ultra {
             background: rgba(242, 239, 231, 0.6);
             backdrop-filter: blur(24px);
@@ -670,7 +607,6 @@ export default function VocabPage() {
             box-shadow: 0 4px 20px 0 rgba(139, 0, 74, 0.06);
           }
 
-          /* Duolingo Style Bold Button */
           .duo-btn {
             border-bottom-width: 4px;
             transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
@@ -680,18 +616,28 @@ export default function VocabPage() {
             border-bottom-width: 0px;
             margin-top: 4px;
           }
-
-          /* Clean Flip Card */
-          .flip-card { perspective: 1000px; }
-          .flip-card-inner { transform-style: preserve-3d; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-          .flip-card-flipped { transform: rotateY(180deg); }
-          .flip-card-front, .flip-card-back { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-          .flip-card-back { transform: rotateY(180deg); }
         `}
       </style>
 
-      {/* --- EXACT MURREY/ALABASTER COMBO BACKGROUND --- */}
-      <div className="min-h-screen bg-[#F2EFE7] text-gray-900 flex flex-col items-center p-4 py-8 font-body pb-32 overflow-x-hidden w-full relative selection:bg-[#E01A76]/20 selection:text-[#8B004A]">
+{/* 🔥 FULL PAGE VIEW STACK COMPONENT 🔥 */}
+      <AnimatePresence>
+        {isStackOpen && (
+          <ViewStack 
+            history={history} 
+            onClose={() => setIsStackOpen(false)} 
+            onLoadWord={(item) => loadFromHistoryCard(item)} 
+            
+            // 👇 YEH LINE SABSE IMPORTANT HAI 👇
+            onPlayAudio={(wordToSpeak) => playPremiumAudio(wordToSpeak)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 🔥 MAIN CONTENT WRAPPER (Hidden when Stack is open via display:none) 🔥 */}
+      <div 
+        className="min-h-screen bg-[#F2EFE7] text-gray-900 flex-col items-center p-4 py-8 font-body pb-32 overflow-x-hidden w-full relative selection:bg-[#E01A76]/20 selection:text-[#8B004A]"
+        style={{ display: isStackOpen ? 'none' : 'flex' }}
+      >
         
         {/* VIBRANT GLOWING ORBS FOR BLUR EFFECT */}
         <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-gradient-to-br from-[#E01A76]/20 to-[#8B004A]/10 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{animationDuration: '6s'}}></div>
@@ -748,62 +694,17 @@ export default function VocabPage() {
               >
                 <Swords size={18} strokeWidth={2.5}/> Practice
               </button>
+
+              {/* 🔥 REPLACED HISTORY BUTTON WITH STACK LAUNCHER 🔥 */}
               <button
-                onClick={() => setShowHistory(!showHistory)}
-                className={`flex items-center gap-2 px-5 py-3.5 rounded-[1.5rem] text-sm font-bold shadow-md duo-btn ${showHistory ? 'glass-ultra text-[#8B004A] border-white' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                onClick={() => setIsStackOpen(true)}
+                className="flex items-center gap-2 px-5 py-3.5 rounded-[1.5rem] text-sm font-bold shadow-md duo-btn bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
               >
-                {showHistory ? "Hide Stack" : "History"}
-                <ChevronDown size={18} strokeWidth={2.5} className={`transition-transform duration-300 ${showHistory ? 'rotate-180' : ''}`} />
+                View Stack
+                <History size={18} strokeWidth={2.5} className="ml-1" />
               </button>
             </motion.div>
           </div>
-
-          {/* --- 3. SLEEK HISTORY CARDS --- */}
-          <AnimatePresence>
-            {showHistory && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden mb-10"
-              >
-                <div className="glass-ultra rounded-[2rem] p-5">
-                  {history.length === 0 ? (
-                    <div className="py-8 text-center opacity-60">
-                      <ImageIcon size={40} className="mx-auto text-gray-400 mb-3" />
-                      <p className="font-heading text-sm font-bold text-gray-600">Your collection is empty.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                      {history.map((item) => (
-                        <div key={item._id} className="flex gap-2 group">
-                          <div className="flip-card flex-1 h-[60px] cursor-pointer" onClick={() => toggleFlip(item._id)}>
-                            <div className={`flip-card-inner w-full h-full relative ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}>
-                              <div className="flip-card-front absolute w-full h-full bg-white/90 backdrop-blur-md border border-white rounded-[1.2rem] px-5 flex items-center justify-between hover:bg-white transition-colors shadow-sm">
-                                <span className="font-heading font-black text-[#8B004A] text-[16px] truncate">
-                                  {item.word} {(item.imageUrl || (item.imageUrls && item.imageUrls.length > 0)) && <span className="text-[12px] ml-1">🖼️</span>}
-                                </span>
-                                <span className="text-[10px] text-[#E01A76] font-extrabold tracking-widest uppercase bg-[#E01A76]/10 px-2 py-1 rounded-lg">Flip</span>
-                              </div>
-                              <div className="flip-card-back absolute w-full h-full bg-gradient-to-br from-[#8B004A] to-[#600033] text-white rounded-[1.2rem] px-4 flex items-center justify-center shadow-inner">
-                                <span className="text-[13px] text-center font-bold line-clamp-2 leading-tight">
-                                  {item.meaning}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); loadFromHistoryCard(item); }}
-                            className="w-[60px] h-[60px] bg-white border border-white rounded-[1.2rem] flex items-center justify-center text-gray-400 hover:bg-[#FFB800] hover:text-[#8B004A] hover:border-[#FFB800] transition-colors shadow-sm shrink-0 active:scale-95"
-                          >
-                            <Search size={22} strokeWidth={3}/>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
           {/* --- 4. BOLD SEARCH BAR --- */}
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full mb-12 group z-20">
@@ -834,7 +735,6 @@ export default function VocabPage() {
           {activeWord && !loading && (
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex p-1.5 bg-white/40 backdrop-blur-md rounded-2xl w-full max-w-[320px] mx-auto mb-10 z-10 relative border border-white">
               <button
-                // 🔥 RESET DISMISS STATE ON TAB CHANGE
                 onClick={() => { setResultView("ai"); setIsStickyDismissed(false); }}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[14px] font-black transition-all duration-300 ${
                   resultView === "ai" ? "bg-white text-[#8B004A] shadow-md" : "text-gray-500 hover:text-gray-800"
@@ -944,7 +844,6 @@ export default function VocabPage() {
                       <Bot size={20} className="text-[#8B004A]" strokeWidth={2.5}/>
                     </div>
                     <div className="glass-solid rounded-[2rem] rounded-tl-sm p-5 w-full border-t-[3px] border-t-[#FFB800]">
-                       {/* 🔥 CHANGED TO FLEX-COL HERE FOR UPER-NEECHE LAYOUT 🔥 */}
                        <div className="flex flex-col gap-3">
                           <div className="bg-emerald-50/80 border-2 border-emerald-200 rounded-[1.2rem] p-4 flex flex-col w-full">
                             <span className="text-[11px] font-black uppercase text-emerald-600 block mb-2 font-heading tracking-widest shrink-0">Similar</span>

@@ -12,7 +12,7 @@ import { Capacitor } from '@capacitor/core';
 
 import { 
   Search, History, Volume2, RefreshCw, Sparkles, Image as ImageIcon, 
-  ChevronDown, Swords, Share2, Globe, Loader2, X, Send, Check, Bot
+  ChevronDown, Swords, Share2, Globe, Loader2, X, Send, Check, Bot, Tag
 } from "lucide-react";
 
 export default function VocabPage() {
@@ -31,15 +31,17 @@ export default function VocabPage() {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   
-  // 🔥 NEW STACK STATE
   const [isStackOpen, setIsStackOpen] = useState(false);
-  
   const [contextBadge, setContextBadge] = useState("Active Target");
 
   const [imageGallery, setImageGallery] = useState([]);
   const [isImageLoading, setIsImageLoading] = useState(false);
   const [imageAction, setImageAction] = useState(""); 
   const [isImageExpanded, setIsImageExpanded] = useState(false);
+
+  // 🔥 INSPIRATION TAGS STATE
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
 
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -69,7 +71,6 @@ export default function VocabPage() {
   
   const [isGlobalSelected, setIsGlobalSelected] = useState(false);
   const [isGlobalSent, setIsGlobalSent] = useState(false);
-  
   const [isSendingMultiple, setIsSendingMultiple] = useState(false);
   
   const totalSelected = selectedSquads.size + (isGlobalSelected ? 1 : 0);
@@ -80,7 +81,6 @@ export default function VocabPage() {
     "Execution", "Development"
   ];
 
-  // 🔥 CHAT STATE & REFS
   const [followUpChat, setFollowUpChat] = useState([]);
   const [chatInputText, setChatInputText] = useState("");
   const [isChatProcessing, setIsChatProcessing] = useState(false);
@@ -100,7 +100,6 @@ export default function VocabPage() {
     }
   }
 
-  // 🔥 SLEEK STICKY HEADER SCROLL LOGIC
   const { scrollY } = useScroll();
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [isStickyDismissed, setIsStickyDismissed] = useState(false); 
@@ -471,6 +470,53 @@ export default function VocabPage() {
     } catch (err) {}
   };
 
+  // 🔥 TAG HANDLERS (UPDATED LOGIC FOR NEW UI)
+  const submitTag = async () => {
+    if (tagInput.trim() && activeWordRef.current) {
+      const newTag = tagInput.trim();
+      if (tags.includes(newTag)) {
+        toast.error("Tag already exists!");
+        return;
+      }
+      
+      const updatedTags = [...tags, newTag];
+      setTags(updatedTags);
+      setTagInput("");
+      
+      try {
+        await fetch(`${API_URL}/api/words/update-tags`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, tags: updatedTags })
+        });
+        toast.success("Anchor saved! 🏷️");
+        fetchHistoryFromDB();
+      } catch (err) {
+        toast.error("Failed to save anchor.");
+      }
+    }
+  };
+
+  const handleAddTag = async (e) => {
+    if (e.key === 'Enter') {
+      submitTag();
+    }
+  };
+
+  const handleRemoveTag = async (tagToRemove) => {
+    const updatedTags = tags.filter(t => t !== tagToRemove);
+    setTags(updatedTags);
+    
+    try {
+      await fetch(`${API_URL}/api/words/update-tags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ word: activeWordRef.current, userId: userEmail, tags: updatedTags })
+      });
+      fetchHistoryFromDB();
+    } catch(err) {}
+  };
+
   const handleSearchWord = async (wordToSearch = word, isAlternative = false, isSilent = false) => {
     const searchTarget = wordToSearch ? wordToSearch.trim() : "";
     if (!searchTarget && !isSilent) return toast.error("Please enter a word");
@@ -485,6 +531,7 @@ export default function VocabPage() {
     setSentSquads(new Set()); setSelectedSquads(new Set()); setIsGlobalSelected(false); setIsGlobalSent(false);
     setImageGallery([]); setIsImageExpanded(false); setFollowUpChat([]); setChatInputText("");
     setIsStickyDismissed(false); 
+    setTags([]); // 🔥 Reset tags on new search
 
     try {
       const response = await fetch(`${API_URL}/api/words/define`, {
@@ -498,6 +545,7 @@ export default function VocabPage() {
         setActiveWord(fetchedWord); activeWordRef.current = fetchedWord; 
         setPartOfSpeech(resData.data.partOfSpeech); setMeaning(resData.data.meaning); setExplanation(resData.data.explanation);
         setSynonyms(resData.data.synonyms); setAntonyms(resData.data.antonyms); setSentences(resData.data.sentences);
+        setTags(resData.data.tags || []); // 🔥 Load tags if backend returns any
 
         if (!isSilent) {
           if (isAlternative) toast.success("New context generated! 🔄");
@@ -525,11 +573,12 @@ export default function VocabPage() {
     setPartOfSpeech(item.partOfSpeech || "Vocabulary"); setMeaning(item.meaning); setExplanation(item.explanation);
     setSynonyms(item.synonyms); setAntonyms(item.antonyms); setSentences(item.sentences);
     
-    setIsStackOpen(false); // 🔥 HIDE STACK WHEN CARD LOADED
+    setIsStackOpen(false); 
     setResultView("ai"); 
     setSentSquads(new Set()); setSelectedSquads(new Set()); setIsGlobalSelected(false); setIsGlobalSent(false);
     setFollowUpChat(item.chatHistory || []); setChatInputText("");
     setIsStickyDismissed(false);
+    setTags(item.tags || []); // 🔥 Load tags from history card
 
     if (!isSilent) { setContextBadge("Historical Target"); playPremiumAudio(item.word); }
     fetchRelatedPosts(item.word);
@@ -628,7 +677,6 @@ export default function VocabPage() {
             onLoadWord={(item) => loadFromHistoryCard(item)} 
             onPlayAudio={(wordToSpeak) => playPremiumAudio(wordToSpeak)} 
             API_URL={API_URL} 
-            // 👇 YEH NAYI LINE ADD KI HAI TO REFRESH STATE AFTER SRS 👇
             onRefresh={() => fetchHistoryFromDB()} 
           />
         )}
@@ -696,7 +744,6 @@ export default function VocabPage() {
                 <Swords size={18} strokeWidth={2.5}/> Practice
               </button>
 
-              {/* 🔥 REPLACED HISTORY BUTTON WITH STACK LAUNCHER 🔥 */}
               <button
                 onClick={() => setIsStackOpen(true)}
                 className="flex items-center gap-2 px-5 py-3.5 rounded-[1.5rem] text-sm font-bold shadow-md duo-btn bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
@@ -792,7 +839,7 @@ export default function VocabPage() {
                       <Bot size={20} className="text-[#8B004A]" strokeWidth={2.5}/>
                     </div>
                     
-                    {/* 🔥 UNIFIED MEANING & CONTEXT CARD 🔥 */}
+                    {/* 🔥 UNIFIED MEANING & CONTEXT CARD (Cleaned) 🔥 */}
                     <div className="glass-solid rounded-[2rem] rounded-tl-sm p-6 sm:p-8 w-full relative overflow-hidden">
                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#FFB800] to-[#E01A76]"></div>
                        
@@ -891,6 +938,61 @@ export default function VocabPage() {
                          handleWebImport={handleWebImport} 
                          fileInputRef={fileInputRef}
                        />
+                    </div>
+                  </motion.div>
+
+                  {/* 🔥 STEP 4.5: MEMORY ANCHORS (TAGS) 🔥 */}
+                  <motion.div variants={scrollVariant} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} className="flex w-full items-end gap-2 justify-end pl-12 pr-2 mt-2">
+                    <div className="bg-[#8B004A] text-white rounded-[1.5rem] rounded-br-sm px-5 py-4 text-[15px] font-bold shadow-md max-w-[85%] border-b-4 border-[#600033]">
+                       I want to link this to a memory.
+                    </div>
+                  </motion.div>
+
+                  <motion.div variants={scrollVariant} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-40px" }} className="flex w-full items-start gap-3 justify-start pr-8 pl-1 mt-1">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#FFB800] to-[#E01A76] flex items-center justify-center shadow-md shrink-0 z-10 border-2 border-white mt-1">
+                      <Bot size={20} className="text-[#8B004A]" strokeWidth={2.5}/>
+                    </div>
+                    <div className="glass-solid rounded-[2rem] rounded-tl-sm p-6 w-full border-t-[3px] border-t-[#8B004A]">
+                       <div className="flex items-center gap-2 mb-4">
+                         <div className="bg-[#FFB800]/20 p-2 rounded-xl">
+                           <Tag size={18} className="text-[#8B004A]" strokeWidth={2.5}/>
+                         </div>
+                         <div>
+                           <h4 className="font-heading font-black text-[#8B004A] text-[16px] leading-tight">Memory Anchors</h4>
+                           <p className="text-[11px] font-bold text-gray-500 font-body">Where did you read or hear this?</p>
+                         </div>
+                       </div>
+                       
+                       <div className="flex flex-wrap gap-2 mb-4">
+                         {tags.map((tag, idx) => (
+                           <span key={idx} className="group relative bg-white border border-[#FFB800]/50 text-[#8B004A] text-[13px] px-3 py-1.5 rounded-xl font-bold shadow-sm flex items-center gap-1.5 transition-all hover:pr-8 hover:bg-[#FFB800]/10">
+                             #{tag}
+                             <button onClick={() => handleRemoveTag(tag)} className="absolute right-2 opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-700 transition-opacity">
+                               <X size={14} strokeWidth={3} />
+                             </button>
+                           </span>
+                         ))}
+                         {tags.length === 0 && (
+                           <span className="text-[12px] font-bold text-gray-400 border border-dashed border-gray-300 px-3 py-1.5 rounded-xl">No anchors yet</span>
+                         )}
+                       </div>
+
+                       <div className="relative flex items-center">
+                         <input
+                           type="text"
+                           value={tagInput}
+                           onChange={(e) => setTagInput(e.target.value)}
+                           onKeyDown={handleAddTag}
+                           placeholder="e.g. Breaking Bad, Naval Podcast..."
+                           className="w-full bg-gray-50 border border-gray-200 focus:border-[#E01A76]/50 focus:bg-white outline-none pl-4 pr-10 py-3 rounded-xl text-[14px] font-bold text-gray-800 placeholder:text-gray-400 transition-all shadow-inner font-body"
+                         />
+                         <button 
+                           onClick={submitTag} 
+                           className="absolute right-2 p-1.5 bg-[#8B004A] text-white rounded-lg hover:bg-[#E01A76] active:scale-95 transition-all"
+                         >
+                           <Check size={16} strokeWidth={3} />
+                         </button>
+                       </div>
                     </div>
                   </motion.div>
 

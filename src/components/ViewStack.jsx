@@ -1,19 +1,26 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, Image as ImageIcon, ArrowLeft, Layers, Sparkles, BookOpen, Volume2 } from "lucide-react";
+import { Search, X, Image as ImageIcon, ArrowLeft, Layers, Sparkles, BookOpen, Volume2, Brain, Check, RotateCcw, Loader2, Award } from "lucide-react";
 
-export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio }) {
+export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio, API_URL, onRefresh }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [flippedCards, setFlippedCards] = useState({});
+  const [isRecallActive, setIsRecallActive] = useState(false);
 
   const toggleFlip = (id) => {
     setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Filter history based on the search query
+  // Filter history based on search query
   const filteredHistory = history.filter((item) =>
     item.word.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Filter cards due for Spaced Repetition (SRS) review
+  const dueCards = history.filter(item => {
+    if (!item.srsData || !item.srsData.nextReviewDate) return true; // Include new words immediately
+    return new Date(item.srsData.nextReviewDate) <= new Date();
+  });
 
   return (
     <motion.div
@@ -23,7 +30,7 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
       transition={{ type: "spring", bounce: 0.25, duration: 0.6 }}
       className="fixed inset-0 z-[100] bg-[#F2EFE7] overflow-y-auto overflow-x-hidden no-scrollbar flex flex-col font-body w-full min-h-screen selection:bg-[#E01A76]/20 selection:text-[#8B004A]"
     >
-      {/* 🔥 INJECTED CSS FOR FLIP ANIMATION 🔥 */}
+      {/* INJECTED CSS FOR FLIP ANIMATION */}
       <style>
         {`
           .flip-card { perspective: 1000px; }
@@ -37,11 +44,11 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
         `}
       </style>
 
-      {/* --- VIBRANT BACKGROUND ORBS --- */}
+      {/* VIBRANT BACKGROUND ORBS */}
       <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-gradient-to-br from-[#E01A76]/20 to-[#8B004A]/10 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '6s' }}></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] bg-[#FFB800]/15 rounded-full blur-[120px] pointer-events-none"></div>
 
-      {/* --- STICKY GLASS HEADER --- */}
+      {/* STICKY GLASS HEADER */}
       <div className="sticky top-0 z-50 bg-[#F2EFE7]/80 backdrop-blur-2xl border-b border-white/60 shadow-[0_4px_30px_rgba(139,0,74,0.03)] pt-6 pb-4 px-4 sm:px-8">
         <div className="w-full max-w-4xl mx-auto">
           
@@ -90,9 +97,22 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
         </div>
       </div>
 
-      {/* --- GRID CONTENT AREA --- */}
+      {/* SPEED REPS LAUNCHER BAR */}
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-8 mt-6 z-10 relative">
+        <button 
+          onClick={() => setIsRecallActive(true)}
+          disabled={dueCards.length === 0}
+          className="w-full bg-gradient-to-r from-[#E01A76] to-[#8B004A] text-white py-4 rounded-[1.5rem] font-black font-heading text-lg flex items-center justify-center gap-3 shadow-lg active:scale-95 disabled:opacity-50 disabled:grayscale transition-all border-b-4 border-[#600033] active:border-b-0 active:translate-y-1"
+        >
+          <Brain size={24} strokeWidth={2.5} /> 
+          {dueCards.length > 0 
+            ? `Start Speed Reps (${dueCards.length} Due)` 
+            : "No Words Due - You're All Caught Up! 🎉"}
+        </button>
+      </div>
+
+      {/* GRID CONTENT AREA */}
       <div className="w-full max-w-4xl mx-auto p-4 sm:p-8 relative z-10 flex flex-col flex-1">
-        
         {filteredHistory.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
@@ -126,11 +146,7 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
                     key={item._id} 
                     className="flex flex-col p-2.5 bg-white/40 backdrop-blur-md rounded-[2rem] border border-white shadow-[0_4px_20px_rgba(139,0,74,0.04)] hover:shadow-[0_8px_30px_rgba(139,0,74,0.08)] transition-all group"
                   >
-                    
-                    {/* --- STATIC CONTAINER FOR IMAGE & FLIPPING STRIP --- */}
                     <div className="flex gap-2.5 w-full mb-2" style={{ height: '130px' }}>
-                      
-                      {/* 1. STATIC IMAGE (LEFT SIDE) */}
                       {coverImage ? (
                         <div className="h-full w-28 sm:w-32 rounded-[1.2rem] overflow-hidden shrink-0 shadow-sm border border-white bg-gray-50 relative pointer-events-none">
                           <img src={coverImage} alt={item.word} className="w-full h-full object-cover" />
@@ -141,23 +157,16 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
                         </div>
                       )}
 
-                      {/* 2. FLIPPING STRIP / PATTI (RIGHT SIDE) */}
                       <div 
                         className="flip-card flex-1 cursor-pointer rounded-[1.2rem] overflow-hidden shadow-sm border border-white" 
                         onClick={() => toggleFlip(item._id)}
                       >
                         <div className={`flip-card-inner w-full h-full relative ${flippedCards[item._id] ? 'flip-card-flipped' : ''}`}>
-                          
-                          {/* FRONT OF STRIP */}
                           <div className="flip-card-front absolute w-full h-full bg-white/90 backdrop-blur-xl p-3 flex flex-col justify-center transition-colors">
-                            
-                            {/* 🔥 WORD & PRONUNCIATION BUTTON 🔥 */}
                             <div className="flex justify-between items-start gap-1 mb-2">
                               <span className="font-heading font-black text-[#8B004A] text-[18px] sm:text-[20px] leading-tight truncate tracking-tight flex-1 pt-0.5">
                                 {item.word}
                               </span>
-                              
-                              {/* Audio Button - 'e.stopPropagation()' is magic here! */}
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation(); 
@@ -182,7 +191,6 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
                             </div>
                           </div>
                           
-                          {/* BACK OF STRIP (Word + Meaning) */}
                           <div className="flip-card-back absolute w-full h-full bg-gradient-to-br from-[#8B004A] to-[#600033] text-white p-3.5 flex flex-col items-center justify-center">
                             <span className="text-[12px] font-black font-heading text-[#FFB800] uppercase tracking-widest leading-none mb-1.5 truncate w-full text-center">
                               {item.word}
@@ -191,13 +199,10 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
                               {item.meaning}
                             </span>
                           </div>
-
                         </div>
                       </div>
-
                     </div>
                     
-                    {/* --- LOAD TARGET BUTTON (STATIC BOTTOM) --- */}
                     <div className="w-full">
                       <button
                         onClick={() => onLoadWord(item)}
@@ -206,13 +211,148 @@ export default function ViewStack({ history, onClose, onLoadWord, onPlayAudio })
                         <Search size={18} strokeWidth={3} className="mr-2 opacity-80" /> Load Target
                       </button>
                     </div>
-
                   </motion.div>
                 );
               })}
             </AnimatePresence>
           </motion.div>
         )}
+      </div>
+
+      {/* EMBEDDED SPEED REPS ACTIVE RECALL MODAL */}
+      <AnimatePresence>
+        {isRecallActive && (
+          <ActiveRecallModal 
+            deck={dueCards} 
+            onClose={() => {
+              setIsRecallActive(false);
+              if (onRefresh) onRefresh(); 
+            }} 
+            API_URL={API_URL} 
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// Internal Active Recall Component for Speed Reps
+function ActiveRecallModal({ deck, onClose, API_URL }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const currentWord = deck[currentIndex];
+  const isComplete = currentIndex >= deck.length;
+
+  const handleRating = async (rating) => {
+    if (!currentWord || isUpdating) return;
+    setIsUpdating(true);
+
+    try {
+      await fetch(`${API_URL}/api/words/srs-update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wordId: currentWord._id, rating })
+      });
+    } catch (err) {
+      console.error("Failed to update SRS", err);
+    } finally {
+      setIsUpdating(false);
+      setIsFlipped(false);
+      setTimeout(() => setCurrentIndex(prev => prev + 1), 150);
+    }
+  };
+
+  if (isComplete) {
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-[#8B004A] flex flex-col items-center justify-center text-white p-6">
+        <Brain size={80} className="mb-6 text-[#FFB800] animate-bounce" strokeWidth={2} />
+        <h2 className="text-4xl sm:text-5xl font-black font-heading text-center">Deck Cleared!</h2>
+        <p className="font-bold mt-4 text-white/80 text-lg text-center max-w-sm">Great active recall session. Your brain is getting stronger.</p>
+        <button onClick={onClose} className="mt-10 bg-white text-[#8B004A] px-10 py-4 rounded-full font-black text-lg shadow-xl active:scale-95 transition-transform">
+          Back to Stack
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed inset-0 z-[200] bg-[#F2EFE7] flex flex-col pt-12 pb-6 px-4 font-body selection:bg-[#E01A76]/20 selection:text-[#8B004A]">
+      <div className="fixed top-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-[#E01A76]/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="flex justify-between items-center mb-10 max-w-md mx-auto w-full relative z-10">
+        <span className="bg-white text-[#8B004A] font-black px-5 py-2 rounded-full text-sm shadow-sm border border-gray-100 flex items-center gap-2">
+          <Brain size={16} className="text-[#FFB800]" /> {currentIndex + 1} / {deck.length}
+        </span>
+        <button onClick={onClose} className="p-3 bg-white rounded-full shadow-sm text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors active:scale-90 border border-gray-100">
+          <X size={24} strokeWidth={2.5}/>
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full relative z-10" style={{ perspective: 1000 }}>
+        <motion.div 
+          onClick={() => !isUpdating && setIsFlipped(true)}
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          className="w-full aspect-[3/4] relative preserve-3d cursor-pointer"
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          <div className="absolute inset-0 bg-white rounded-[2.5rem] shadow-[0_10px_40px_rgba(139,0,74,0.1)] flex flex-col items-center justify-center backface-hidden border-2 border-white" style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+             <h2 className="text-5xl sm:text-6xl font-black font-heading text-[#8B004A] tracking-tight px-4 text-center">{currentWord?.word}</h2>
+             
+             {!isFlipped && (
+               <div className="absolute bottom-10 flex flex-col items-center animate-pulse">
+                 <span className="text-gray-400 font-bold text-sm tracking-widest uppercase mb-2">Tap to Reveal</span>
+                 <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+               </div>
+             )}
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8B004A] to-[#600033] rounded-[2.5rem] shadow-2xl flex flex-col items-center justify-center backface-hidden text-white p-8 border-2 border-[#600033]" style={{ transform: "rotateY(180deg)", backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}>
+             <h3 className="text-3xl sm:text-4xl font-black mb-6 text-[#FFB800] font-heading">{currentWord?.word}</h3>
+             
+             <div className="bg-white/10 p-5 rounded-2xl w-full text-center backdrop-blur-sm border border-white/20">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FFB800] block mb-2 opacity-80">Meaning</span>
+                <p className="text-xl sm:text-2xl font-bold leading-snug">{currentWord?.meaning}</p>
+             </div>
+             
+             {currentWord?.partOfSpeech && (
+               <span className="mt-6 bg-white/20 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest">{currentWord.partOfSpeech}</span>
+             )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Action Buttons (2x2 Grid for 4 Options) */}
+      <div className="mt-6 max-w-md mx-auto w-full relative z-10">
+        <AnimatePresence>
+          {isFlipped && (
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="grid grid-cols-2 gap-3 w-full">
+              
+              {/* Button 1: Forgot */}
+              <button disabled={isUpdating} onClick={() => handleRating('again')} className="w-full bg-white text-rose-500 py-3 rounded-2xl font-black text-sm shadow-md border-b-4 border-rose-200 flex flex-col items-center gap-1 active:scale-95 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50">
+                {isUpdating ? <Loader2 className="animate-spin" size={20}/> : <RotateCcw size={20} strokeWidth={2.5}/>} Forgot
+              </button>
+              
+              {/* Button 2: Hard */}
+              <button disabled={isUpdating} onClick={() => handleRating('hard')} className="w-full bg-white text-[#FFB800] py-3 rounded-2xl font-black text-sm shadow-md border-b-4 border-[#FFB800]/30 flex flex-col items-center gap-1 active:scale-95 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50">
+                {isUpdating ? <Loader2 className="animate-spin" size={20}/> : <Brain size={20} strokeWidth={2.5}/>} Hard
+              </button>
+              
+              {/* Button 3: Got It */}
+              <button disabled={isUpdating} onClick={() => handleRating('easy')} className="w-full bg-[#8B004A] text-white py-3 rounded-2xl font-black text-sm shadow-md border-b-4 border-[#600033] flex flex-col items-center gap-1 active:scale-95 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50">
+                {isUpdating ? <Loader2 className="animate-spin text-white" size={20}/> : <Check size={20} strokeWidth={2.5}/>} Got It
+              </button>
+
+              {/* 🔥 Button 4: Mastered (No SRS needed) */}
+              <button disabled={isUpdating} onClick={() => handleRating('mastered')} className="w-full bg-emerald-500 text-white py-3 rounded-2xl font-black text-sm shadow-md border-b-4 border-emerald-700 flex flex-col items-center gap-1 active:scale-95 active:border-b-0 active:translate-y-1 transition-all disabled:opacity-50">
+                {isUpdating ? <Loader2 className="animate-spin text-white" size={20}/> : <Award size={20} strokeWidth={2.5}/>} I Know This
+              </button>
+
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );

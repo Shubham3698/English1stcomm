@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import PostCard from "../components/PostCard"; 
 import VisualAnchor from "../components/ai-wordsimg/VisualAnchor"; 
-import ViewStack from "../components/ViewStack"; // 🔥 IMPORT NEW VIEW STACK
+import ViewStack from "../components/ViewStack"; 
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 
 // 🔥 Native Speech imports
@@ -619,16 +619,17 @@ export default function VocabPage() {
         `}
       </style>
 
-{/* 🔥 FULL PAGE VIEW STACK COMPONENT 🔥 */}
+      {/* 🔥 FULL PAGE VIEW STACK COMPONENT 🔥 */}
       <AnimatePresence>
         {isStackOpen && (
           <ViewStack 
             history={history} 
             onClose={() => setIsStackOpen(false)} 
             onLoadWord={(item) => loadFromHistoryCard(item)} 
-            
-            // 👇 YEH LINE SABSE IMPORTANT HAI 👇
             onPlayAudio={(wordToSpeak) => playPremiumAudio(wordToSpeak)} 
+            API_URL={API_URL} 
+            // 👇 YEH NAYI LINE ADD KI HAI TO REFRESH STATE AFTER SRS 👇
+            onRefresh={() => fetchHistoryFromDB()} 
           />
         )}
       </AnimatePresence>

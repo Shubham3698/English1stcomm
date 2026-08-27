@@ -198,6 +198,7 @@ export default function Navbar() {
           {[
             { label: "Home", path: "/home" },
             { label: "Community", path: "/" },
+            { label: "Movie Scripts", path: "/script" }, // 🔥 SCRIPT OPTION ADDED HERE
             { label: "Practice", path: "/vocab-deck" },
             { label: "Dictionary", path: "/find-vocab" },
             { label: "Saved Words", onClick: () => goToPath("/saved-posts") },

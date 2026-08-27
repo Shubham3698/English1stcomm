@@ -28,6 +28,7 @@ import LessonsPage from "./pages/LessonsPage";
 import SquadChat from './pages/SquadChat';
 import SquadList from './pages/SquadList'; 
 import SinglePostView from './pages/SinglePostView';
+import MyScript from './pages/MyScript';
 
 export default function App() {
   const userEmail = localStorage.getItem("eng_userEmail");
@@ -155,6 +156,7 @@ export default function App() {
           <Route path="/squads" element={<SquadList />} />
           <Route path="/squad-chat" element={<SquadChat />} />
           <Route path="/post/:postId" element={<SinglePostView />} />
+          <Route path="/script" element={<MyScript />} />
         </Routes>
         <BottomNav />
       </div>

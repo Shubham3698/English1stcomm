@@ -1,0 +1,2843 @@
+[
+    {
+    "type": "action",
+    "text": "Over black."
+  },
+  {
+    "type": "dialogue",
+    "character": "DAD (V.O.)",
+    "text": "Long ago, the world was full of wonder!"
+  },
+  {
+    "type": "sceneHeading",
+    "text": "EXT. FANTASY LANDSCAPE - DAY"
+  },
+  {
+    "type": "action",
+    "text": "We race over rolling green hills. A unicorn soars into view, whinnies, and banks off into the sky."
+  },
+  {
+    "type": "dialogue",
+    "character": "DAD (V.O.)",
+    "text": "It was adventurous..."
+  },
+  {
+    "type": "action",
+    "text": "The land below is alive with FANTASY CREATURES. We pass through a field of racing CENTAURS."
+  },
+  {
+    "type": "dialogue",
+    "character": "DAD (V.O.)",
+    "text": "Exciting..."
+  },
+  {
+    "type": "action",
+    "text": "Mermaids leap through shimming water and FAIRIES fly through the air, spiraling up into the sky."
+  },
+  {
+    "type": "dialogue",
+    "character": "DAD (V.O.)",
+    "text": "And best of all... there was MAGIC!"
+  },
+
+  {
+    "type": "action",
+    "text": "We stop on an ELF WIZARD holding a gnarled wooden staff. He turns and thrusts his staff toward the sky, casting a spell.                            ELF WIZARD                  Boombastia!"
+  },
+  {
+    "type": "action",
+    "text": "Fireworks shoot magically into the air. Fantasy creatures across the land watch in awe.      EXT. CLIFF - DAY A small group of creatures huddle and shiver in the cold.                            DAD (V.O.)                  And that magic helped all in need."
+  },
+  {
+    "type": "action",
+    "text": "A SATYR WIZARD approaches.                            SATYR WIZARD                  Flame Infernar!"
+  },
+  {
+    "type": "action",
+    "text": "A fire appears and they happily warm themselves by it."
+  },
+  {
+    "type": "action",
+    "text": "A warrior, rogue, and wizard try to reach a glowing chalice. A dragon breathes FIRE at them. The warrior holds up a shield, protecting them from the flame."
+  },
+  {
+    "type": "action",
+    "text": "The BRAVE WIZARD leaps out and casts a spell.                            BRAVE WIZARD                  Voltar Thundasir!"
+  },
+  {
+    "type": "action",
+    "text": "A lighting bolt zaps the ceiling, crashing rocks down in front of the dragon, clearing their path to the chalice.      EXT. MUSHROOM VILLAGE - DUSK A wizard teaches a young apprentice to conjure a glowing orb. She floats the orb into a mushroom house, filling it with light. The gnome resident of the house emerges, delighted."
+  },
+  {
+    "type": "action",
+    "text": "The apprentice attempts the spell, but only manages to catch his robe on FIRE. The wizard quickly puts out the flames and encourages the apprentice to try again.                            DAD (V.O.)                  But it wasn't easy to master. And"
+  },
+  {
+    "type": "action",
+    "text": "The wizard and apprentice see a satyr INVENTOR in a barn surrounded by fantasy creatures.                            INVENTOR                  I call it: the light bulb!"
+  },
+  {
+    "type": "action",
+    "text": "The inventor flips a switch and the lightbulb turns on, illuminating the room. The crowd is amazed."
+  },
+  {
+    "type": "action",
+    "text": "The apprentice hands the wizard the magical staff, walks toward the crowd, and gives the light bulb a try.                            APPRENTICE                  `Tis so easy!"
+  },
+  {
+    "type": "action",
+    "text": "The wizard looks on, disappointed.                              MASTER WIZARD                  Huh."
+  },
+  {
+    "type": "action",
+    "text": "An elf on a sales floor lights up a gas stove with a click, click. Everyone reacts in amazement."
+  },
+  {
+    "type": "action",
+    "text": "Goblins sit in a cozy living room. One of them turns on a gas fireplace using a remote.                            DAD (V.O.)                  Over time, magic faded away..."
+  },
+  {
+    "type": "action",
+    "text": "A centaur plays \"Prance Prance Revolution\" in an arcade."
+  },
+  {
+    "type": "action",
+    "text": "A mermaid lounges in a kiddie pool, scrolling on her phone."
+  },
+  {
+    "type": "action",
+    "text": "A sprite, suitcase in hand, approaches an awaiting airplane."
+  },
+  {
+    "type": "action",
+    "text": "A factory assembly line rolls by."
+  },
+  {
+    "type": "action",
+    "text": "Traffic crawls along a congested highway.      EXT. SUBURBAN STREET - MORNING A troll on a bicycle tosses papers onto doorsteps of mushroom houses with satellite dishes, garages, basketball hoops, etc."
+  },
+  {
+    "type": "action",
+    "text": "A feral unicorn roots around in a trash can. Another unicorn approaches and hisses. The first unicorn chases it off."
+  },
+  {
+    "type": "action",
+    "text": "We push into the upstairs window of a mushroom house.      INT. LIGHTFOOT HOUSE - IAN'S ROOM - MORNING                            DAD (V.O.)                  But I hope there's a little magic"
+  },
+  {
+    "type": "action",
+    "text": "A phone alarm beeps. A boy's hand quickly silences it. Puts on his watch with style. His shoes with flair.                               DAD (V.O.)                  ...in you."
+  },
+  {
+    "type": "action",
+    "text": "He pulls on his sweatshirt and gets stuck. He pulls harder until his big nose, wild hair, and giant ears pop out of the sweatshirt, revealing a lanky teenage elf: IAN LIGHTFOOT."
+  },
+  {
+    "type": "action",
+    "text": "Ian smiles and dusts off the \"Willowdale College\" sweatshirt. He grabs his backpack and pauses to look at his desk calendar. Today is circled and reads: 16TH BDAY."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks into the mirror, smiles, and walks out of the room.      TITLE: ONWARD"
+  },
+  {
+    "type": "action",
+    "text": "Ian walks downstairs to the beat of loud, pulsing music."
+  },
+  {
+    "type": "action",
+    "text": "LAUREL LIGHTFOOT, a female elf in her 40s, works out in front of the TV. An onscreen FITNESS INSTRUCTOR barks commands.                            FITNESS INSTRUCTOR                  We're gonna get Warrior Z90 fit!"
+  },
+  {
+    "type": "action",
+    "text": "A scaly Labrador-sized dragon, BLAZEY, races into the room and tackles Ian to the ground.                              IAN                  Aahh!"
+  },
+  {
+    "type": "action",
+    "text": "Ian is trapped as the dragon happily licks his face.                            IAN                  Shh! Down girl! Please!                            LAUREL                       (noticing)"
+  },
+  {
+    "type": "action",
+    "text": "Laurel races over, squirting the dragon with a spray bottle.                            IAN                  Ah! Stop, girl, stop!                            LAUREL                  Bad dragon! Back to your lair!"
+  },
+  {
+    "type": "action",
+    "text": "Blazey blows a small puff of fire at Laurel and runs off. Ian stands and is attacked with Mom kisses.                            LAUREL                  Happy Birthday, mister adult man!                            IAN                       (struggling/laughing)"
+  },
+  {
+    "type": "action",
+    "text": "Laurel looks at Ian, touched.                              IAN                  What?                            LAUREL                  You're wearing your Dad's Ian looks in the fridge for breakfast.                            LAUREL                  Ugh, we don't have much food. I"
+  },
+  {
+    "type": "action",
+    "text": "Laurel smacks Ian's hand as he reaches for something.                            LAUREL                  Hands off, Mister! Those are for"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes the milk from the fridge and closes the door.                            IAN                  It's not a party Mom, it just us."
+  },
+  {
+    "type": "action",
+    "text": "Ian empties the last of a box of cereal into a bowl.                            LAUREL                  Well, you could invite those kids"
+  },
+  {
+    "type": "action",
+    "text": "Laurel makes herself a smoothie, yelling over the blender.                            LAUREL                  SPEAKING OF TRYING NEW THINGS, DID                  YOU SIGN UP FOR DRIVING PRACTICE?! The blender stops, but Ian is still shouting.                               IAN                  NO!                          (quieter)"
+  },
+  {
+    "type": "action",
+    "text": "Laurel pours her shake into a glass.                            LAUREL                  I know you're a little scared to"
+  },
+  {
+    "type": "action",
+    "text": "Ian walks to the kitchen table, stumbling over a plastic flail on the floor. The table is covered with a game: pewter figures, dice, and miniatures. Ian and begins to move them--                            IAN                  Well, he's gotta learn how to clean"
+  },
+  {
+    "type": "action",
+    "text": "--when suddenly a huge, thick arm wraps around his neck.                               BARLEY (O.S.)                  HALT!                               IAN                  AHH!"
+  },
+  {
+    "type": "action",
+    "text": "Ian is pulled into the hulking barrel chest of twenty-year- old BARLEY LIGHTFOOT.                            BARLEY                  Doth my brother dare disrupt an"
+  },
+  {
+    "type": "action",
+    "text": "Ian's cereal bowl is knocked to the floor in the scuffle.                            IAN                  Oh, come on!                            BARLEY                  You know, Ian, in the days of old,"
+  },
+  {
+    "type": "action",
+    "text": "Barley releases Ian.                            BARLEY                  Okay, but I know you're stronger"
+  },
+  {
+    "type": "action",
+    "text": "Barley puts Laurel in the same chokehold as she laughs.                            BARLEY                  Oh! That's good! Keepin' your head"
+  },
+  {
+    "type": "action",
+    "text": "Blazey roars and leaps around. Amidst the chaos, Ian picks up his bowl from the floor and retreats to the kitchen counter.                            BARLEY                  If you tried a little harder, you"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, Laurel flips Barley onto his back with a CRASH."
+  },
+  {
+    "type": "action",
+    "text": "Barley reaches up to high-five Laurel.                            LAUREL                  Thank you. Now take out the trash.      EXT. LIGHTFOOT HOME - CONTINUOUS As Barley opens the back door, trash in hand, we hear a police radio.                            OFFICER GORE (O.S.)                       (fuzzy, over radio)"
+  },
+  {
+    "type": "action",
+    "text": "OFFICER COLT BRONCO, a mustachioed, cocky cop with mirrored aviator sunglasses, speaks over the clop of horse hooves.                            COLT                  Barley, Barley, Barley. Every time"
+  },
+  {
+    "type": "action",
+    "text": "As he steps closer, we see he's not a mounted police officer after all. He's a centaur cop.                            BARLEY                  I don't know what you're talking"
+  },
+  {
+    "type": "action",
+    "text": "Laurel appears in the doorway behind Barley, irritated.                            COLT                  Oh, really?"
+  },
+  {
+    "type": "action",
+    "text": "Colt pulls out his phone. A video shows Barley chained to an ancient fountain in front of a laughing crowd of people.                            BARLEY                  I will not let you tear this down"
+  },
+  {
+    "type": "action",
+    "text": "As construction workers pull him away, Barley falls into the water with a SPLASH.                              LAUREL                  Barley.                            BARLEY                  They're destroying the town's past!                            COLT                  And last night, someone destroyed"
+  },
+  {
+    "type": "action",
+    "text": "Laurel and Colt kiss. Ian and Barley shudder in disgust.      INT. LIGHTFOOT HOME - KITCHEN - DAY Colt approaches Ian in the kitchen.                            COLT                  Hey there, Birthday Boy... So ya"
+  },
+  {
+    "type": "action",
+    "text": "Colt punches Ian on the shoulder just a little too hard.                            IAN                  I'm just, you know... making a"
+  },
+  {
+    "type": "action",
+    "text": "As Colt turns, his tail knocks Ian's toast off the counter. It falls to the floor and is promptly snatched up by Blazey.                            COLT                  You can't spend all day playing"
+  },
+  {
+    "type": "action",
+    "text": "Colt awkwardly plops his hindquarters into a chair at the table, toppling Quests of Yore pieces. Barley hustles over to set the pieces straight.                            BARLEY                  Uh, Quests of Yore isn't just a"
+  },
+  {
+    "type": "action",
+    "text": "Ian folds the last piece of toast and starts to take a bite--                            BARLEY                  You could be a crafty rogue, or..."
+  },
+  {
+    "type": "action",
+    "text": "Barley puts the pewter wizard figure on Ian's shoulder.                            BARLEY                       (wizard voice)"
+  },
+  {
+    "type": "action",
+    "text": "Barley hums \"Shave and a Haircut\" with raspberries for the last two beat, but clumsily knocks Ian's toast off the counter. Ian lunges for it, but Barley gets it first.                            BARLEY                  Whoops! Five second rule."
+  },
+  {
+    "type": "action",
+    "text": "As Barley puts the toast back on the plate, his wrist cuff snags on Ian's sweatshirt, ripping it. Ian GASPS.                            BARLEY                  It's okay! You just gotta pull it!"
+  },
+  {
+    "type": "action",
+    "text": "Barley yanks his arm to snap the snagged thread, but only rips the seam even more.                              IAN                  NO!                              LAUREL                  Barley!"
+  },
+  {
+    "type": "action",
+    "text": "Laurel cuts the thread. Ian walks away, trying to stay calm.                            IAN                  You know what, I'm just gonna get"
+  },
+  {
+    "type": "action",
+    "text": "Barley jumps up, puts on a helmet, and grabs a sword.                            BARLEY                  Wait, wait, wait, wait! By the Laws"
+  },
+  {
+    "type": "action",
+    "text": "Ian closes the door behind him and lets out a massive SIGH.      EXT. BURGERSHIRE RESTAURANT - DAY People come and go from a typical fast food restaurant.      INT. BURGERSHIRE RESTAURANT - DAY A cash register runs up an order."
+  },
+  {
+    "type": "action",
+    "text": "Ian takes his receipt and sits. An elf dad in his forties, GAXTON, and his preteen son sit on the bench next to Ian.                            GAXTON                  Hey! Go Griffins!                              IAN                  What?"
+  },
+  {
+    "type": "action",
+    "text": "Gaxton points to Ian's hoodie.                            GAXTON                  You go to Willowdale College?"
+  },
+  {
+    "type": "action",
+    "text": "Gaxton's son goes to the counter to wait for their food.                            IAN                  Oh, no. This was my Dad's."
+  },
+  {
+    "type": "action",
+    "text": "Ian points to the name LIGHTFOOT on the hoodie.                            GAXTON                  \"Lightfoot?\" Wilden Lightfoot?"
+  },
+  {
+    "type": "action",
+    "text": "Ian lights up.                              IAN                  Yeah!                            GAXTON                  You're kidding! I went to college"
+  },
+  {
+    "type": "action",
+    "text": "Ian nods and smiles.                            IAN                  Yeah... thanks.                            GAXTON                  You know, your dad was a great guy!"
+  },
+  {
+    "type": "action",
+    "text": "GAXTON'S SON calls out, waving a bag of food.                               GAXTON'S SON                  Dad!                             GAXTON                  Oh! Sorry. Gotta get this guy off"
+  },
+  {
+    "type": "action",
+    "text": "Gaxton holds out his hand to shake Ian's.                            GAXTON                  Hey, it was nice meeting you!                            IAN                  Yeah, you too."
+  },
+  {
+    "type": "action",
+    "text": "Ian thinks to himself for a beat.                               IAN                  Huh. Bold."
+  },
+  {
+    "type": "action",
+    "text": "Ian sits outside the school, making a list called \"NEW ME.\"                  SPEAK UP MORE                  LEARN TO DRIVE                  INVITE PEOPLE TO PARTY He thinks to himself for a moment and then adds a final item:                  BE LIKE DAD The bell rings and he heads into the imposing building.      INT. CLASSROOM - DAY Ian walks into his classroom.                            TEACHER                  Okay, class, sit down. We're"
+  },
+  {
+    "type": "action",
+    "text": "GORGAMON, a slobby, flip-flop-wearing troll, has his feet on Ian's chair.                            IAN                  Hey, uh, Gorgamon... um, would you"
+  },
+  {
+    "type": "action",
+    "text": "Ian sits, scooting up to make room for the gross feet."
+  },
+  {
+    "type": "action",
+    "text": "A GOBLIN TEACHER stands next to a student driver car.                            DRIVING INSTRUCTOR                  First road test, any volunteers?"
+  },
+  {
+    "type": "action",
+    "text": "A single hand raises from the back of a group of students. The crowd parts to reveal a nervous Ian.      INT. DRIVER'S ED CAR - DAY Ian drives. The Driving Instructor sits in the passenger seat. Two other kids are in the backseat.                            DRIVING INSTRUCTOR                  A left here."
+  },
+  {
+    "type": "action",
+    "text": "Ian signals and turns.                            DRIVING INSTRUCTOR                  Now take this on-ramp to the"
+  },
+  {
+    "type": "action",
+    "text": "Ian's smile fades as he nears the ZOOMING freeway traffic.                            IAN                       (unconvincing)"
+  },
+  {
+    "type": "action",
+    "text": "He grows more nervous.                            DRIVING INSTRUCTOR                  Merge into traffic!                              IAN                  Uh...                            DRIVING INSTRUCTOR                  MERGE INTO TRAFFIC!"
+  },
+  {
+    "type": "action",
+    "text": "Panicked, Ian tries to merge. A car lays on its horn and Ian retreats back into his lane.                            IAN                  I'm not ready!                               DRIVING INSTRUCTOR                  Pull over."
+  },
+  {
+    "type": "action",
+    "text": "Ian pulls the car off the freeway.      EXT. HIGH SCHOOL - DAY Students are hanging out in front of the school, including four friendly TEENS: SADALIA, GURGE, PARTHENOPE, and ALTHEA.                            SADALIA                  Alright, so what should we do this"
+  },
+  {
+    "type": "action",
+    "text": "We see Ian nearby, alone, rehearsing some lines to himself.                            IAN                  Oh, hey! What's up, dudes? I'm, uh,"
+  },
+  {
+    "type": "action",
+    "text": "Ian's smile drops. Ian checks the writing on his hand.                            IAN                  That's not something anyone says."
+  },
+  {
+    "type": "action",
+    "text": "He crosses out \"dudes\" and changes it to \"gang.\"                            IAN                  What's up, gang?!"
+  },
+  {
+    "type": "action",
+    "text": "Ian nods, then nervously heads over to the TEENS.                            IAN                  Hey, what's up, gang?"
+  },
+  {
+    "type": "action",
+    "text": "The teens turn to Ian.                            SADALIA                  Oh, hey... Ian, right?"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at his hand. The writing is smeared and sweaty.                            IAN                  Uhhh, anyway... if you like"
+  },
+  {
+    "type": "action",
+    "text": "The teens look at each other.                            SADALIA                  Are you inviting us to a party?                            IAN                  That's the one.                            SADALIA                  Oh, yeah! We don't have any plans."
+  },
+  {
+    "type": "action",
+    "text": "The others all agree. Ian looks up, surprised.                            IAN                  Really? I guess we can just take"
+  },
+  {
+    "type": "action",
+    "text": "Ian is suddenly distracted by metal music in the near distance, a hard-working engine, a backfire. The teens look over as a disaster of a van pulls up, its side painted with a rearing Pegasus surrounded by lightning bolts.                            IAN                  Oh, no, no, no, no, no."
+  },
+  {
+    "type": "action",
+    "text": "It's Barley. He spots Ian and sticks his head out the window.                            BARLEY                  Ha-ha! Is that the birthday boy I"
+  },
+  {
+    "type": "action",
+    "text": "Ian cringes. The van swerves into the school pickup area, and comes to a stop halfway up onto the curb. Barley steps out, in full fantasy garb, and gestures grandly.                            BARLEY                  Behold! Your chariot awaits!"
+  },
+  {
+    "type": "action",
+    "text": "The group looks at Ian. Ian keeps his back turned to the van.                            ALTHEA                  Do you know that guy?                              IAN                  Uh...                            BARLEY                  Sir Iandore of Lightfoot!                            ALTHEA                  Seems like he's talking to you.                              BARLEY                  HEY, IAN! Barley honks the horn. Ian turns around sheepishly.                            IAN                  Hey, Barley... Yeah, we're actually"
+  },
+  {
+    "type": "action",
+    "text": "Barley slaps the hood of the van. The bumper falls off.                            BARLEY                  Oops, that's embarrassing! That's"
+  },
+  {
+    "type": "action",
+    "text": "Barley bends to reattach the bumper with duct tape, revealing his butt crack. Ian puts his hand to his face, embarrassed."
+  },
+  {
+    "type": "action",
+    "text": "Ian removes his hand to reveal the ink from his palm is now on his face.                            SADALIA                  You've got something on your face."
+  },
+  {
+    "type": "action",
+    "text": "Ian wipes his cheek, smearing ink there.                            SADALIA                  Oh no, you just--oh! Right."
+  },
+  {
+    "type": "action",
+    "text": "Ian wipes the other side spreading more ink around.                            SADALIA                  No, it's--nope."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at his hand, then panics.                            IAN                  Oh! Uh... You know what? I just"
+  },
+  {
+    "type": "action",
+    "text": "Ian races into Barley's van.      INT. VAN - CONTINUOUS A pile of parking tickets clutter the passenger seat.                            BARLEY                  Ooh, whoops! Sorry! Let me just"
+  },
+  {
+    "type": "action",
+    "text": "Barley shoves the parking tickets into the glovebox, then notices the smeared letters on Ian's forehead.                            BARLEY                  Hey! Did those kids write on your"
+  },
+  {
+    "type": "action",
+    "text": "Barley licks his thumb and starts to rub Ian's forehead.                             BARLEY                   Here, I'll get it."
+  },
+  {
+    "type": "action",
+    "text": "Ian pushes Barley's hand away.                             IAN                   Can we please just go home?                             BARLEY                   Okay, we'll perform your birthday"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at the cartoon dragon on the side of the gym, giving an exaggerated thumbs up. Ian slumps in his seat.      INT. LIGHTFOOT HOUSE - DAY Ian enters the house, defeated.                              IAN                   Mom?"
+  },
+  {
+    "type": "action",
+    "text": "No answer.      INT. IAN'S ROOM - EVENING Ian sits at his desk, looks at his \"NEW ME\" list, and crosses off SPEAK UP MORE, LEARN TO DRIVE, INVITE PEOPLE TO PARTY. He pauses, then crosses off the last item: BE LIKE DAD."
+  },
+  {
+    "type": "action",
+    "text": "Ian crumples the list and throws it in his waste basket."
+  },
+  {
+    "type": "action",
+    "text": "He leans back in his chair and looks at the photos on his bulletin board."
+  },
+  {
+    "type": "action",
+    "text": "A photo of WILDEN LIGHTFOOT, Ian's Dad, with three-year-old Barley and pregnant Laurel."
+  },
+  {
+    "type": "action",
+    "text": "A photo of Laurel, toddler Barley, and baby Ian. No Dad."
+  },
+  {
+    "type": "action",
+    "text": "Ian opens his drawer and pulls out a tape labeled: DAD. He puts it into a stereo on his desk and presses play. We hear timeworn audio of a man and woman in conversation."
+  },
+  {
+    "type": "action",
+    "text": "Laurel moves out of range of the microphone. We only hear Dad, then pauses for Laurel's distant, indecipherable words.                            DAD                       (into mic)"
+  },
+  {
+    "type": "action",
+    "text": "Ian smiles, rewinds the tape, and plays it again.                            LAUREL                  Will, you're not gonna get that"
+  },
+  {
+    "type": "action",
+    "text": "We see close-ups of the pictures on the bulletin board as Ian begins to talk over the tape, forming a conversation.                            DAD                  Hello? Hello?                            IAN                  It's me, Ian.                            DAD                  Oh, is that right?                            IAN                  Yeah. Did you have a good day?                            DAD                  Well, I'm trying to.                            IAN                  Yeah, me too. Although, I could"
+  },
+  {
+    "type": "action",
+    "text": "The tape stops. Ian sits back, deflated.      INT. LIVING ROOM - DAY Laurel steps on a pewter warrior figure on the ground.                               LAUREL                  AH! MY--! She opens the basement door and calls to Barley over the din of his music.                            LAUREL                  Barley, keep your soldiers off my"
+  },
+  {
+    "type": "action",
+    "text": "Laurel sees Ian on the couch, sewing his sweater.                            LAUREL                  Honey, I was gonna do that.                            IAN                  That's okay."
+  },
+  {
+    "type": "action",
+    "text": "Laurel watches him.                            LAUREL                  Wow, you must have been taught by"
+  },
+  {
+    "type": "action",
+    "text": "Ian finishes sewing. He holds out the thread and Laurel cuts it with the scissors. They've clearly done this a lot."
+  },
+  {
+    "type": "action",
+    "text": "Ian rubs his fingers over the word stitched on the breast of the hoodie: \"LIGHTFOOT.\"                            IAN                  What was Dad like when he was my"
+  },
+  {
+    "type": "action",
+    "text": "Laurel watches Ian, heartbroken.                            LAUREL                  You know what, I have something for Laurel pulls down the attic ladder and climbs into the darkness. Ian comes up the stairs with Barley.                            BARLEY                  What do you mean it's from Dad?                            IAN                  I don't know! Mom said it was for"
+  },
+  {
+    "type": "action",
+    "text": "Laurel descends the ladder with a long, canvas-wrapped item."
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley set the gift on Ian's bed. Ian pulls back the cloth to reveal a long, skinny, gnarled piece of wood.                              BARLEY                  NO WAY! Barley picks it up in amazement.                            BARLEY                  It's a wizard staff! DAD WAS A                  WIZARD!                              IAN                  What?                            LAUREL                  Hold on, your Dad was an"
+  },
+  {
+    "type": "action",
+    "text": "Laurel and Ian are confused. Ian looks back under the cloth and sees a rolled up piece of parchment.                              IAN                  There's a letter."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at the second page of the letter.                            IAN                  Visitation Spell?"
+  },
+  {
+    "type": "action",
+    "text": "Barley takes the page from Ian and examines it. It reads VISITATION SPELL and has a diagram of a wizard staff with a beam of light shooting from it, forming a person.                            BARLEY                  I don't believe this."
+  },
+  {
+    "type": "action",
+    "text": "Laurel grabs the letter from the boys. She's beside herself.                            LAUREL                  Oh, Will, you wonderful nut, what"
+  },
+  {
+    "type": "action",
+    "text": "Barley digs through the cloth.                            BARLEY                  Now, a spell this powerful needs an"
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls out an orange gem and exams it.                            BARLEY                  Wow. There's only a few of these"
+  },
+  {
+    "type": "action",
+    "text": "Barley puts the gem in the staff, holds out the staff, and gets suddenly serious. Everyone waits in suspense."
+  },
+  {
+    "type": "action",
+    "text": "Barley grabs the staff, strikes a pose in the center of the room, and begins to read the spell.                             BARLEY                   \"Only once is all we get, grant me"
+  },
+  {
+    "type": "action",
+    "text": "But nothing happens.                             BARLEY                   Hold on, I was just gripping it"
+  },
+  {
+    "type": "action",
+    "text": "Barley adjusts his hands.                             BARLEY                   Only once is all we get, grant me"
+  },
+  {
+    "type": "action",
+    "text": "Still nothing."
+  },
+  {
+    "type": "action",
+    "text": "In quick cuts, Barley tries again and again, with no success.                             BARLEY                   Only once is all we get, grant me"
+  },
+  {
+    "type": "action",
+    "text": "He tries again.                             BARLEY                   `Til tomorrow's sun has set..."
+  },
+  {
+    "type": "action",
+    "text": "And again.                             BARLEY                   ...one day to walk THE EARTH!"
+  },
+  {
+    "type": "action",
+    "text": "And again, exhausted.                             BARLEY                   One day to walk the earth!"
+  },
+  {
+    "type": "action",
+    "text": "Losing his patience.                            BARLEY                  `Til tomorrow's sun has set..."
+  },
+  {
+    "type": "action",
+    "text": "Again, frustrated.                            BARLEY                  One day to walk the earth!"
+  },
+  {
+    "type": "action",
+    "text": "With everything he has left.                            BARLEY                  ...One day... to walk... the earth!"
+  },
+  {
+    "type": "action",
+    "text": "One more big attempt.                            BARLEY                  `Til tomorrow's sun has set..."
+  },
+  {
+    "type": "action",
+    "text": "Laurel and Ian have already given up.                            BARLEY                  One day to walk the earth!                            LAUREL                       (gentle)"
+  },
+  {
+    "type": "action",
+    "text": "He looks back to her, then puts the staff down and sits on the bed. Laurel puts her hand on Barley's shoulder. All three of them are heartbroken.                            LAUREL                  I'm sorry you guys don't have your"
+  },
+  {
+    "type": "action",
+    "text": "Barley leaves.                            LAUREL                       (to Ian)"
+  },
+  {
+    "type": "action",
+    "text": "As Laurel gets to the door, she looks back at Ian with a sad smile, then leaves. Ian sits on his bed, crestfallen.      INT. IAN'S BEDROOM - EVENING Ian at his desk, looking at all the pictures of Dad on his bulletin board. He examines Dad's spell, reading it aloud.                            IAN                  Only once is all we get, grant me"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, an orange light glows on Ian's face. He turns to see the Phoenix Gem is glowing. He looks back at the spell.                            IAN                  'Til tomorrow's sun has set..."
+  },
+  {
+    "type": "action",
+    "text": "The gem glows brighter. Objects in the room raise from the ground. The staff shakes and starts to fall."
+  },
+  {
+    "type": "action",
+    "text": "As Ian catches it, the staff lights up. He tightens his grip and reads louder.                            IAN                  One day to walk the earth!"
+  },
+  {
+    "type": "action",
+    "text": "A beam of light shoots from the staff. Ian holds on with all his might as objects in the room swirl around him."
+  },
+  {
+    "type": "action",
+    "text": "Barley opens the door.                             BARLEY                  Hey man, what are you doing in"
+  },
+  {
+    "type": "action",
+    "text": "Blazey pokes her head in the door but quickly runs away."
+  },
+  {
+    "type": "action",
+    "text": "Ian strains to hold the staff. The light from the staff conjures a pair of shoes.                            BARLEY                  Whoa, feet!"
+  },
+  {
+    "type": "action",
+    "text": "Above the shoes, bright purple socks appear. Then pant cuffs, pant legs, a belt, a shirt, one button at a time..."
+  },
+  {
+    "type": "action",
+    "text": "The gem slowly lifts out of the staff and spins. An ominous red light swells from the gem, overpowering Ian."
+  },
+  {
+    "type": "action",
+    "text": "Dad's body recedes to the waist. Ian braces with all he has.                            BARLEY                  Hang on, I can help!"
+  },
+  {
+    "type": "action",
+    "text": "Barley reaches for the staff. Ian pulls away from Barley.                            IAN                  BARLEY, NO! The red swell explodes. The gem BURSTS into pieces.      EXT. LIGHTFOOT HOUSE - CONTINUOUS The window of Ian's room blasts out.      INT. LIGHTFOOT BEDROOM - CONTINUOUS Barley helps Ian up. Ian looks around, desperate. There's no sign of dad in the empty, disheveled room."
+  },
+  {
+    "type": "action",
+    "text": "Suddenly there's a rustling in the closet. The boys perk up. A pair of legs in khaki pants and dress shoes clumsily begin to kick their way out from behind the clothes.                              IAN                  Dad?"
+  },
+  {
+    "type": "action",
+    "text": "The legs stand to reveal... they have no torso.                              IAN                  AH!                            BARLEY                  AH! He's just legs!"
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley cautiously approach the living pants as Dad's feet begin to feel their way around the space.                            BARLEY                  There's no top part. I definitely"
+  },
+  {
+    "type": "action",
+    "text": "The pants start to make their way toward Ian and Barley. Ian calms himself, then approaches Dad's pants. He reaches out, waving his hand through Dad's missing torso.                               IAN                  Hello?"
+  },
+  {
+    "type": "action",
+    "text": "Dad begins to feel around with his foot and walk blindly.                            BARLEY                  It's really him."
+  },
+  {
+    "type": "action",
+    "text": "Dad bumps into a dresser and falls. The boys race over to help him up.                            IAN                  Whoa, whoa!                               BARLEY                  Oh boy!                            IAN                  Ah, he can't hear us."
+  },
+  {
+    "type": "action",
+    "text": "Barley thinks, then walks over and taps on Dad's foot: Shave and a Haircut.                            IAN                  What are you doing?"
+  },
+  {
+    "type": "action",
+    "text": "Dad's legs suddenly leap back with emotion - as much emotion as legs can have. He stomps the final two beats of the song."
+  },
+  {
+    "type": "action",
+    "text": "Dad touches Barley's feet with his foot, patting gently.                            BARLEY                  That's right Dad. It's me, Barley."
+  },
+  {
+    "type": "action",
+    "text": "Dad feels around, finds Ian's foot, and does the same.                            BARLEY                  Yeah, that's Ian.                               IAN                  Hi... Dad."
+  },
+  {
+    "type": "action",
+    "text": "This lands on Ian, and he puts his hand delicately on Dad's foot. It's the closest they can get to a hug.                            IAN                  Oh... I messed this whole thing up"
+  },
+  {
+    "type": "action",
+    "text": "Barley points to the spell, illustrations of the sun setting and the man vanishing.                            IAN                  Okay, okay, okay. Twenty-Four"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at his phone, broken in the chaos. He chucks it on his bed and sets his watch. Twenty-four hours counting down.                            IAN                  Well, we'll just have to do the"
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls Ian into a playful headlock. Ian pushes away.                            IAN                  But I couldn't even finish the"
+  },
+  {
+    "type": "action",
+    "text": "Barley gets an idea. He flips through his Quests of Yore cards then holds one up to Ian. It shows an old pub: THE      MANTICORE'S TAVERN.                            BARLEY                  Ah-ha! We'll start at the place"
+  },
+  {
+    "type": "action",
+    "text": "Then another card: THE MANTICORE, a fearsome winged beast."
+  },
+  {
+    "type": "action",
+    "text": "Barley holds up a card featuring THE PHOENIX GEM.                              BARLEY                  Trust me."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks longingly at Dad.                            IAN                  Whatever it takes, I am gonna meet Ian slams his door. Barley slams his door.      INT. BARLEY'S VAN - CONTINUOUS Seatbelt on, keys in the ignition, the gears grind.                            BARLEY                       (straining)"
+  },
+  {
+    "type": "action",
+    "text": "The van starts. Barley grabs a cassette tape labeled \"QUEST MIX\" and pops it in the stereo. Sweeping fantasy music plays.                              BARLEY                  H'YAH! The van backfires and spits black smoke as it heads away from the cookie cutter suburban homes, toward the fantastical purple mountains in the distance.      EXT. SUBURBAN FANTASY TOWN - NIGHT - MONTAGE The van travels past a road sign: \"Leaving New Mushroomton.\" The van passes through a TROLL BOOTH.      INT. VAN - CONTINUOUS Ian sits in the back, talking to Dad's legs, working on something we can't quite see.                            IAN                  Anyway, it's like this award for"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks in the rearview mirror.                            BARLEY                  Hey, what are you two Chatty"
+  },
+  {
+    "type": "action",
+    "text": "Ian picks something up and puts it on Dad, he steps aside to reveal it's a top half made out of stuffed clothes.                              IAN                  ...Ta-da!                            BARLEY                  Oh! That's great! Dad, you look"
+  },
+  {
+    "type": "action",
+    "text": "Dad starts to wander toward the front seat."
+  },
+  {
+    "type": "action",
+    "text": "Barley flips on the air conditioning. It BLASTS like a leaf blower. Ian fights against the wind to turn it off.                            IAN                  Showing Dad your van? That's your"
+  },
+  {
+    "type": "action",
+    "text": "Barley nods, appreciative.                            BARLEY                  That's cool."
+  },
+  {
+    "type": "action",
+    "text": "Barley tosses Ian the Quests of Yore book.                            IAN                  This book is for a game.                            BARLEY                  I told you, everything in Quests of"
+  },
+  {
+    "type": "action",
+    "text": "Barley hands Ian the staff. Ian opens the book."
+  },
+  {
+    "type": "action",
+    "text": "Laurel sees a note taped to Ian's door: \"Back soon with MIND- BLOWING surprise!\" along with a crude drawing of Laurel with a mushroom cloud blowing from the top of her head."
+  },
+  {
+    "type": "action",
+    "text": "She opens the door.      INT. IAN'S BEDROOM - NIGHT Laurel GASPS. Ian's bedroom looks like a bomb went off."
+  },
+  {
+    "type": "action",
+    "text": "She notices Ian's broken phone on the bed. Then walks over to the Quests of Yore cards Barley laid out earlier: The Phoenix Gem and the Manticore's Tavern.      INT. LIGHTFOOT HOME - ENTRYWAY - NIGHT Laurel grabs her car keys off of the hook.      EXT. LIGHTFOOT HOME - NIGHT She pulls out of the garage in her car.      INT. LIGHTFOOT LIVING ROOM - NIGHT Headlights shine on a pewter figurine on Barley's game board: part lion, part bat, part scorpion: THE MANTICORE.      EXT. BACK ROAD - NIGHT Barley's van drives through a muddy back road.      INT. VAN - NIGHT Ian points the staff at an empty soda can.                            IAN                  Aloft Elevar."
+  },
+  {
+    "type": "action",
+    "text": "Nothing happens.                            IAN                  Aloft Elevar."
+  },
+  {
+    "type": "action",
+    "text": "Still nothing. Ian turns to Barley, picks up the Quests of Yore book gestures to a levitation spell in it.                            IAN                  I can't get this levitation spell"
+  },
+  {
+    "type": "action",
+    "text": "Ian seems doubtful about this advice.                            IAN                       (trying harder)"
+  },
+  {
+    "type": "action",
+    "text": "Nothing.                            BARLEY                  No, like - Aloft Elevar!                            IAN                       (angry, louder)"
+  },
+  {
+    "type": "action",
+    "text": "Ian tosses the staff in frustration.                            IAN                  STOP SAYING HEARTS FIRE! This just"
+  },
+  {
+    "type": "action",
+    "text": "Ian sits defeated next to Dad.                            BARLEY                  Hey, it was a good start."
+  },
+  {
+    "type": "action",
+    "text": "Ian stares at the Visitation spell, then looks to Dad, disappointed in himself.                            BARLEY                  Oh! Gather your courage, we've"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks out the window to see an old tavern, just like the one on the Quests of Yore card.                            IAN                  Wow, it is still here.                            BARLEY                  Yeah! I told you.      EXT. TAVERN - NIGHT Ian and Barley approach the tavern. Ian has to tug on Dad's leash to keep him moving in the right direction.                            IAN                  Come on, Dad! That's good."
+  },
+  {
+    "type": "action",
+    "text": "They approach the ominous entrance, with a carving of the Manticore's fearsome face above the door.                            BARLEY                  Alright, listen, first: let me do"
+  },
+  {
+    "type": "action",
+    "text": "Barley pushes open the door.      INT. MANTICORE'S TAVERN - NIGHT The place is a ridiculous family restaurant, just full frontal Fuddruckers. A large table of revelers sing along with the waitstaff, around a birthday cake.                            WAITERS                       (singing)"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at Barley, losing faith in his brother.                            BARLEY                  Okay, okay, so the tavern changed a"
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley walk through the restaurant, taking it all in."
+  },
+  {
+    "type": "action",
+    "text": "A TAVERN WAITRESS takes an order at a nearby table.                            TAVERN PATRON                  I'll have the soup of the day."
+  },
+  {
+    "type": "action",
+    "text": "An elf kid plays a claw drop game with a gauntlet hand picking up treasure. He loses."
+  },
+  {
+    "type": "action",
+    "text": "Barley marches up a Hostess.                            BARLEY                  Madame, I request an audience..."
+  },
+  {
+    "type": "action",
+    "text": "The Hostess blows into a fake horn.                            HOSTESS                  Oh, Manticore!"
+  },
+  {
+    "type": "action",
+    "text": "A plush COSTUMED MANTICORE leaps into frame. Adorable and silly, it lets out a CHUCKLE and hugs Ian. Barley pushes the Costumed Manticore away from Ian, irritated.                            BARLEY                  No, no, no, no no! The real"
+  },
+  {
+    "type": "action",
+    "text": "The costumed Manticore rubs its eyes like it's crying.                            HOSTESS                  Oh, you mean Corey? She's over"
+  },
+  {
+    "type": "action",
+    "text": "The hostess gestures toward the kitchen.      INT. MANTICORE'S TAVERN - NIGHT The kitchen doors burst open as a frantic Manticore struggles to balance plates. No longer a fearless adventurer, she wears a restaurant uniform, glasses, and a wrist brace.                            MANTICORE                  QUICK, SOMEBODY HELP ME! These"
+  },
+  {
+    "type": "action",
+    "text": "Waiters rushes in and she scrambles to offload the plates.                            IAN                  That's the Manticore?"
+  },
+  {
+    "type": "action",
+    "text": "Barley leaps forward and takes a knee.                            BARLEY                  Oh, great and powerful Manticore!                            MANTICORE                  Whoah, sir! You're right in the hot"
+  },
+  {
+    "type": "action",
+    "text": "A GOBLIN COOK passes by her.                            MANTICORE                  You're late, Adolphus.                              ADOLPHUS                         (goblin language)                            MANTICORE                  I understand there's traffic, you"
+  },
+  {
+    "type": "action",
+    "text": "The goblin heads onto the floor for his shift.                              ADOLPHUS                         (goblin language)                            MANTICORE                  Well maybe your mother should get"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore turns toward the boys, startled.                              MANTICORE                  AHH!                            BARLEY                  My brother and I seek a map... to a"
+  },
+  {
+    "type": "action",
+    "text": "She quickly races to a host podium and digs around.                            MANTICORE                  I have the parchment you desire"
+  },
+  {
+    "type": "action",
+    "text": "She presents them with a children's menu that says \"FIND THE PHOENIX GEM!\" above a variety of puzzles.                            IAN                  Oh... that's a children's menu.                            MANTICORE                  Isn't that fun? They're all based"
+  },
+  {
+    "type": "action",
+    "text": "She hurries off, but Barley follows reverently.                            BARLEY                  That's very amusing your dominance,"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore points to a wall of swords, shields, scrolls.                            MANTICORE                  Uh... yeah, it's over there."
+  },
+  {
+    "type": "action",
+    "text": "Ian points to a map on the wall with the title: PHOENIX GEM.                               IAN                  That's it!                            BARLEY                  This is perfect!"
+  },
+  {
+    "type": "action",
+    "text": "Barley reaches for the scroll, but the Manticore grabs it.                            MANTICORE                  Whoa, whoa, whoa! What are you"
+  },
+  {
+    "type": "action",
+    "text": "Barley removes Dad's torso to reveal he's just legs. The Manticore looks aghast, unsure what she's seeing.                            MANTICORE                  What is that?"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore Mascot walks past and sees the legs. Stunned, the mascot bumps into a serving tray and FALLS to the ground.                            IAN                  It's our dad, and we have a chance"
+  },
+  {
+    "type": "action",
+    "text": "Barley steps in front of Ian, taking over.                            BARLEY                  Buuuut... we can't do that without"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore considers this.                            MANTICORE                  No! My days of sending people on"
+  },
+  {
+    "type": "action",
+    "text": "The HOSTESS pops around the corner.                            HOSTESS                  Corey, the karaoke machine is"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore sees a group of female fantasy creatures in matching shirts surrounding a cyclops in a veil.                            MANTICORE                       (to the boys) The Manticore grovels to the bachelorette party.                            MANTICORE                       (worried, stressed)"
+  },
+  {
+    "type": "action",
+    "text": "Ian pushes past Barley to approach the Manticore.                               BARLEY                  No, Ian!                            BRIDESMAID #1                  You're ruining Althea's special"
+  },
+  {
+    "type": "action",
+    "text": "The karaoke machine lets out a squall of feedback.                            BRIDESMAID #1                  I'm giving this place a one-star"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at Dad's purple socks. He steps up.                            IAN                  Please, we need that map!                            MANTICORE                  No, I am not giving you the map!"
+  },
+  {
+    "type": "action",
+    "text": "Ian stands up straight and looks determined.                            IAN                  Well... well, I'm not!                            BARLEY                  Whoa, whoa, whoa!"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore looks up, surprised. Barley looks at Ian, equally surprised."
+  },
+  {
+    "type": "action",
+    "text": "Ian points to a heroic painting of the warrior Manticore.                            IAN                  She looks like she lived to take"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore stands up, gesturing wildly.                            MANTICORE                  She could just fly out the door"
+  },
+  {
+    "type": "action",
+    "text": "The startled bridesmaid backs off.                            MANTICORE                  Okay, maybe this place isn't as"
+  },
+  {
+    "type": "action",
+    "text": "A pathetic patron blows on his soup.                            MANTICORE                  ...but so what?! Whoever said you"
+  },
+  {
+    "type": "action",
+    "text": "Ian nervously points behind the Manticore.                            IAN                  Apparently, you did."
+  },
+  {
+    "type": "action",
+    "text": "The Manticore looks at her portrait, Above it is a plaque:                  YOU HAVE TO TAKE RISKS IN LIFE TO HAVE AN                  ADVENTURE. - THE MANTICORE"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore is speechless."
+  },
+  {
+    "type": "action",
+    "text": "A ROGUE WAITER walks up with a plate of mozzarella sticks.                            ROGUE WAITER                  Table 32 said their mozzarella"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore breathes fire on the mozzarella sticks. Terrified, the waiter scuttles away.                            MANTICORE                  What have I done?                            IAN                  Well, it's not too late. I mean,"
+  },
+  {
+    "type": "action",
+    "text": "The Chuck E. Cheese-style Manticore mascot stands behind the real Manticore and begins to imitate her movements.                               COSTUMED MANTICORE                  Dangerous!                            MANTICORE                  --and wild.                               COSTUMED MANTICORE                  Wild!                            MANTICORE                  I used to be dangerous and wild!                            COSTUMED MANTICORE                  Dangerous and wild!"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore stares daggers at the mascot moving behind her. She tackles it, rips off its foam head, and holds it up proudly with a mighty roar.                            MANTICORE                  I'm living a lie -- WHAT HAVE I                  BECOME?! She torches the mascot head. Parents cover a child's eyes.                               BARLEY                  Oh no..."
+  },
+  {
+    "type": "action",
+    "text": "The Manticore throws the smoldering, melting mascot head and it lands on a table between two customers."
+  },
+  {
+    "type": "action",
+    "text": "The mascot head ignites a banner that burns into the rafters.      INT. MANTICORE'S TAVERN - NIGHT Patrons watch in terror as the fire spreads. Kids are grabbed and hurried out the doors by their terrified parents. One kid is torn away from coloring her children's menu.      EXT. MANTICORE'S TAVERN FRONT ENTRANCE - NIGHT Terrified patrons stream from the blazing building.      INT. MANTICORE'S TAVERN - NIGHT The Manticore has completely lost it.                            MANTICORE                  Sorry, the karaoke machine is"
+  },
+  {
+    "type": "action",
+    "text": "Manticore throws the karaoke machine against the wall knocking away the dry wall and revealing the stone beneath."
+  },
+  {
+    "type": "action",
+    "text": "The Manticore picks up a cardboard standee of herself and throws it to the ground with a yell. She throws the Phoenix Gem map with it."
+  },
+  {
+    "type": "action",
+    "text": "Ian watches in horror as the map catches fire. He races to the map, but it's too late. All that's left is ashes.                            IAN                  No, no, no, no! No! ...No."
+  },
+  {
+    "type": "action",
+    "text": "A beam falls behind them.                            BARLEY                  We gotta go!"
+  },
+  {
+    "type": "action",
+    "text": "They race through the restaurant, arm-in-arm with Dad, his torso detaches. His legs runs in the wrong direction, bump into a wall, and fall to the ground."
+  },
+  {
+    "type": "action",
+    "text": "Ian realizes they've lost Dad. He turns and sees Dad struggling to stand. The roof above suddenly buckles. The wooden beams CRASH down, headed right for Dad."
+  },
+  {
+    "type": "action",
+    "text": "Without a thought, Ian lifts the staff and calls out."
+  },
+  {
+    "type": "action",
+    "text": "A blast of light from the staff freezes the wooden beam in mid-air, mere inches from Dad. Ian strains to hold the spell."
+  },
+  {
+    "type": "action",
+    "text": "Barley rushes in and grabs Dad, pulling him to safety. Ian releases the spell and the beam CRASHES to the ground. Barley, Ian, and Dad flee from the burning tavern.      EXT. MANTICORE'S TAVERN - NIGHT The van pulls away, past approaching fire trucks.      INT. VAN - NIGHT                            BARLEY                  Ha-ha! That was unbelievable. You"
+  },
+  {
+    "type": "action",
+    "text": "Barley reveals a kids' menu he grabbed. Ian sighs.                             BARLEY                  Look, on a quest, you have to use"
+  },
+  {
+    "type": "action",
+    "text": "Barley points to a crayon signature that reads: \"KAYLA\"                            BARLEY                  Best part is, little Kayla already"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes the menu. The puzzle has been solved in crayon."
+  },
+  {
+    "type": "action",
+    "text": "Something dawns on him. Ian reaches down and takes out a map.                            IAN                  Raven's Point... Raven's Point..."
+  },
+  {
+    "type": "action",
+    "text": "He slams a roadmap down on the dash and points to a mountain labeled: RAVEN'S POINT.                            IAN                  Raven's Point!                            BARLEY                  Yes! The gem must be in the"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at Dad, disappointed.                              IAN                  Yeah."
+  },
+  {
+    "type": "action",
+    "text": "The van comes to a stop at a red light."
+  },
+  {
+    "type": "action",
+    "text": "Ian traces a route with his finger, right to Raven's Point.                            IAN                  Well, it looks like the expressway"
+  },
+  {
+    "type": "action",
+    "text": "Barley highlights barely-perceptible road on the map.                            BARLEY                  And it's telling me we take an"
+  },
+  {
+    "type": "action",
+    "text": "Dad breaks free from his seatbelt in back and wanders toward the front of the van, leaving his top half behind. He taps his foot against Barley's. Barley pats Dad's foot and sighs.                            IAN                  So, we should just take the"
+  },
+  {
+    "type": "action",
+    "text": "Barley steers the van onto an onramp.      EXT. FREEWAY - NIGHT Just then, Laurel's car drives under the onramp just under the van, heading in the opposite direction from the boys.      INT. LAUREL'S CAR - NIGHT A GPS screen navigates toward the Manticore's tavern."
+  },
+  {
+    "type": "action",
+    "text": "A phone call interrupts the GPS. It's Colt. Laurel answers.                              LAUREL                  Hey.      EXT. FRY FORTRESS - NIGHT Colt talks on the phone, carrying a bag of takeout.                            COLT                  I'm just checking in. Did you catch"
+  },
+  {
+    "type": "action",
+    "text": "Laurel sees the Manticore's Tavern burning to the ground.                              COLT                  Fire?!                            LAUREL                  FIRE! The place is on fire! My Laurel gets out of the car and sees people from the tavern:"
+  },
+  {
+    "type": "action",
+    "text": "The headless Manticore mascot, patting her smoking costume.                            COSTUMED MANTICORE                  Get it off, get it off, get it off!"
+  },
+  {
+    "type": "action",
+    "text": "The bachelorette party, disheveled and crying.                            LAUREL                  Excuse me? Hello! Please, I'm"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore sits on the side of the curb, wrapped in a silver emergency blanket, holding a mug.                            MANTICORE                  Oh, they went on a quest to find a"
+  },
+  {
+    "type": "action",
+    "text": "A police officer, OFFICER AVEL, leans in to talk to Laurel.                            OFFICER AVEL                  Listen, this one's gone a little"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore starts to move toward Laurel. Officer Avel pulls the Manticore toward the police car.                            OFFICER AVEL                  Whoa, heyyy. You're not going"
+  },
+  {
+    "type": "action",
+    "text": "Laurel looks around, concerned. She's sees a first aid kit in the back of an ambulance and gets an idea.      EXT. TAVERN - MOMENTS LATER The Manticore talks with Officer Avel by a police car.                            MANTICORE                  Last name \"Manticore.\" First name,"
+  },
+  {
+    "type": "action",
+    "text": "Laurel walks up to Officer Avel and the Manticore.                             LAUREL                  Hold on! You're right, she has gone"
+  },
+  {
+    "type": "action",
+    "text": "Laurel points dramatically to a slight scrape on the Manticore's leg.                            OFFICER AVEL                  That's just a scratch."
+  },
+  {
+    "type": "action",
+    "text": "Laurel pulls out the Quests of Yore card about the Manticore and waves it around like it's an official document.                             LAUREL                  Oh, I'm sorry, are you an expert on"
+  },
+  {
+    "type": "action",
+    "text": "Officer Avel throws his hands in the air.                              OFFICER AVEL                  Okay!                            LAUREL                  Thank you! Could we have a little"
+  },
+  {
+    "type": "action",
+    "text": "Officer Avel steps away.                            LAUREL (O.S.)                  Just lie back. That's good.                            OFFICER AVEL                  Just don't take too long back"
+  },
+  {
+    "type": "action",
+    "text": "Officer Avel turns and looks at the Manticore's silhouette, then carefully walks back toward the police car.                            OFFICER AVEL                  I said, don't take too long back"
+  },
+  {
+    "type": "action",
+    "text": "As he gets closer, he sees the source of Manticore's silhouette: The melted mascot head, propped up as a decoy.                              OFFICER AVEL                  Ahh!      EXT. ROAD - NIGHT Laurel's car drives away, the back dragging sparks.      INT. LAUREL'S CAR - NIGHT The Manticore is hunkered down in the backseat of the car.                            LAUREL                  Alright, how do we help my boys?"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore smiles.                            MANTICORE                  Oooooh, I'm gonna like you!      EXT. FREEWAY - NIGHT The van passes through a city.      INT. VAN - NIGHT Barley drives as Ian and Dad sit on bean bags in the back. Ian stares at the list he's made.                            BARLEY                  Radio... headlights... brakes,"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks over at Dad and crosses things off his list.                            IAN                  Looks like we're not gonna get to"
+  },
+  {
+    "type": "action",
+    "text": "Dad rubs his foot against Ian's. Ian smiles.                            IAN                  But don't worry, we'll have you"
+  },
+  {
+    "type": "action",
+    "text": "Barley puts his finger up to his face to create a mustache.                            BARLEY                       (Colt impression)"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly the van begins to SPUTTER.                            BARLEY                  No, no, no, NO! Come on, old girl!"
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls the van off the expressway and lurches it to a stop on the side of the road.      INT. VAN - NIGHT                            IAN                  I thought you said you fixed the"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks over at the gas gauge. The needle is on \"F.\"                            IAN                  But it says we have a full tank.                            BARLEY                  Oh, that doesn't work.      EXT. ROADSIDE - NIGHT Barley gets out, goes to the back of the van, pulls out a gas can, and shakes it next to his ear.                            BARLEY                  Only a few drops left."
+  },
+  {
+    "type": "action",
+    "text": "Ian gets out. Barley climbs on top of Guinevere."
+  },
+  {
+    "type": "action",
+    "text": "There's nothing within sight. Ian looks at the staff.                            IAN                  Is there a magic way to get gas?                            BARLEY                  Oh! I like your thinking young"
+  },
+  {
+    "type": "action",
+    "text": "Barley scrambles down from the van and shows Ian a page in the spell book: an illustration of a wizard growing an apple to five times its size.                            BARLEY                  Growth Spell! We grow the can and"
+  },
+  {
+    "type": "action",
+    "text": "Ian mutters to himself as he holds the spell and the staff.                            IAN                  Okay, loosen up, heart's fire. Here"
+  },
+  {
+    "type": "action",
+    "text": "Barley shows Ian the book."
+  },
+  {
+    "type": "action",
+    "text": "Barley puts the gas can on the ground. Ian points the staff.                            IAN                  Okay..."
+  },
+  {
+    "type": "action",
+    "text": "Ian holds out the staff and tries to focus.                              BARLEY                  Uh...                            IAN                  Something wrong?                            BARLEY                  Sorry, it's just, your stance is"
+  },
+  {
+    "type": "action",
+    "text": "Barley poses Ian awkwardly, all over his personal space.                             BARLEY                  Chin up, elbows out, feet apart,"
+  },
+  {
+    "type": "action",
+    "text": "Barley tries to adjust Ian's elbow one more time. Ian shoots him a look. Barley throws up his hands and steps back."
+  },
+  {
+    "type": "action",
+    "text": "Ian focuses hard and recites the spell.                            IAN                  Magnora Gantuan!"
+  },
+  {
+    "type": "action",
+    "text": "The staff throws off violent, flashing sparks. Ian winces, but does his best to stay focused. The can begins to grow.                            BARLEY                  Don't let the magic spook you.                               IAN                  Okay.                               BARLEY                  Elbows!                               IAN                  What?!                               BARLEY                  Elbows up!"
+  },
+  {
+    "type": "action",
+    "text": "Ian lifts his elbows as high as possible.                            BARLEY                  No, no, no, too high. That's too"
+  },
+  {
+    "type": "action",
+    "text": "Barley encourages Ian -- slowly, almost to himself -- but so, deeply annoying."
+  },
+  {
+    "type": "action",
+    "text": "Ian lowers the staff, frustrated.                            BARLEY (O.S.)                  It worked! The can is huge!"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks down to see that Barley is now TINY.                            BARLEY                  And the van is huge!"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at his tiny body.                              BARLEY                  Oh, no...                            IAN                  What happened?                            BARLEY                  Looks like you shrunk me.                            IAN                  Wha-- how?!                            BARLEY                  Well, if you mess up a spell, there"
+  },
+  {
+    "type": "action",
+    "text": "As the boys argue, Dad taps Ian's foot then searches for Barley. Dad taps Barley's head, nearly stepping on him.                            BARLEY                  Whoa, ow! Dad, it's me!"
+  },
+  {
+    "type": "action",
+    "text": "Barley does \"Shave and a Haircut\" on Dad's foot. Dad freaks out, recognizing him and reacting to his shrunken size.                            IAN                  Whoah, Dad, it's okay, don't worry,"
+  },
+  {
+    "type": "action",
+    "text": "Ian grabs Dad's leash and picks up the gas can.                            BARLEY                  Well, where are you going?                            IAN                  To find a gas station.                            BARLEY                  Well, I'm going too.                              IAN                  Fine."
+  },
+  {
+    "type": "action",
+    "text": "Ian tries to pick up Barley, but Barley refuses.                            BARLEY                  Hey, I don't need your help!                            IAN                  Fine with me."
+  },
+  {
+    "type": "action",
+    "text": "Ian struggles to carry everything as Barley runs after Ian.      EXT. INDUSTRIAL NEIGHBORHOOD - NIGHT Ian with Dad. A tiny, shrunken Barley tries to keep up.                            BARLEY                       (panting)"
+  },
+  {
+    "type": "action",
+    "text": "Ian walks back and awkwardly picks up Barley by the shirt.                            BARLEY                  Look, a gas station!"
+  },
+  {
+    "type": "action",
+    "text": "Ian turns to see a glowing gas station in the distance."
+  },
+  {
+    "type": "action",
+    "text": "Ian drops Barley into his pocket and charges ahead.                            BARLEY                  Hey! I don't need you to carry me! Ian approaches the gas station, Barley and Dad in tow. He walks past a gas pump. Dad searches the ground with his foot.                            IAN                  Dad, come on, it's okay, Barley is"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at his reflection in the gas pump.                            BARLEY                  Yeah, I'm fine, Dad. The side"
+  },
+  {
+    "type": "action",
+    "text": "A group   of loudly revving, seemingly unmanned motorcycles park in   front of the gas station. Suddenly, a sprite in a leather   jacket, DEWDROP, pops out from behind the bike. Other sprites   appear. They were all collectively driving the bikes."
+  },
+  {
+    "type": "action",
+    "text": "They hop off and swagger into the gas station."
+  },
+  {
+    "type": "action",
+    "text": "An elf walks out of the gas station drinking a slushie. He unknowingly hits Dewdrop with the door on his way out.                            DEWDROP                  Hey! Did you just bump into me?                            GAS STATION VICTIM                  Oh, I'm terribly sorry, I didn't"
+  },
+  {
+    "type": "action",
+    "text": "He drops his slushie and runs away."
+  },
+  {
+    "type": "action",
+    "text": "Ian slinks into the station, Dad in tow, Barley in pocket."
+  },
+  {
+    "type": "action",
+    "text": "Sprites climb the shelves, throw things to their cohorts, drink from the soda fountain. A sprite on the counter scratches a lotto ticket. Another throws money at the clerk.                            COBWEB                  Gimme a bag of Extra Sours."
+  },
+  {
+    "type": "action",
+    "text": "The clerk hands over a bag.                            COBWEB                  Keep the change."
+  },
+  {
+    "type": "action",
+    "text": "The sprites pass Ian, carrying a box of candy-filled straws.                            COBWEB                  Outta the way, beanstalk."
+  },
+  {
+    "type": "action",
+    "text": "Ian tries to keep a low profile as he talks to the CLERK.                            IAN                  Uh, ten on pump two, please."
+  },
+  {
+    "type": "action",
+    "text": "Barley leans out of Ian's pocket, reaching for a bag of snacks, but knocks over the entire rack.                            IAN                  What are you doing?!                            BARLEY                  I'm getting us food."
+  },
+  {
+    "type": "action",
+    "text": "Ian pushes a few bags of cheese puffs forward.                            IAN                  Alright, I got it. And a couple of"
+  },
+  {
+    "type": "action",
+    "text": "Ian turns back to the clerk."
+  },
+  {
+    "type": "action",
+    "text": "The clerk hands them a bathroom key attached to a license plate. Ian takes Barley out of his pocket and gives him the key. Tiny Barley has to carry the key over his head.                            IAN                  Okay, be quick. I want to get out"
+  },
+  {
+    "type": "action",
+    "text": "Barley runs to the bathroom. Dad searches around with his foot for little Barley and just misses him.                            GAS STATION CLERK                  That'll be twelve ninety-nine."
+  },
+  {
+    "type": "action",
+    "text": "Ian hands money to the cashier. Dad continues to search for little Barley, and taps the head of one of the sprites.                            MUSTARDSEED                  Hey! Watch it!"
+  },
+  {
+    "type": "action",
+    "text": "Dewdrop leaps over to Dad and puffs out her chest.                            DEWDROP                  You got a problem, Shades?!"
+  },
+  {
+    "type": "action",
+    "text": "Dad stares at her.                            DEWDROP                  Answer me when I'm talking to you!"
+  },
+  {
+    "type": "action",
+    "text": "Ian turns to see that Dewdrop staring down Dad from high on a shelf. Ian grabs Dad and pulls him away.                            IAN                  Sorry, I don't really know where"
+  },
+  {
+    "type": "action",
+    "text": "Ian pulls Dad to the door and EXITS.                            IAN                       (sotto)"
+  },
+  {
+    "type": "action",
+    "text": "Laurel's car speeds down the highway, the passenger side drags along the ground, sparks shooting out.      INT. LAUREL'S CAR - NIGHT Laurel drives. The Manticore is tight in the passenger seat.                            MANTICORE                  You know, I would fly us to help"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore wiggles her wings a little.                            MANTICORE                  It's my own fault. I should be"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore rips off her sleeve to reveal an arm full of tattoos. She points to an image of a red cloud.                            MANTICORE                  If your boys take the gem, the"
+  },
+  {
+    "type": "action",
+    "text": "She points to the red mist holding rocks together to make a beast attacking someone.                            MANTICORE                  ...and assume the form of a mighty"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore points to a glowing circle in the \"heart\" of one of the beasts.                            MANTICORE                  Every curse has a core, the center"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore rips off her other sleeve to reveal a tattoo of a glowing yellow sword that reads: THE CURSE CRUSHER.                            MANTICORE                  ...the Curse Crusher!                            LAUREL                  Okay, but you don't seem to have"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore looks a Laurel, embarrassed.                            MANTICORE                  I sold it. Got in a little tax"
+  },
+  {
+    "type": "action",
+    "text": "Laurel nods, determined.                            LAUREL                       (sotto)"
+  },
+  {
+    "type": "action",
+    "text": "Ian finishes pumping gas. He looks at his watch.                            IAN                       (to self)"
+  },
+  {
+    "type": "action",
+    "text": "Then he hears something off in the distance.                            DEWDROP (O.S.)                  Who you calling whimsical?"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks over to see Barley in talking to two sprites.                              IAN                  Oh no.                            BARLEY                  Whoa, whoa, whoa!                            DEWDROP                  You got a lotta nerve."
+  },
+  {
+    "type": "action",
+    "text": "Ian makes his way toward Barley while struggling with Dad.                            BARLEY                  I'm just saying sprites used to fly"
+  },
+  {
+    "type": "action",
+    "text": "She throws down her candy straw on the ground and stomps it.                             BARLEY                  No, no, no. Not you. Your"
+  },
+  {
+    "type": "action",
+    "text": "But Ian swoops in and GRABS Barley while also holding the full gas can and a wandering Dad.                            IAN                  I'm sorry! Very sorry! He's sorry,"
+  },
+  {
+    "type": "action",
+    "text": "Dad has wandered to the other side of the line of motorcycles and Ian unwittingly pulls him into the bikes. They CRASH like dominoes, blocking the gas station door.                              IAN                  Oh no."
+  },
+  {
+    "type": "action",
+    "text": "The Sprites inside the gas station SLAM into the door and windows of the station. They are SEETHING caged animals.                            DEWDROP                  HEY! YOU'RE DEAD! Ian RACES Dad and Barley out of there as fast as he can.      EXT. ROADSIDE - NIGHT Ian runs, terrified.                            IAN                  We're dead! We're dead! We're dead!"
+  },
+  {
+    "type": "action",
+    "text": "Ian frantically fills the van with gasoline.                            BARLEY                  Relax, they won't be able to lift"
+  },
+  {
+    "type": "action",
+    "text": "One motorcycle ROARS to life in the distance.                            BARLEY                  Oh, they are strong..."
+  },
+  {
+    "type": "action",
+    "text": "Barley jumps up and down on the door handle.                            BARLEY                  It's locked!                            IAN                  What?! Where are the keys?"
+  },
+  {
+    "type": "action",
+    "text": "They see the keys still in the ignition.                            BARLEY                  I got this!"
+  },
+  {
+    "type": "action",
+    "text": "Barley slides his tiny body through the cracked window. He struggles to try to lift the lock.                            IAN                  C'mon, Barley!"
+  },
+  {
+    "type": "action",
+    "text": "The lock pops up, sending Barley flying backwards.                              BARLEY                  Whoa!"
+  },
+  {
+    "type": "action",
+    "text": "Ian climbs in the passenger side and slams the door.      INT. VAN - CONTINUOUS Ian points out the windshield.                            IAN                  Okay, Go! Go! Go!"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at Barley, tiny and useless on the drivers seat.                            IAN                  Oh, no. No, no, no, no. No way...                            BARLEY                  You're gonna have to!"
+  },
+  {
+    "type": "action",
+    "text": "Ian slides over into the drivers seat. He carefully buckles his seatbelt, but then sees the motorcycles coming. Ian turns the key. The engine whines, but nothing happens.                            IAN                  Come on, why won't it start?!"
+  },
+  {
+    "type": "action",
+    "text": "Ian wiggles the ignition, leaning into it.                             IAN                  Comeoncomeoncomeoncomeon! Come. On."
+  },
+  {
+    "type": "action",
+    "text": "The van sputters to life.                            BARLEY                  Put it in \"O\" for \"onward!\""
+  },
+  {
+    "type": "action",
+    "text": "Ian pulls the screwdriver gear shift down to the handwritten letter \"O\". The van lurches forward just as a sprite SMASHES out Ian's window with a flail.                              IAN                  AHH!                              BARLEY                  DRIVE!!! Ian's unintentionally cuts off the sprites. Their bikes get tangled up as the van speeds away.      EXT. EXPRESSWAY/INT. VAN - NIGHT The van races up the on-ramp onto the expressway.                            BARLEY                  Okay, you're gonna have to merge!"
+  },
+  {
+    "type": "action",
+    "text": "Cars ROAR past the van as Ian cautiously picks up speed. A huge truck barrels up beside him. Ian tentatively steers the van closer to the freeway. The truck lays on its horn.                              BARLEY                  Speed up!                            IAN                  I can't do this!                            BARLEY                  Yes you can!                            IAN                  I'm not ready!                            BARLEY                  You'll never be ready! MERGE!!"
+  },
+  {
+    "type": "action",
+    "text": "Ian floors it and cuts in front of the giant truck.                            BARLEY                  Ha-ha! Nice job!"
+  },
+  {
+    "type": "action",
+    "text": "In the rearview mirror, Ian sees the motorcycles gaining on them. They pull up on both sides of the van, surrounding him."
+  },
+  {
+    "type": "action",
+    "text": "A biker pulls out a flail and hits the van. Barley leaps up to the window, yelling out at the sprites.                            BARLEY                  Hey, don't hit Gwinny!                              IAN                  Barley!"
+  },
+  {
+    "type": "action",
+    "text": "Ian quickly comes up behind a slow moving car.                              IAN                  Oh, no!                            BARLEY                  Get around 'em!                            IAN                  They're not letting me in!                              BARLEY                  SIGNAL!                            IAN                  You don't have a signal-er!                            BARLEY                  Stick your arm straight out the"
+  },
+  {
+    "type": "action",
+    "text": "Ian holds his arm straight out the window. A sprite immediately wraps a chain around it.                              IAN                  AH!! Ian turns the wheel one-handed and merges into the next lane. Barley climbs out on Ian's arm to untangle the chain.                            IAN                  Get back here!"
+  },
+  {
+    "type": "action",
+    "text": "The sprites cheer as they gain on the van.                              IAN                  Barley!"
+  },
+  {
+    "type": "action",
+    "text": "Barley successfully untangles the chain. It recoils and almost knocks a number of sprites off their motorcycle."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks ahead and sees the freeway splitting EAST and NORTH. Barley crawls back onto Ian's shoulder.                            BARLEY                  The mountains are north. You need"
+  },
+  {
+    "type": "action",
+    "text": "Dad stumbles to the front of the car and face plants into the steering wheel, blaring Guinevere's horn.      EXT. EXPRESSWAY - CONTINUOUS Dewdrop sees Dad's body flapping out the window, his stuffed arm waving as if he's shaking a fist.                            DEWDROP                  What the-- Oh it is on, Shades!"
+  },
+  {
+    "type": "action",
+    "text": "A motorcycle races up to Ian's window. A group of sprites LEAP from their bike and into the van, attacking Ian.      INT. VAN - CONTINUOUS A sprite tackles Barley. Barley pulls the sword from the hand of a nearby bobblehead warrior and brandishes it at the sprite. Ian, covered in sprites, causes the van to swerve."
+  },
+  {
+    "type": "action",
+    "text": "Barley and his sprite are thrown onto the passenger seat. The sprite pins Barley down with the seatbelt buckle.                            BARLEY                  Ian! Stay focused!                              IAN                  I can't!                            BARLEY                  You HAVE to focus or we're all"
+  },
+  {
+    "type": "action",
+    "text": "Ian sees the NORTH sign out the window rapidly approaching.                            BARLEY                  Just stay cool!"
+  },
+  {
+    "type": "action",
+    "text": "Ian gets an idea."
+  },
+  {
+    "type": "action",
+    "text": "He frantically reaches and turns on the AC. Strong air blasts from the vents, blowing the sprites out the windows."
+  },
+  {
+    "type": "action",
+    "text": "The sprite that was fighting Barley is blown into the windshield of the car behind Guinevere."
+  },
+  {
+    "type": "action",
+    "text": "Barley clings to the seatbelt, flapping in the wind.                            BARLEY                  Way to go, Guinevere!"
+  },
+  {
+    "type": "action",
+    "text": "He loses his grip and is suddenly blown out the window. But Ian manages to grab him at the last minute."
+  },
+  {
+    "type": "action",
+    "text": "The sprites rev their bike for another attack.                              DEWDROP                  Hit it!"
+  },
+  {
+    "type": "action",
+    "text": "Ian sees his exit ahead, across several lanes.                            BARLEY                  We're not gonna make it!"
+  },
+  {
+    "type": "action",
+    "text": "With determination, Ian crosses several lanes of traffic, just barely making it onto the NORTH fork of the freeway."
+  },
+  {
+    "type": "action",
+    "text": "The sprites don't have time to correct their course. They crash their bike and hurtle toward the ground. But their wings flap until suddenly... they're flying.                              DEWDROP                  Huh.      INT. VAN - NIGHT Tiny Barley perches on Ian's shoulder, celebrating their success. Ian pants heavily, still riding the adrenaline.                            IAN                  Dad, are you okay?!                            BARLEY                  He's fine, thanks to the skillful"
+  },
+  {
+    "type": "action",
+    "text": "Barley raises his hand to high five, but it bulges to full size and smacks Ian in the face.                            IAN                  Ow! What is happening?                            BARLEY                  I think the spell is wearing off."
+  },
+  {
+    "type": "action",
+    "text": "Barley's torso expands to full size on Ian's shoulder. Ian can't even see out the window to know where he's going.                            IAN                  Get off my face!"
+  },
+  {
+    "type": "action",
+    "text": "Barley's right leg grows, slamming onto the gas pedal.      EXT. ROADWAY - NIGHT The van lunges forward, swerving past a hidden police car. Its lights come on and it gives chase.      INT. VAN - NIGHT Barley, now fully-grown, climbs into the passenger seat.                            IAN                  Oh, Chantar's Talon! Cops!                               BARLEY                  Pull over!                            IAN                  I don't have a license."
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls a small piece of folded leather from his pocket.                            BARLEY                  Ah! My wallet's still tiny!      EXT. FREEWAY SHOULDER - NIGHT The van pulls over."
+  },
+  {
+    "type": "action",
+    "text": "There are two cops in the car behind them. An imposing cyclops, OFFICER SPECTER, and a boorish satyr: OFFICER GORE. Officer Specter speaks into the P.A.                            OFFICER SPECTER                  Step out of the vehicle."
+  },
+  {
+    "type": "action",
+    "text": "The boys struggle to remain calm.                            IAN                  What are we gonna do?                            BARLEY                  I don't know!"
+  },
+  {
+    "type": "action",
+    "text": "In the background, Dad's dizzy legs stumble around, then lean against the open back doors of the van and begin to step out.                            IAN                  How are we gonna explain-- The cops watch Dad slowly stumble from the van, then share a knowing look. They step out of the car and walk over to Dad.                            OFFICER GORE                  You have a long night there, buddy?                            OFFICER SPECTER                  Sir, I'm gonna ask you to walk this"
+  },
+  {
+    "type": "action",
+    "text": "Meanwhile, Ian and Barley confer in front of the van.                            IAN                  They're gonna take Dad!"
+  },
+  {
+    "type": "action",
+    "text": "Barley thinks for a moment.                            BARLEY                  Oh! I got it! The disguise spell!"
+  },
+  {
+    "type": "action",
+    "text": "Barley draws the spell in the dirt.                            IAN                  What if I mess up again?                            BARLEY                  According to the spell, \"Disguising"
+  },
+  {
+    "type": "action",
+    "text": "The cops watch a wandering, meandering Dad.                            OFFICER GORE                  Okay, we're taking you down to the"
+  },
+  {
+    "type": "action",
+    "text": "There's a flash followed by the sound of hooves. The cops turn to see Officer Colt Bronco walk out from behind the van.                            COLT                       (nervous/uncertain)"
+  },
+  {
+    "type": "action",
+    "text": "Colt's back legs walk out of sync, nervous and awkward.                            OFFICER GORE                  Officer Bronco?                            OFFICER SPECTER                  Were you in that van?"
+  },
+  {
+    "type": "action",
+    "text": "To the side of Colt we see a new point of view: The boys are masked by a ghost-like shell of Colt, Ian in the front, Barley in the back. We hear Colt's voice turn into Ian's.                            COLT/IAN                  Affirmative! And we will, I mean, I"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly Colt's right ear vanishes. Ian quickly turns, blocking the missing ear from view."
+  },
+  {
+    "type": "action",
+    "text": "And with that, Colt's left hand goes away. Ian quickly and awkwardly bends his arm behind his body.                            BARLEY                       (whispered, to Ian)"
+  },
+  {
+    "type": "action",
+    "text": "They all look to see Dad slump on the hood of the police car.                            OFFICER SPECTER                  Yeah, he does seem a little off."
+  },
+  {
+    "type": "action",
+    "text": "Behind the illusion, Ian is nervous and sweating.                            IAN/COLT                  Uh, actually, if I'm being"
+  },
+  {
+    "type": "action",
+    "text": "Specter and Gore share a look. Specter takes Colt aside.                            OFFICER SPECTER                  Whoa, whoa, hold on, okay hold on,"
+  },
+  {
+    "type": "action",
+    "text": "The boys, still disguised as Colt, put Dad back in the van.                            BARLEY                       (whispering)"
+  },
+  {
+    "type": "action",
+    "text": "Ian grins at Barley.                            OFFICER GORE                  I don't envy you, Bronco. That"
+  },
+  {
+    "type": "action",
+    "text": "Colt's right leg instantly vanishes. Right in front of Barley's face.                               BARLEY                          (hurt, stunned)"
+  },
+  {
+    "type": "action",
+    "text": "Colt's other arm vanishes. Ian quickly shuffles back to the van. The cops watch, baffled by Colt's behavior.                            COLT                  Ah, I mean, I'm late for work."
+  },
+  {
+    "type": "action",
+    "text": "Colt's back legs vanish."
+  },
+  {
+    "type": "action",
+    "text": "With each lie, Colt loses an arm, leg, ear. Ian and Barley just barely slink into the van before Colt's head disappears.                            OFFICER GORE                       (laughing)"
+  },
+  {
+    "type": "action",
+    "text": "Specter watches the van drive away. Then she CLICKS on her flashlight and follows Colt's hoof prints in the dirt, only to find them eventually lead to regular shoe prints.                            OFFICER SPECTER                       (into her radio) The boys drive down the highway, silent. Ian looks straight ahead, guilty. Barley stares at the road, stone-faced.                            IAN                  Barley... I don't know what"
+  },
+  {
+    "type": "action",
+    "text": "Barley says nothing.                            IAN                  Maybe the magic just got it"
+  },
+  {
+    "type": "action",
+    "text": "Barley BLASTS super loud fantasy metal. Ian winces.                            IAN                  I DON'T KNOW WHAT HAPPENED-- Barley turns up the music louder.                            IAN                  BARLEY! BARLEY!"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly Barley whips off the road at a rest area. He gets out of the van through the side door.      EXT. REST STOP - NIGHT The music blares as Barley marches away from the van. He angrily tears into a bag of Gorgon-Zola's Cheese Puffs.                            IAN                  Where are you going?"
+  },
+  {
+    "type": "action",
+    "text": "Ian follows after him, calling out.                            IAN                  Barley, come on, this is all just--"
+  },
+  {
+    "type": "action",
+    "text": "Barley stops and turns to Ian.                            BARLEY                  I'm not a screwup!                            IAN                  I didn't say you were.                            BARLEY                  The magic said it for you!                            IAN                  Well, the magic got it wrong!                            BARLEY                  Magic doesn't get it wrong! The cop"
+  },
+  {
+    "type": "action",
+    "text": "Ian stops, stunned.                            IAN                  Are you kidding? Because everything"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks over Ian's shoulder back toward the van.                              IAN                  What?!"
+  },
+  {
+    "type": "action",
+    "text": "Ian turns to see Dad standing in the back of the van, bending his knees to the music.                            IAN                  What is he doing?                            BARLEY                  I think he can feel the vibrations"
+  },
+  {
+    "type": "action",
+    "text": "The boys watch as Dad slowly adds more dance moves. Then Dad really cuts loose and it's... not good.                            IAN                  Wow. He is terrible."
+  },
+  {
+    "type": "action",
+    "text": "Dad flails so wildly that his top half falls off.                            BARLEY                  Yeah. He's really, really bad."
+  },
+  {
+    "type": "action",
+    "text": "They watch in embarrassment. Dad shimmies over to the boys."
+  },
+  {
+    "type": "action",
+    "text": "Dad hooks his leg around Barley's, cajoling him to dance.                            BARLEY                  No no no, thanks Dad. Dad, thank"
+  },
+  {
+    "type": "action",
+    "text": "Ian watches Barley and Dad dance. Then Dad walks over to Ian.                            IAN                  Oh! No, no, no. No, no, no! I'm not"
+  },
+  {
+    "type": "action",
+    "text": "Ian tries to get away, but Dad won't have it. Ian is forced to dance. The boys both dance with Dad.                            IAN                  Just imagine what the top half of"
+  },
+  {
+    "type": "action",
+    "text": "Barley dances wildly behind Dad, mimicking Dad's upper half for a moment. The boys laugh."
+  },
+  {
+    "type": "action",
+    "text": "The music stops. Dad sits.                            BARLEY                  Oh, you danced your shoelaces loose"
+  },
+  {
+    "type": "action",
+    "text": "Barley kneels to tie Dad's shoe. Then speaks to Ian without looking at him.                            BARLEY                  You know, I want to see him, too.                            IAN                  Yeah... I know."
+  },
+  {
+    "type": "action",
+    "text": "Barley stands.                            BARLEY                  It's not fair for you to call me a"
+  },
+  {
+    "type": "action",
+    "text": "This hits Ian."
+  },
+  {
+    "type": "action",
+    "text": "Barley nods. Ian looks uncertain, then...                              IAN                  Okay."
+  },
+  {
+    "type": "action",
+    "text": "Barley smiles.      EXT. ROAD - NIGHT The van drives down the road, then veers onto a dusty, unpaved path. The roughness of the road causes Guinevere's back bumper to fall off, license plate and all."
+  },
+  {
+    "type": "action",
+    "text": "The van drives away into the distance.      EXT. GRECKLIN'S PAWN SHOP - NIGHT The Manticore and Laurel climb out of the car.                            LAUREL                  Uh, so where is your magic sword?                            MANTICORE                  It lies beyond those gates."
+  },
+  {
+    "type": "action",
+    "text": "The MANTICORE looks toward a small building with a flashing sign that reads: PAWN SHOP.                            MANTICORE                  If we don't leave here with the A dirty pawn shop filled with old junk, TV's, microwaves as well as antiques, fantasy armor, instruments, and books."
+  },
+  {
+    "type": "action",
+    "text": "The pawnshop's owner, GRECKLIN, a grizzled, lanky goblin, lays a large garlic press in front of them.                            GRECKLIN                  There you are, one garlic crusher.                            MANTICORE                  No, Curse Crusher. It's a large"
+  },
+  {
+    "type": "action",
+    "text": "Grecklin looks through junk behind the counter.                            GRECKLIN                  Sword, sword, sword..."
+  },
+  {
+    "type": "action",
+    "text": "She holds up a giant, glorious sword.                            GRECKLIN                  I mean, I got this thing.                               MANTICORE                  That's it!                               LAUREL                  How much?                            GRECKLIN                  Let's call it, uh... ten.                               LAUREL                  Great!"
+  },
+  {
+    "type": "action",
+    "text": "Laurel counts the money. The Manticore speaks to her sword.                            MANTICORE                  Forged of the rarest metals, the"
+  },
+  {
+    "type": "action",
+    "text": "Grecklin slams her hand on the sword.                               GRECKLIN                  Oops."
+  },
+  {
+    "type": "action",
+    "text": "Laurel's phone rings. She steps away to answer it.                               LAUREL                  Yeah."
+  },
+  {
+    "type": "action",
+    "text": "Laurel looks over to see the Manticore and Grecklin arguing.                            MANTICORE                  Do you know who I am?                            GRECKLIN                  Some kind of winged bear-snake"
+  },
+  {
+    "type": "action",
+    "text": "Back on Laurel.                            LAUREL                  It sure does."
+  },
+  {
+    "type": "action",
+    "text": "Laurel walks over to Grecklin and the Manticore, putting down her phone for a moment.                             LAUREL                        (angry)"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore's tail suddenly STRIKES Grecklin in the neck. Grecklin's eyes POP openand she falls to the ground.                            LAUREL                  HOLY- SON OF- YOU KILLED HER!                             MANTICORE                  It's okay! She's only temporarily"
+  },
+  {
+    "type": "action",
+    "text": "On the other side of the counter, Grecklin lies motionless."
+  },
+  {
+    "type": "action",
+    "text": "Laurel considers this for a moment.                            LAUREL                  Grab the sword!                            GRECKLIN                  Don't you touch that!"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore grabs the Curse Crusher from the counter. Laurel delicately puts some cash on the counter.                            LAUREL                       (nervous/polite)"
+  },
+  {
+    "type": "action",
+    "text": "Laurel flips the sign to \"CLOSED\" and exits.                               GRECKLIN                  Hey! HEY!      EXT. PAWN SHOP - NIGHT Laurel and the Manticore run to the car with the sword.                               MANTICORE                  Ohhh yeah!                            COLT (ON PHONE)                  Laurel?! What's happening?!"
+  },
+  {
+    "type": "action",
+    "text": "Back on Colt, who looks panicked.                            COLT (ON PHONE)                  Hello? Are you alright?! Laurel!                            LAUREL                       (phone to ear)"
+  },
+  {
+    "type": "action",
+    "text": "And she hangs up on Colt."
+  },
+  {
+    "type": "action",
+    "text": "Just then, Colt sees a bumper at the head of a rough path. He shines his flashlight onto the plate reading \"GWNIVER\"."
+  },
+  {
+    "type": "action",
+    "text": "Colt's hoof HITS the gas.      EXT. COLT'S CAR - NIGHT Colt's car speeds down the path into the distance.      EXT. ANCIENT TRAIL - DAY Adventurous fantasy music swells in the sunrise as Guinevere traverses the uneven trail.      INT. VAN - DAY                            BARLEY                       (singing)"
+  },
+  {
+    "type": "action",
+    "text": "A bump jostles Ian awake in back. Dad also wakes up in a panic. He taps Ian's foot.                            IAN                  Yeah, we're still here."
+  },
+  {
+    "type": "action",
+    "text": "Dad goes to the front and taps his foot against Barley.                            BARLEY                  Well, good morning to thee, dear"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks out the window at a desolate field.                            IAN                  It's not much of a path.                            BARLEY                  Well, you know, they never really"
+  },
+  {
+    "type": "action",
+    "text": "Barley turns to Ian, taking his eyes off the road.                            BARLEY                  Oh, it's a giant green cube that Barley SLAMS on the brakes. The van comes to a screeching halt at the edge of a chasm.      EXT. BOTTOMLESS PIT - DAY The boys step out of the van. Ian holds Dad's leash.                            IAN                  What is this?                            BARLEY                  Bottomless pit. Whatever falls in"
+  },
+  {
+    "type": "action",
+    "text": "Ian peers over. He doesn't notice Dad wander right to the edge. Ian pulls him back at the last minute.                            IAN                  Whoa, Dad, come here."
+  },
+  {
+    "type": "action",
+    "text": "Ian walks Dad back the van and places him in the front seat.                            BARLEY                  Ian, check it out. This is an"
+  },
+  {
+    "type": "action",
+    "text": "Ian points.                            IAN                  Found it! But, it's on the other"
+  },
+  {
+    "type": "action",
+    "text": "Ian gets an idea. He lifts the staff.                            IAN                  Okay, I got this. Aloft Elevar."
+  },
+  {
+    "type": "action",
+    "text": "Magic shoots from the staff, but peters out halfway across.                            BARLEY                  You can't cast a levitation spell"
+  },
+  {
+    "type": "action",
+    "text": "Ian walks to the lip of the chasm and holds out his staff.                            IAN                  Bridgrigar Invisia."
+  },
+  {
+    "type": "action",
+    "text": "The staff lights up, but no bridge. Ian looks at Barley.                            IAN                  It didn't work.                            BARLEY                  No, the spell's still going. You"
+  },
+  {
+    "type": "action",
+    "text": "Ian gestures to the empty air over the chasm."
+  },
+  {
+    "type": "action",
+    "text": "Barley considers this, then gets an idea.                                                   CUT TO: Barley ties a rope to a large rock. The other end is tied around Ian's waist. Barley holds the rope in the middle.                            BARLEY                  Now we've got a rope. But you're"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes a deep breath and gathers himself. He takes a big step and... FALLS over the edge.                              IAN                  Agh!"
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls the rope and stops Ian's fall.                            IAN                  I'm dying, I'm dying! I'm dead! I'm"
+  },
+  {
+    "type": "action",
+    "text": "Barley pulls Ian up, scraping him along the rocks and roots of the chasm. When he gets to the top, Barley dusts him off.                            BARLEY                  Okay, you fell. But was that so"
+  },
+  {
+    "type": "action",
+    "text": "Ian thinks about this and looks across the chasm. He takes a breath and repositions himself at the edge.                            IAN                  Bridgrigar Invisia!"
+  },
+  {
+    "type": "action",
+    "text": "The staff glows. Ian looks at the chasm, then back at Barley.                            BARLEY                  Hey. You can do this."
+  },
+  {
+    "type": "action",
+    "text": "He STEPS off the edge. But this time his foot stops mid-air, planted on a glowing platform of light.                               BARLEY                  Ha-ha!                               IAN                  Yeah!                            BARLEY                  THERE YOU GO! Ian stands there for a moment, one-legged, then plants his other foot. But this foot doesn't land on anything."
+  },
+  {
+    "type": "action",
+    "text": "Barley gives a tug on the rope and pulls him back.                            BARLEY                  Believe with every step!"
+  },
+  {
+    "type": "action",
+    "text": "Ian closes his eyes, concentrates, then LANDS it on another platform of light.                               BARLEY                  Oh yeah!"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes another step. It lands, solid. He takes another few steps and calls back to Barley.                            IAN                  You've got me, right?"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes one step after another to the center of the chasm."
+  },
+  {
+    "type": "action",
+    "text": "But the knot in the rope loosens. Barley's eyes go wide.                            IAN                  This is amazing!"
+  },
+  {
+    "type": "action",
+    "text": "The rope loosens more and more, until it falls free, dropping into the chasm.                            BARLEY                       (covering panic)"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at the useless rope in his hands.                            BARLEY                  YEAH! I GOT IT!                            IAN                  I AM NOT AFRAID!                       (beat)"
+  },
+  {
+    "type": "action",
+    "text": "Ian playfully steps from side to side.                            BARLEY                  OKAY, BUT KEEP MOVING! WE'VE GOTTA                  SEE DAD, REMEMBER?! Ian approaches the other side of the chasm.                            IAN                  HEY DAD, THIS LAST STEP IS FOR YOU! Ian turns to look at Barley and Dad. When he does, he sees the rope isn't attached to him anymore."
+  },
+  {
+    "type": "action",
+    "text": "As soon as he sees this, he FALLS."
+  },
+  {
+    "type": "action",
+    "text": "But just catches himself on the lip of the chasm. He pulls himself up, terrified, and leans against the bridge lever. The bridge lowers, loud and creaky."
+  },
+  {
+    "type": "action",
+    "text": "Barley drives across the bridge and gets out to hug Ian.                            BARLEY                  That was amazing!                            IAN                  How long... was the rope gone?                            BARLEY                  Oh, just like the second half of Ian thinks about this. He looks back at the chasm and smiles faintly at his success.                               BARLEY (O.S.)                  Ian! Look."
+  },
+  {
+    "type": "action",
+    "text": "Barley points to the top of the drawbridge structure.                            BARLEY                  It's a raven."
+  },
+  {
+    "type": "action",
+    "text": "Barley takes out the wrinkled children's menu.                            BARLEY                  The clue on the menu said Raven's"
+  },
+  {
+    "type": "action",
+    "text": "Ian points to the mountains in the distance.                            IAN                  Yeah. In the mountains.                             BARLEY                  But maybe the puzzle didn't mean"
+  },
+  {
+    "type": "action",
+    "text": "Barley follows the line of the raven's beak to a stone structure in the distance: Another raven.                            BARLEY                  Ha-ha! It's another raven! That one"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at the mountains, horrified.                            IAN                  I had us going the wrong way.                            BARLEY                  Well, I told ya. My gut knows where"
+  },
+  {
+    "type": "action",
+    "text": "Barley pats his gut and laughs proudly."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at Barley, impressed."
+  },
+  {
+    "type": "action",
+    "text": "Barley grabs Dad and heads to the van.                            BARLEY                       (shaking his keys)"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, a POLICE SIREN. A police car crosses the bridge and screeches to a halt in front of them. Colt gets out of his car, struggling to pull his rear end out the door.                            COLT                  You guys are in trouble, big time!                            BARLEY                  No, no, no, Colt, we found a spell."
+  },
+  {
+    "type": "action",
+    "text": "Barley removes Dad's torso. Colt looks confused.                            COLT                  Well, uh, your mom told me there"
+  },
+  {
+    "type": "action",
+    "text": "Colt stops his hoof once... then twice... then...                            IAN                  Okay. We'll go."
+  },
+  {
+    "type": "action",
+    "text": "Ian grabs the van keys from Barley.                               BARLEY                  Ian--                            IAN                  He's a police officer."
+  },
+  {
+    "type": "action",
+    "text": "Ian turns and heads toward the driver's side of the van.      INT. VAN - DAY Barley climbs in and looks at Ian behind the wheel.                            BARLEY                  What are you doing?                            IAN                  I don't know."
+  },
+  {
+    "type": "action",
+    "text": "Ian HITS the gas.      EXT. DRAWBRIDGE - DAY The van takes off, Colt runs after it.                               COLT                  Son of a--"
+  },
+  {
+    "type": "action",
+    "text": "Colt runs after the van. Exhausted, he talks into his radio.                            COLT                  I need backup. Runaway van!      INT. VAN - DAY Barley looks behind them, celebrating."
+  },
+  {
+    "type": "action",
+    "text": "Ian keeps his eyes locked on the road, focused and frazzled.                            IAN                  I can't believe I'm running from"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, a squadron of police cars come straight at them.                            BARLEY                  Okay, now you're running from the"
+  },
+  {
+    "type": "action",
+    "text": "The cops approach from both directions. Ian whips Guinevere into a fishtail, drops the hammer, and evades the cops."
+  },
+  {
+    "type": "action",
+    "text": "Out the window, Ian spots the raven statue in the distance. He cranks the wheel toward it, down a narrow, unpaved road.                              IAN                  Hold on!"
+  },
+  {
+    "type": "action",
+    "text": "Guinevere skids around an unbelievably tight turn at the edge of a cliff. Ian pats Guinevere's dash board, encouragingly.                            IAN                  Yeah! Nice going, Guinevere!"
+  },
+  {
+    "type": "action",
+    "text": "The road comes to a dead end. Ian turns the van around, but they see the cop cars coming up the narrow mountain pass."
+  },
+  {
+    "type": "action",
+    "text": "Ian gets out of the van.                            IAN                  Oh, what did I do?! I shouldn't"
+  },
+  {
+    "type": "action",
+    "text": "Barley points to boulders at the top of the narrow pass.                            BARLEY                  Hey! Block the road with those"
+  },
+  {
+    "type": "action",
+    "text": "Barley hands Ian the book and points to the spell.                            BARLEY                  \"To make lightning strike with"
+  },
+  {
+    "type": "action",
+    "text": "Ian picks up the staff and points it at the boulders.                            IAN                  Voltar Thundasir."
+  },
+  {
+    "type": "action",
+    "text": "A tiny bit of electricity glows in his staff, but quickly peters out. He tries again.                            IAN                  Voltar Thundasir."
+  },
+  {
+    "type": "action",
+    "text": "The staff glows again, but quickly fades. Ian points the staff at the boulders again.                            IAN                  Voltar Thundasir."
+  },
+  {
+    "type": "action",
+    "text": "The magic gives out.                            IAN                  I can't, I can't do it!"
+  },
+  {
+    "type": "action",
+    "text": "Ian sighs and turns to Barley and Dad.                            IAN                  We're not gonna see you, Dad. And"
+  },
+  {
+    "type": "action",
+    "text": "Barley sees how upset Ian is. He turns, starts up Guinevere, and puts in a tape labelled RISE TO VALHALLA. Sad, heroic, music blares."
+  },
+  {
+    "type": "action",
+    "text": "Barley aligns the steering wheel, puts a rock on the gas pedal, knocks the gear shift to \"O.\""
+  },
+  {
+    "type": "action",
+    "text": "Then watches her go."
+  },
+  {
+    "type": "action",
+    "text": "Her turn signal pops out and falls to the ground."
+  },
+  {
+    "type": "action",
+    "text": "The glove compartment pops open and parking violations fly out the windows."
+  },
+  {
+    "type": "action",
+    "text": "Barley salutes her."
+  },
+  {
+    "type": "action",
+    "text": "She rides up the edge of the narrow pass, SLAMS into the rocks, flips onto her back in the middle of the road, and is covered by boulders... completely blocking the road."
+  },
+  {
+    "type": "action",
+    "text": "The police can't get through.                               COLT                  What the--"
+  },
+  {
+    "type": "action",
+    "text": "Barley picks up Guinevere's turn signal light, gives it a loving rub, and puts it in his pocket.                               IAN                  Barley...                            BARLEY                  She was just a beat up old van."
+  },
+  {
+    "type": "action",
+    "text": "Barley ducks under the guard rail and walks through the brush with Dad. Ian climbs the guard rail and follows."
+  },
+  {
+    "type": "action",
+    "text": "We see the boys walk off toward the lowering sun.      EXT. FANTASY WILDERNESS - DAY The boys and Dad walk through tall fields, steady and somber."
+  },
+  {
+    "type": "action",
+    "text": "They reach the raven. It points to another distant raven."
+  },
+  {
+    "type": "action",
+    "text": "They walk toward that raven, through the rain."
+  },
+  {
+    "type": "action",
+    "text": "They reach the raven, follow its beak, and walk further on."
+  },
+  {
+    "type": "action",
+    "text": "The beak of the next raven points straight at a metal disk on the ground. Barley begins to pry it up.                              IAN                  Wait."
+  },
+  {
+    "type": "action",
+    "text": "Ian wipes dirt from the disk. They see the reflection of the raven's beak pointing back at the chest of the raven statue."
+  },
+  {
+    "type": "action",
+    "text": "Ian goes to the statue, examines the chest, and pulls out a loose tile with a distinctive shape.                            BARLEY                  You see that, Dad? The apprentice"
+  },
+  {
+    "type": "action",
+    "text": "Barley takes a closer look at the tile. There's a hieroglyphic engraved in it: wavy lines that lead to an \"X\".                            BARLEY                  It looks like... water."
+  },
+  {
+    "type": "action",
+    "text": "They look around and see a river flowing into a tunnel. They give each other an excited glance.      EXT. TUNNEL ENTRANCE - DAY                            IAN                  So what's the X mean?                            BARLEY                  On a quest, an X only means one Ian creates a magic flame to light a torch."
+  },
+  {
+    "type": "action",
+    "text": "The light reveals horrific, rat-like unicorns that HISS.                              IAN                  AH! Ugh!                              BARLEY                  Ugh!"
+  },
+  {
+    "type": "action",
+    "text": "They flap their horrible wings and flutter out of the tunnel."
+  },
+  {
+    "type": "action",
+    "text": "The boys and Dad climb deeper into the tunnel, along the river. Barley snacks on cheese puffs. Ian looks up to see ancient paintings adorning the walls.                              BARLEY                  Cool..."
+  },
+  {
+    "type": "action",
+    "text": "Ian holds up the torch to try to see the end of the tunnel. It just disappears into endless darkness.                            IAN                  This water could go on for miles."
+  },
+  {
+    "type": "action",
+    "text": "Ian looks around.                            IAN                  There's not much to float on.                            BARLEY                  Remember, on a quest you have to"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at the cheese puff he's about to eat.                                                   CUT TO:                            IAN                  Magnora Gantuan!"
+  },
+  {
+    "type": "action",
+    "text": "A FLASH. Then Ian, Barley, and Dad float into frame riding on a GIANT cheese puff. Ian wields the staff.                              IAN                  Accelior!"
+  },
+  {
+    "type": "action",
+    "text": "The cheese puff races into the darkness of the tunnel.                            IAN                  This is actually kinda cool! So,"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore holds the Curse Crusher sword and downs an energy drink. Laurel drives and calls Colt.                            LAUREL                  Colt, we know where the boys are"
+  },
+  {
+    "type": "action",
+    "text": "She slams the energy drink and tosses it over her shoulder.                            LAUREL                  The curse! The curse that protects"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore cracks open another energy drink.                            MANTICORE                  Oh, we'll get them FAST, we'll get"
+  },
+  {
+    "type": "action",
+    "text": "Laurel takes the energy drink from the Manticore, shakes her head, and pours the rest out the window.                            COLT (ON PHONE)                  Well, I almost had them, but Ian,"
+  },
+  {
+    "type": "action",
+    "text": "A flying SPRITE hits the windshield.                   LAUREL                             MANTICORE      Ahhh!                                Ahhh!                COLT (O.S.)                        WINDSHIELD SPRITE      Ahhh!                                Ahhh!"
+  },
+  {
+    "type": "action",
+    "text": "Laurel can't see. She turns on the windshield wipers in the chaos, then steers the car off the road, into a ditch."
+  },
+  {
+    "type": "action",
+    "text": "She and the Manticore get out of the car, dazed. We can hear Colt's muffled voice inside.                            COLT (ON PHONE)                  Laurel, what happened?! What's"
+  },
+  {
+    "type": "action",
+    "text": "The Sprite peels herself off of the windshield.                            WINDSHIELD SPRITE                  You almost killed me, lady!                            LAUREL                  Are you okay? Where did you come"
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, a swarm of sprites flies in.                            DEWDROP                  You were in our flight path!                            FLYING SPRITES                  Yeah! Come on! / Watch where you're"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore looks at the demolished car.                            MANTICORE                  Oh, no! Our transport! How are we"
+  },
+  {
+    "type": "action",
+    "text": "Laurel looks around for any sign of hope."
+  },
+  {
+    "type": "action",
+    "text": "Laurel   watches the sprites fly away and gets an idea.                            LAUREL                  How do you feel about exercising"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore gives her wings a nervous flutter.      INT. TUNNEL - DAY Ian stands in the speeding cheese puff, holding the staff.                            IAN                  Boombastia!"
+  },
+  {
+    "type": "action",
+    "text": "Just a small spark. Barley adjust Ian's shoulder like he did with the growth spell.                            BARLEY                  Remember...                             IAN                  Ah, right."
+  },
+  {
+    "type": "action",
+    "text": "Beautiful fireworks explode from the staff.                              IAN                  Whoa!                            BARLEY                  Yeah! You're a natural!"
+  },
+  {
+    "type": "action",
+    "text": "Barley grabs a chunk of cheese doodle and THROWS it at Ian.                            BARLEY                  Think fast!                            IAN                  Aloft Elevar!"
+  },
+  {
+    "type": "action",
+    "text": "Ian catches it with magic.                            BARLEY                  Ha-ha! Yeah!"
+  },
+  {
+    "type": "action",
+    "text": "He tosses it back to Barley who pops it in his mouth."
+  },
+  {
+    "type": "action",
+    "text": "Barley eats another fist-sized chunk of the cheese doodle.                            IAN                  Careful how much boat you're eating"
+  },
+  {
+    "type": "action",
+    "text": "Barley pauses, a little pained.                            BARLEY                  It's... it's just not my favorite."
+  },
+  {
+    "type": "action",
+    "text": "Barley gives Ian a side glance, hesitant to start.                            BARLEY                  When Dad was sick..."
+  },
+  {
+    "type": "action",
+    "text": "Ian smiles, bittersweet."
+  },
+  {
+    "type": "action",
+    "text": "Barley looks ahead and points.                             BARLEY                  Ah, looks like we're coming up on"
+  },
+  {
+    "type": "action",
+    "text": "The walls of the cavern grow ornate, wizard statues guard the tunnel. The boat slows and stops at the edge of a landing."
+  },
+  {
+    "type": "action",
+    "text": "The boys and Dad approach an ancient, ornate archway.                            BARLEY                       (in awe) Ian enters the tunnel. Dad walks just ahead of him on the leash. Barley notices skeletons up ahead.                            BARLEY                  Careful, there could be booby"
+  },
+  {
+    "type": "action",
+    "text": "A blade swings from the wall, cutting off Dad's torso and flinging it behind them. A gust blows out Barley's torch."
+  },
+  {
+    "type": "action",
+    "text": "Behind them, a trap door in the ceiling slowly opens, casting a sickly green light into the tunnel.                            BARLEY                  Oh no, it can't be..."
+  },
+  {
+    "type": "action",
+    "text": "A giant GELATINOUS CUBE filled with skeletons drops from a hole in the ceiling, closing them off from the way they came.                            BARLEY                  A GELATINOUS CUBE! The cube moves toward them. As it does, it runs over Dad's dismembered torso. The torso immediately dissolves."
+  },
+  {
+    "type": "action",
+    "text": "They look to the other end of the tunnel and see a door slowly lowering from above, about to close them off inside the chamber with the gelatinous cube.                              BARLEY                  Run!"
+  },
+  {
+    "type": "action",
+    "text": "Ian sees there are shapes and symbols on the path stones.                            IAN                  Whoa, wait! It's some kind of"
+  },
+  {
+    "type": "action",
+    "text": "Barley and Ian grab shields from skeletons and RUN."
+  },
+  {
+    "type": "action",
+    "text": "As they step on path stones, arrows release from the walls and strike the shields. At the other side, they STOP in front of a wide chasm with spikes at the bottom.                              IAN                  Jump!                              BARLEY                  What?                              IAN                  Trust me."
+  },
+  {
+    "type": "action",
+    "text": "Barley jumps and begins to fall toward the spikes.                            IAN                  Aloft Elevar!"
+  },
+  {
+    "type": "action",
+    "text": "Ian catches Barley in mid-air with a levitation spell."
+  },
+  {
+    "type": "action",
+    "text": "Ian and Dad leap off the edge, using Barley as a stepping stone to bound to the other side.                              BARLEY                  Ow! Hey!"
+  },
+  {
+    "type": "action",
+    "text": "Ian lands on the other side and looks back.                              BARLEY                  Ian..."
+  },
+  {
+    "type": "action",
+    "text": "The cube is closing in on Barley, who floats over the chasm. Ian uses magic to lift Barley to safety, just barely sliding him up between the gelatinous cube and the ledge."
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley slide under the closing door, then notice Dad is still on the other side. Ian grabs his leash and tugs him under the door just as it closes."
+  },
+  {
+    "type": "action",
+    "text": "Ian stands and starts to move forward, but Barley stops him.                            BARLEY                  Whoa whoa whoa!"
+  },
+  {
+    "type": "action",
+    "text": "Barley points at the floor. There's a star-shaped tile on the floor, similar to the ones in the gauntlet.                            BARLEY                  Don't step on that."
+  },
+  {
+    "type": "action",
+    "text": "There's a clanging noise, slow and deep. Suddenly water RUSHES into the silo from holes at the bottom. It quickly lifts them off their feet, toward the ceiling.                            IAN                  I didn't touch it!"
+  },
+  {
+    "type": "action",
+    "text": "Barley holds onto Dad, trying to keep him above water with them. Ian aims the staff at a hole at the top of the silo.                            IAN                  Voltar Thundasir!"
+  },
+  {
+    "type": "action",
+    "text": "A lightning bolt shoots forth, bouncing off the door."
+  },
+  {
+    "type": "action",
+    "text": "As they get closer to the top, they can see the hole the light is coming through is star-shaped. Ian sticks his head underwater and looks at star-shaped stone on the floor."
+  },
+  {
+    "type": "action",
+    "text": "Barley swims to the bottom of the silo. He STANDS on the stone and the door above them begins to open.                            IAN                  It's working!"
+  },
+  {
+    "type": "action",
+    "text": "But Barley can't hold his breath long enough. He swims back to the surface and the door quickly closes                             BARLEY                  It's impossible!"
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley look at each other, then at Dad. Ian lets go of Dad, letting him sink to the bottom. Ian guides Dad toward the stone with his leash, but Dad keeps missing."
+  },
+  {
+    "type": "action",
+    "text": "The water fills to the top. The boys take a deep breath then are fully submerged. Ian finally guides Dad to the stone. The door above them opens as the stone finally LOCKS into place."
+  },
+  {
+    "type": "action",
+    "text": "The boys GASP to the surface. They climb out of the water and reel in Dad with the leash.                            BARLEY                  Ha-ha! We made it!"
+  },
+  {
+    "type": "action",
+    "text": "Just above them is a circular portal.                            BARLEY                  The Phoenix Gem awaits beyond this"
+  },
+  {
+    "type": "action",
+    "text": "They climb the ladder, laughing as they clumsily help Dad.                            IAN                  Dad, we have followed the quest and"
+  },
+  {
+    "type": "action",
+    "text": "Ian slides the portal aside and sunlight seeps in...      EXT. NEW MUSHROOMTON DOWNTOWN - DAY Ian climbs out of the hole and squints into the sunlight. His smile fades as he recognizes landmarks of New Mushroomton."
+  },
+  {
+    "type": "action",
+    "text": "They're right back where they started."
+  },
+  {
+    "type": "action",
+    "text": "A bus HONKS at the boys and Dad, who are still standing in the middle of the street. Barley pulls Ian toward the park.                            IAN                       (in shock)"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks more closely at the tile.                             BARLEY                  Unless the X meant stay away from"
+  },
+  {
+    "type": "action",
+    "text": "He turns the tile so the X is on the bottom.                            BARLEY                  Or it could be, like, a campfire..."
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at Ian, hurt."
+  },
+  {
+    "type": "action",
+    "text": "Ian takes Dad by the leash walks into the park.                            BARLEY                  Where are you going?                            IAN                  To spend what little time we have"
+  },
+  {
+    "type": "action",
+    "text": "Ian looks at the staff in disgust. He hands it to Barley.                            BARLEY                  Ian, wait! We can still find the"
+  },
+  {
+    "type": "action",
+    "text": "But Ian just keeps walking with Dad further into the park.                              BARLEY                  Ian! IAN!      EXT. OCEANSIDE CLIFF - PARK - DAY Ian reaches a cliff. He looks sadly out at the sun starting to set into the ocean. Dad searches around with his foot.                            IAN                  No, Dad. He's not here."
+  },
+  {
+    "type": "action",
+    "text": "Ian and Dad sit down on the ground, facing the setting sun.      EXT. DOWNTOWN - DAY Meanwhile, Barley frantically searches the park.                            BARLEY                  Come on, where is it?"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks at the fountain.                            BARLEY                  Follow the water!"
+  },
+  {
+    "type": "action",
+    "text": "Barley races to the fountain and sloshes in the dirty water looking for a clue. Two nearby construction workers notice.                            CONSTRUCTION WORKER #2                  Alright, come on, out of the"
+  },
+  {
+    "type": "action",
+    "text": "The construction workers pull him away from the fountain.                            BARLEY                  Okay! Okay! Ow! Okay, I'm leaving!"
+  },
+  {
+    "type": "action",
+    "text": "Barley breaks free from them and races back to the fountain.                              FENNWICK                  Hey!"
+  },
+  {
+    "type": "action",
+    "text": "They try to grab him again, but he awkwardly shimmies to the top, arms wrapped around the spire, wet and pathetic.                            CONSTRUCTION WORKER #2                  Can someone call the cops?! We got"
+  },
+  {
+    "type": "action",
+    "text": "Barley looks desperate and confused. The screwup everyone always believed him to be.      EXT. OCEANSIDE CLIFF - PARK - DAY Ian pulls out the list of things to do with Dad. His heart breaks as he begins to cross off one item after another."
+  },
+  {
+    "type": "action",
+    "text": "Ian is about to cross off DRIVING LESSON when he stops.                                                   IN FLASHBACK:      EXT. FREEWAY - NIGHT                            IAN                  I can't do this!                            BARLEY                  Yes, you can!                            IAN                  I'm not ready!                            BARLEY                  You'll never be ready! MERGE!!                              IAN                  AHHH!!! Ian floors it and drives onto the freeway.                            BARLEY                  Ha-ha! Nice job!                                                   END FLASHBACK. Ian thinks. Then places a check mark next to DRIVING LESSON."
+  },
+  {
+    "type": "action",
+    "text": "He goes back to the top of the list: PLAY CATCH.                                                   IN FLASHBACK:"
+  },
+  {
+    "type": "action",
+    "text": "Barley throws a cheese doodle chunk.                            BARLEY                  THINK FAST!                            IAN                  Aloft Elevar!"
+  },
+  {
+    "type": "action",
+    "text": "Ian catches it with magic.                                                   END FLASHBACK. Ian checks off PLAY CATCH."
+  },
+  {
+    "type": "action",
+    "text": "The next item on the list: LAUGH TOGETHER.                                                   IN FLASHBACK:      EXT. REST AREA - NIGHT The boys dance with Dad at the rest area.                                                   END FLASHBACK. Ian checks off LAUGH TOGETHER."
+  },
+  {
+    "type": "action",
+    "text": "The next item on the list: SHARE MY LIFE WITH HIM.                                                   IN FLASHBACK:      EXT. SWIMMING POOL - DAY Young Ian stands nervously at the edge of a diving board. Young Barley pushes him in. Ian laughs and they both play.                                                   CUT TO:      INT. BEDROOM - DAY The boys pillow fight. Young Ian hits Young Barley. Barley falls over, pretending Ian hit him with a lot of strength.                                                   CUT TO:      EXT. LIGHTFOOT HOUSE - DAY Young Barley pushes young Ian on a bike then lets him go."
+  },
+  {
+    "type": "action",
+    "text": "Barley's encouraging words swirl around in Ian's memory.                            BARLEY                  I know you're stronger than that!                                                   CUT TO:                            BARLEY                  My little brother has the magic Ian sees he's crossed off everything on the list. He puts the checklist back in his pocket, takes Dad's leash, and races into the park, toward Barley.      EXT. FOUNTAIN - DAY Barley crouches on top of the fountain, evading the cops who call to him from below.                            OFFICER SPECTER                  Okay, come on. Get down right now."
+  },
+  {
+    "type": "action",
+    "text": "Barley notices a shape on the fountain that matches the tile from the entrance to the tunnel. His eyes light up. He slowly pushes the tile into the matching shape in the fountain."
+  },
+  {
+    "type": "action",
+    "text": "The tile slides in with a CLACK. It's a perfect fit."
+  },
+  {
+    "type": "action",
+    "text": "An eye atop the fountain opens to reveal the PHOENIX GEM.                            BARLEY                  YEAH! YEAH!"
+  },
+  {
+    "type": "action",
+    "text": "He grabs the gem, but doesn't notice a red mist that pours from the fountain. Ian clears the woods and sees Barley on the fountain, holding the gem triumphantly.                               IAN                  BARLEY! Barley looks at Ian.                               BARLEY                  Ian, look!"
+  },
+  {
+    "type": "action",
+    "text": "Ian smiles, impressed. But then sees the ominous red smoke.                            IAN                  Behind you!"
+  },
+  {
+    "type": "action",
+    "text": "Barley turns to see the red smoke go past the police officers. They slowly back into the crowd.                            BARLEY                  It's a curse!"
+  },
+  {
+    "type": "action",
+    "text": "The smoke pulls apart the high school with its red coils, forming the shape of a massive DRAGON. It turns to reveal it has the eerie, smiling face of the school's dragon mascot."
+  },
+  {
+    "type": "action",
+    "text": "The dragon sees the gem in Barley's hand and ROARS a terrifying, garbled version of the school bell.                            IAN                  Barley, RUN!"
+  },
+  {
+    "type": "action",
+    "text": "Barley jumps down from the fountain, grabs the staff, and takes off running. He calls out to the dragon.                            BARLEY                  What do you want?! The gem?! Fine."
+  },
+  {
+    "type": "action",
+    "text": "He THROWS the gem as far as he can in the other direction. The dragon turns to chase the gem."
+  },
+  {
+    "type": "action",
+    "text": "But when it lands, we see it isn't the gem at all. It's Guinevere's turn signal."
+  },
+  {
+    "type": "action",
+    "text": "Barley and Ian race toward each other. Barley holds up his hand to reveal he still has the real gem."
+  },
+  {
+    "type": "action",
+    "text": "The dragon turns, sees Barley with the gem, and breathes a wall of fire between the boys. Ian and Barley are thrown to the ground, they can't get to each other."
+  },
+  {
+    "type": "action",
+    "text": "The dragon takes a flying leap toward the boys and Dad."
+  },
+  {
+    "type": "action",
+    "text": "Suddenly, a dark shape sweeps down from the sky. The Manticore, holding the Curse Crusher sword, BASHES the dragon to the ground.                            BARLEY                  The Manticore!"
+  },
+  {
+    "type": "action",
+    "text": "Ian squints and sees someone riding atop the Manticore.                              IAN                  Mom?!"
+  },
+  {
+    "type": "action",
+    "text": "Laurel stands atop the Manticore heroically.                            LAUREL                  It's okay, boys! We'll take care of-"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore tips to one side.                            LAUREL                  Whoa, you're tilting, you're"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore straightens.                              IAN                  Mom!                            LAUREL                  Go see your father!                            BARLEY                       (to Ian)"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore flies toward the dragon, taunting it into a chase. As the dragon follows briefly distracted, the Manticore loops around and cuts off the dragon's wings."
+  },
+  {
+    "type": "action",
+    "text": "The boys climb the hill to get around the fire: Ian up one side with Dad, Barley up the other with the staff and gem."
+  },
+  {
+    "type": "action",
+    "text": "As they meet at the top, Barley hands Ian the staff.                             IAN                  Barley, what I said before-- I am"
+  },
+  {
+    "type": "action",
+    "text": "Ian holds out the staff with the gem inside.                            IAN                  Only once is all we get,"
+  },
+  {
+    "type": "action",
+    "text": "A beam of light shoots from the staff. Ian holds on strong."
+  },
+  {
+    "type": "action",
+    "text": "The Manticore flies back toward the dragon, fast and fierce.                            MANTICORE                  Time to crush a curse!"
+  },
+  {
+    "type": "action",
+    "text": "But the dragon swats the Manticore out of the sky with its tail. Laurel and the Manticore CRASH to the ground. Laurel gets up, but the Manticore cannot.                            MANTICORE                  Ooh, my back!"
+  },
+  {
+    "type": "action",
+    "text": "A shadow passes over them as the dragon makes its way toward the boys. Laurel lifts the heavy Curse Crusher and wields it.                            LAUREL                  I am a mighty warrior..."
+  },
+  {
+    "type": "action",
+    "text": "Laurel clambers up the tail of the dragon with the sword. The music from Laurel's warrior workout video plays. Laurel runs to the curse's core, glowing deep beneath its armor."
+  },
+  {
+    "type": "action",
+    "text": "Laurel holds the sword above her head with both hands and STABS the sword into the core.                            LAUREL                  I AM A MIGHTY WARRIOR! The dragon slows to a stop. The boys watch the red of the curse turn blue. Laurel holds the sword with great effort.                            LAUREL                  Hurry, I can't hold this for long!"
+  },
+  {
+    "type": "action",
+    "text": "The sword is up to the hilt in the armor, but just barely piercing the red core."
+  },
+  {
+    "type": "action",
+    "text": "Meanwhile, the gem lifts out of the staff and spins. Red, ominous light grows around it, the staff begins to shake.                            IAN                  No, no, no, no, no--"
+  },
+  {
+    "type": "action",
+    "text": "The red magic swells and is about to explode..."
+  },
+  {
+    "type": "action",
+    "text": "Barley runs and braces his back against Ian's."
+  },
+  {
+    "type": "action",
+    "text": "There's an explosion. Then the gem floats over Dad and begins raining magic down upon him, slowly building the rest of him."
+  },
+  {
+    "type": "action",
+    "text": "The boys watch with joy."
+  },
+  {
+    "type": "action",
+    "text": "The dragon's armor begins to shift, slowly working the sword out of the core. Now freed, the dragon knocks Laurel off its back. The sword falls deep into a pile of lockers.                            LAUREL                  Boys! It's coming back!"
+  },
+  {
+    "type": "action",
+    "text": "The dragon's eyes turn immediately to the gem."
+  },
+  {
+    "type": "action",
+    "text": "Ian and Barley turn to the dragon as Dad continues to generate. The sun is beginning to set.                            BARLEY                  I'll go distract it!                            IAN                  What? No! If you do that, you'll"
+  },
+  {
+    "type": "action",
+    "text": "Ian takes this in and suddenly realizes what he has to do.                            IAN                  No. You go and say goodbye.                              BARLEY                  What?                            IAN                  I had someone who looked out for"
+  },
+  {
+    "type": "action",
+    "text": "Barley opens his mouth to respond, but before he can say anything, Ian takes the staff and races off."
+  },
+  {
+    "type": "action",
+    "text": "Ian leaps off the ledge, calling out the trust bridge spell.                            IAN                  Bridrigar Invisia!"
+  },
+  {
+    "type": "action",
+    "text": "He lands on the bridge midair and runs toward the dragon.                            IAN                  Boombastia!"
+  },
+  {
+    "type": "action",
+    "text": "Fireworks shoot from his staff, blinding the dragon."
+  },
+  {
+    "type": "action",
+    "text": "The dragon whips its tail toward Ian. It misses the first time, but then the dragon lifts its tail to strike Ian again.                            IAN                  Aloft Elevar!"
+  },
+  {
+    "type": "action",
+    "text": "Ian stops the tail by levitation. He strains to hold it."
+  },
+  {
+    "type": "action",
+    "text": "Meanwhile, Laurel tries desperately to reach the hilt of the Curse Crusher deep in the locker pile."
+  },
+  {
+    "type": "action",
+    "text": "The dragon whips its tail, sending Ian and the staff soaring. Ian crashes to the ground, watching helplessly as the staff splashes into the ocean.                              IAN                  NO! The dragon marches straight towards Barley and Dad.                            IAN                  No. No. No-- No!"
+  },
+  {
+    "type": "action",
+    "text": "Laurel gets her fingertips on the sword. It's precariously perched, slipping toward a deeper fall."
+  },
+  {
+    "type": "action",
+    "text": "Ian searches for a way.                            IAN                  Use what I have. Uh, what do I"
+  },
+  {
+    "type": "action",
+    "text": "He looks at his empty hands.                            IAN                  Splinter..."
+  },
+  {
+    "type": "action",
+    "text": "Ian sees a splinter from the staff in his hand.                            IAN                  Magic in every fiber."
+  },
+  {
+    "type": "action",
+    "text": "Ian bites out the splinter and holds it out in his hand.                            IAN                  Magnora Gantuan!"
+  },
+  {
+    "type": "action",
+    "text": "The splinter grows into a full-size staff."
+  },
+  {
+    "type": "action",
+    "text": "Ian sees the beast closing in on Barley and Dad.                              IAN                  NO! Ian points the staff and yells...                            IAN                  Voltar Thundasir!"
+  },
+  {
+    "type": "action",
+    "text": "A colossal bolt of lighting shoots from his staff and blasts most of the armor off the dragon. It keeps advancing, still dragon-shaped, but with its core clearly exposed."
+  },
+  {
+    "type": "action",
+    "text": "The Curse Crusher begins to fall, but Laurel JUST grabs it by the tip of its blade. She stands and calls out to Ian.                              LAUREL                  Ian!"
+  },
+  {
+    "type": "action",
+    "text": "She hurls the sword toward Ian with all her might.                              IAN                  Accelior!"
+  },
+  {
+    "type": "action",
+    "text": "Ian rushes the sword mid-air with the velocity spell and plunges it straight into the core of the curse. It billows into the air as a red cloud, then dissipates into nothing."
+  },
+  {
+    "type": "action",
+    "text": "Ian falls to the ground, spent. The staff clatters away from him and is blocked by the rubble that was once the dragon."
+  },
+  {
+    "type": "action",
+    "text": "Ian gets up but is stopped by a sharp pain in his ankle.                              LAUREL                  Ian!?"
+  },
+  {
+    "type": "action",
+    "text": "Ian turns to see Laurel through a crack in the debris. Colt runs up alongside her."
+  },
+  {
+    "type": "action",
+    "text": "Suddenly there's a warm burst of light from atop the peak. Laurel and Colt look toward the light, stunned."
+  },
+  {
+    "type": "action",
+    "text": "Ian climbs the rubble to find a gap through which he can see."
+  },
+  {
+    "type": "action",
+    "text": "Barley is face to face with a glowing figure. The glowing subsides to reveal Dad. All of him."
+  },
+  {
+    "type": "action",
+    "text": "Barley and Dad look uncomfortable at first; two strangers getting to know each other. Ian can only see Dad's back."
+  },
+  {
+    "type": "action",
+    "text": "Ian slips from his position and loses sight of Barley and Dad. He turns to see the sun is disappearing."
+  },
+  {
+    "type": "action",
+    "text": "He climbs back up and continues to watch."
+  },
+  {
+    "type": "action",
+    "text": "Dad and Barley talk and laugh together."
+  },
+  {
+    "type": "action",
+    "text": "Dad reaches out and gives his big son a hug."
+  },
+  {
+    "type": "action",
+    "text": "The sun sets."
+  },
+  {
+    "type": "action",
+    "text": "And Dad vanishes in Barley's arms."
+  },
+  {
+    "type": "action",
+    "text": "Barley collects himself, then climbs down the peak."
+  },
+  {
+    "type": "action",
+    "text": "Tears fill Laurel's eyes, she leans on Colt."
+  },
+  {
+    "type": "action",
+    "text": "Barley reaches down to help up Ian. The boys stand atop the rubble face to face.                            IAN                  What did he say?                             BARLEY                  He said he always thought his"
+  },
+  {
+    "type": "action",
+    "text": "Barley leans down and gives Ian a big, loving hug."
+  },
+  {
+    "type": "action",
+    "text": "Ian smiles, and hugs him back.                                                   FADE TO BLACK."
+  },
+  {
+    "type": "action",
+    "text": "Over black.                            IAN (V.O.)                  Long ago, the world was full of"
+  },
+  {
+    "type": "action",
+    "text": "Over the rolling hills, into suburban neighborhoods.                            IAN (V.O.)                  It was adventurous, exciting, and"
+  },
+  {
+    "type": "action",
+    "text": "A familiar building at the top of a hill - the Manticore's Tavern with a sign that reads \"GRAND RE-OPENING.\"      INT. MANTICORE'S TAVERN - DAY The tavern looks like it did in it's glory days. A sprite flies with a stein toward a group of sprites playing darts. A sprite tosses bullseye. The sprites celebrate.                            BULLSEYE SPRITE                  Ha-ha! Bullseye!"
+  },
+  {
+    "type": "action",
+    "text": "The Manticore, her wings outstretched, tells a tale.                            MANTICORE                  And then with a slash of my mighty"
+  },
+  {
+    "type": "action",
+    "text": "She blows a flame to light the candles on a birthday cake. The kids' birthday hats get a little scorched.                            MANTICORE                  Okay, who wants cake?"
+  },
+  {
+    "type": "action",
+    "text": "She proudly lifts the glorious Curse Crusher to the skies, then brings it down hard and slices the cake."
+  },
+  {
+    "type": "action",
+    "text": "Frosting splatters on the kids faces. There's a beat, then...                            BIRTHDAY KIDS                       (joyful)                  YEAH!!! The parents watch uncomfortably. Cake on their faces as well."
+  },
+  {
+    "type": "action",
+    "text": "Ian stands in front of a classroom giving a presentation. He holds the new staff he made from the splinter.                            IAN                  And I think with a little bit of"
+  },
+  {
+    "type": "action",
+    "text": "A student, YELDAEH, raises her hand.                            YELDAEH                  Is that how you put the school back"
+  },
+  {
+    "type": "action",
+    "text": "Another student, THEYUS, interrupts.                            THEYUS                  Is that also how you destroyed the"
+  },
+  {
+    "type": "action",
+    "text": "The bell RINGS. The students leave. Sadalia and her group of friends walk up to Ian.                            SADALIA                  Hey, that was great.                              IAN                  Thanks!                            GURGE                  You going to the park later?                            IAN                  Yeah! See you there!"
+  },
+  {
+    "type": "action",
+    "text": "They all wave goodbye to Ian as they leave.      INT. LIVING ROOM - DAY Ian walks in the front door, smiling.                              IAN                  Mom!"
+  },
+  {
+    "type": "action",
+    "text": "Blazey barrels around the corner and knocks Ian to the ground. But Ian stays there and wrestles playfully with her."
+  },
+  {
+    "type": "action",
+    "text": "Laurel hustles around the corner with the spray bottle.                            LAUREL                  Blazey! Down!                            IAN                  Who's a good dragon? Who's a good"
+  },
+  {
+    "type": "action",
+    "text": "Colt sidles up to Laurel.                            COLT                  Hey! There he is. You working hard?                            IAN                  Nope, hardly workin'."
+  },
+  {
+    "type": "action",
+    "text": "Colt throws his head back and laughs. Laurel gets a text.                            LAUREL                  Oh, I gotta go. I'm meeting the"
+  },
+  {
+    "type": "action",
+    "text": "Laurel picks up a battle axe.                            OFFICER GORE (O.S.)                       (on radio)"
+  },
+  {
+    "type": "action",
+    "text": "Colt kisses Laurel, then he leaves.                            COLT                  Duty calls. Time to hit the trail!                            LAUREL                  You forgot your keys!                            COLT                  Don't need `em! I was born to run."
+  },
+  {
+    "type": "action",
+    "text": "Colt runs full-speed down the road, his hair flowing.      INT. LIGHTFOOT HOME - DAY Ian watches from the living room and smiles. Suddenly he's attacked from behind. Barley has him in a choke hold. But Ian gets out of it and slams Barley to the ground."
+  },
+  {
+    "type": "action",
+    "text": "Barley smiles. Ian helps him up and they head out together.                            IAN                  So, how's the new van?                            BARLEY                  Oh, Guinevere the Second is great."
+  },
+  {
+    "type": "action",
+    "text": "The new van has a Pegasus with a warrior Barley on her back and a wizard Ian riding behind him.                              BARLEY                  YEAH!      EXT. ROAD - DAY Barley drives the new van down the road. Her license plate reads: GWNIVER2.                            BARLEY                  Okay, best way to the park is to"
+  },
+  {
+    "type": "action",
+    "text": "The van lifts into the air and flies into the horizon.                              BARLEY                  YEAH!!      INT. IAN'S ROOM - DAY On photos of Dad and the family in Ian's room. Pan past photos of Dad, then of him with Laurel and Barley, happy. Finally, we land on a photo of Ian leaning on Barley.                                                   FADE OUT:  yrr dekho ye onward movei script hai isme na sirf talkin rahe wo wo scene casting text script hatake clean do"
+  }
+]

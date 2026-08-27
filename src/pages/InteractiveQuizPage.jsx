@@ -1,23 +1,69 @@
 import React, { useState, useEffect, useRef } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { SpeechRecognition as CapSpeech } from "@capacitor-community/speech-recognition";
-// 🔥 NAYA IMPORT: Native TTS Plugin jisse aawaz 100% bajegi (Fallback ke liye)
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { Capacitor } from "@capacitor/core";
-import { Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, Bot, Send } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Mic, MicOff, Loader2, Sparkles, User, Volume2, AudioLines, 
+  Bot, Send, Menu, X, Coffee, Briefcase, ShoppingBag, Utensils, Plane, MessageSquare 
+} from "lucide-react"; 
 import toast from "react-hot-toast";
 import 'regenerator-runtime/runtime';
+
+// 🔥 PRE-DEFINED SCENARIOS KI LIST
+const SCENARIOS = [
+  { 
+    id: 'cafe', 
+    title: 'Coffee Shop', 
+    icon: <Coffee size={18} strokeWidth={2.5}/>, 
+    intro: "Namaste! Imagine karo tum ek cafe mein ho aur tumhe ek strong coffee order karni hai, par bahut politely. Tum English mein kaise kahoge? Mic tap karo aur try karo!" 
+  },
+  { 
+    id: 'office', 
+    title: 'Office Leave', 
+    icon: <Briefcase size={18} strokeWidth={2.5}/>, 
+    intro: "Hello! Tum office ki meeting mein ho aur tumhe apne boss se kal ki chhutti (leave) maangni hai. Ek polite aur professional English sentence try karo." 
+  },
+  { 
+    id: 'restaurant', 
+    title: 'Restaurant Issue', 
+    icon: <Utensils size={18} strokeWidth={2.5}/>, 
+    intro: "Hi! Tum ek fancy restaurant mein ho. Khana bahut thanda hai aur tumhe waiter se complain karni hai, lekin bina gussa kiye. Kaise bologe?" 
+  },
+  { 
+    id: 'shop', 
+    title: 'Shopping Size', 
+    icon: <ShoppingBag size={18} strokeWidth={2.5}/>, 
+    intro: "Hey! Tum ek kapde ki dukaan mein ho aur tumhe yeh shirt ek size badi (larger size) chahiye. Shopkeeper se English mein kaise poochoge?" 
+  },
+  { 
+    id: 'airport', 
+    title: 'Airport Check-in', 
+    icon: <Plane size={18} strokeWidth={2.5}/>, 
+    intro: "Namaste! Tumhara luggage overweight hai aur airport counter wali lady extra charge kar rahi hai. Request karo ki thoda adjust kar lein. Try in English!" 
+  },
+  { 
+    id: 'casual', 
+    title: 'Casual Chat', 
+    icon: <MessageSquare size={18} strokeWidth={2.5}/>, 
+    intro: "Hey! Main tumhara AI English buddy hoon. Aaj din kaisa raha? Jo bhi dimaag mein aaye, English mein bolo. Main tumhari mistakes theek karunga." 
+  }
+];
 
 export default function AIVoiceTutor({ userEmail }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  
   const [inputText, setInputText] = useState("");
-
   const [isNativeListening, setIsNativeListening] = useState(false);
 
+  // 🔥 SIDEBAR STATE
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeScenario, setActiveScenario] = useState(SCENARIOS[0]);
+
+  // Chat history starts with active scenario's intro
   const [chatHistory, setChatHistory] = useState([
-    { role: "ai", text: "Namaste! Main aapka AI English coach hoon. Mic par tap karo aur chalo practice shuru karte hain!" }
+    { role: "ai", text: SCENARIOS[0].intro }
   ]);
 
   const {
@@ -31,7 +77,6 @@ export default function AIVoiceTutor({ userEmail }) {
   const audioRef = useRef(null);
   const isApp = Capacitor.isNativePlatform();
 
-  // Backend URL Generator
   const getBackendUrl = () => {
     let BACKEND_URL = "https://serdeptry1st.onrender.com"; 
     if (!isApp) {
@@ -50,7 +95,7 @@ export default function AIVoiceTutor({ userEmail }) {
   }, [chatHistory, isProcessing, inputText]);
 
   useEffect(() => {
-    audioRef.current = new Audio(); // Component load hote hi audio setup
+    audioRef.current = new Audio(); 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -68,7 +113,6 @@ export default function AIVoiceTutor({ userEmail }) {
     }
   }, [webTranscript, webListening, isApp]);
 
-  // 🔥 THE MAGIC UNLOCKER: Ye browser/OS ko trick karega ki user ne play allow kar diya hai
   const unlockAudioEngine = () => {
     if (audioRef.current) {
       audioRef.current.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=";
@@ -76,8 +120,28 @@ export default function AIVoiceTutor({ userEmail }) {
     }
   };
 
+  // 🔥 LOAD NEW SCENARIO FUNCTION
+  const loadScenario = (scenario) => {
+    setActiveScenario(scenario);
+    setChatHistory([{ role: "ai", text: scenario.intro }]); // Reset Chat
+    setInputText("");
+    setIsSidebarOpen(false); // Close sidebar
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    }
+
+    if (isApp && isNativeListening) {
+      CapSpeech.stop().catch(e => console.log(e));
+      setIsNativeListening(false);
+    } else if (!isApp && webListening) {
+      SpeechRecognition.stopListening();
+    }
+  };
+
   const toggleMic = async () => {
-    unlockAudioEngine(); // Tap karte hi audio engine unlock
+    unlockAudioEngine(); 
 
     if (audioRef.current) {
       audioRef.current.pause();
@@ -101,24 +165,15 @@ export default function AIVoiceTutor({ userEmail }) {
       if (isApp) {
         try {
           const { speechRecognition } = await CapSpeech.requestPermissions();
-          if (speechRecognition !== 'granted') {
-            return toast.error("Mic permission denied!");
-          }
+          if (speechRecognition !== 'granted') return toast.error("Mic permission denied!");
 
           setIsNativeListening(true);
-          
-          await CapSpeech.start({
-            language: "en-IN",
-            partialResults: true,
-            popup: false 
-          });
+          await CapSpeech.start({ language: "en-IN", partialResults: true, popup: false });
 
           CapSpeech.addListener("partialResults", (data) => {
             if (data.matches && data.matches.length > 0) {
               const text = data.matches[0];
-              if (text && text.trim().length > 0) {
-                setInputText(text); 
-              }
+              if (text && text.trim().length > 0) setInputText(text); 
             }
           });
         } catch (error) {
@@ -126,9 +181,7 @@ export default function AIVoiceTutor({ userEmail }) {
           toast.error("Phone mic error!");
         }
       } else {
-        if (!browserSupportsSpeechRecognition) {
-          return toast.error("Your browser doesn't support speech recognition.");
-        }
+        if (!browserSupportsSpeechRecognition) return toast.error("Your browser doesn't support speech recognition.");
         resetWebTranscript();
         SpeechRecognition.startListening({ continuous: true, language: 'en-IN' });
       }
@@ -136,8 +189,7 @@ export default function AIVoiceTutor({ userEmail }) {
   };
 
   const handleSendMessage = () => {
-    unlockAudioEngine(); // Message bhejte waqt bhi unlock ensure karein
-
+    unlockAudioEngine(); 
     const textToSend = inputText.trim();
     if (!textToSend) return;
 
@@ -162,53 +214,38 @@ export default function AIVoiceTutor({ userEmail }) {
 
     try {
       const BACKEND_URL = getBackendUrl();
-      const response = await fetch(`${BACKEND_URL}/api/words/voice-chat`, {
+      const response = await fetch(`${BACKEND_URL}/api/words/scenario-chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: userText, 
-          history: updatedHistory 
-        })
+        body: JSON.stringify({ message: userText, history: updatedHistory })
       });
 
       const data = await response.json();
       
       if (response.ok && data.reply) {
         setChatHistory(prev => [...prev, { role: "ai", text: data.reply, audioBase64: data.audioBase64 }]);
-        
-        // 🔥 AUDIO FIX: Ab directly Premium Player Use hoga!
         playPremiumAudio(data.reply, data.audioBase64);
-        
       } else {
         toast.error("Tutor failed to respond.");
       }
     } catch (error) {
-      console.error("Chat Error:", error);
       toast.error("Network connection error!");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // 🔥 MASTER PREMIUM AUDIO PLAYER (Always uses API voice)
   const playPremiumAudio = async (textToSpeak, base64Audio = null) => {
     if (!textToSpeak) return;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
+    if (audioRef.current) audioRef.current.pause();
     
     setIsPlayingAudio(true);
 
     try {
       let finalAudioSrc = "";
-
-      // Agar /voice-chat route se direct base64 audio aa gaya hai
       if (base64Audio) {
         finalAudioSrc = "data:audio/mp3;base64," + base64Audio;
-      } 
-      // Agar base64 nahi hai (Jaise Namaste wala pehla message) toh premium API hit karo
-      else {
+      } else {
         const BACKEND_URL = getBackendUrl();
         const res = await fetch(`${BACKEND_URL}/api/words/speak`, {
           method: "POST",
@@ -220,52 +257,36 @@ export default function AIVoiceTutor({ userEmail }) {
         if (data.success && data.audioBase64) {
           finalAudioSrc = "data:audio/mp3;base64," + data.audioBase64;
         } else {
-          throw new Error("Failed to fetch premium voice from backend");
+          throw new Error("Failed to fetch premium voice");
         }
       }
 
       audioRef.current.src = finalAudioSrc;
-      
       audioRef.current.onended = () => setIsPlayingAudio(false);
-      audioRef.current.onerror = () => {
-        setIsPlayingAudio(false);
-        fallbackSpeak(textToSpeak); // Agar file corrupt ho
-      };
-
+      audioRef.current.onerror = () => { setIsPlayingAudio(false); fallbackSpeak(textToSpeak); };
+      
       await audioRef.current.play();
 
     } catch (error) {
-      console.error("Premium Audio Error, falling back to basic:", error);
       setIsPlayingAudio(false);
       fallbackSpeak(textToSpeak);
     }
   };
 
-  // 🔥 YEH HAI MASTER NATIVE FALLBACK (Robotic aawaz sirf internet crash hone par)
   const fallbackSpeak = async (text) => {
     if (!text) return;
     try {
       if (Capacitor.isNativePlatform()) {
-        await TextToSpeech.speak({
-          text: text,
-          lang: 'en-IN',
-          rate: 0.95, 
-          pitch: 1.0,
-          volume: 1.0,
-        });
+        await TextToSpeech.speak({ text: text, lang: 'en-IN', rate: 0.95, pitch: 1.0, volume: 1.0 });
       } else {
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(text);
-          utterance.rate = 0.95;
-          utterance.pitch = 1.0;
-          utterance.lang = 'hi-IN'; 
+          utterance.rate = 0.95; utterance.pitch = 1.0; utterance.lang = 'hi-IN'; 
           window.speechSynthesis.speak(utterance);
         }
       }
-    } catch (err) {
-      console.error("TTS Fallback Error:", err);
-    }
+    } catch (err) {}
   };
 
   const isMicActive = isApp ? isNativeListening : webListening;
@@ -287,24 +308,78 @@ export default function AIVoiceTutor({ userEmail }) {
         `}
       </style>
 
+      {/* 🔥 SIDEBAR DRAWER (Hamburger Menu) 🔥 */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#8B004A]/30 backdrop-blur-sm z-[100]"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+            <motion.div 
+              initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+              className="fixed top-0 left-0 bottom-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col font-body"
+            >
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="font-playful font-bold text-xl text-[#8B004A]">Scenarios</h3>
+                <button onClick={() => setIsSidebarOpen(false)} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-[#8B004A] active:scale-90">
+                  <X size={20} strokeWidth={2.5}/>
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 no-scrollbar">
+                {SCENARIOS.map((scen) => (
+                  <button
+                    key={scen.id}
+                    onClick={() => loadScenario(scen)}
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-[1rem] transition-all text-left border-2 ${
+                      activeScenario.id === scen.id 
+                        ? "bg-[#8B004A]/5 border-[#8B004A]/20 text-[#8B004A]" 
+                        : "bg-white border-transparent hover:bg-gray-50 text-gray-700"
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+                      activeScenario.id === scen.id ? "bg-[#8B004A] text-white" : "bg-gray-100 text-gray-500"
+                    }`}>
+                      {scen.icon}
+                    </div>
+                    <div>
+                      <p className="font-bold text-[15px] leading-none mb-1">{scen.title}</p>
+                      <p className="text-[11px] text-gray-400 font-bold leading-tight line-clamp-1">{scen.intro}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       <div className="w-full sm:max-w-md mx-auto bg-white flex flex-col h-screen relative font-body shadow-2xl overflow-hidden">
         
         {/* HEADER */}
-        <div className="bg-white px-5 py-4 flex items-center justify-between border-b-2 border-gray-100 z-20 shadow-sm shrink-0">
+        <div className="bg-white px-4 py-4 flex items-center justify-between border-b-2 border-gray-100 z-20 shadow-sm shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-tr from-[#8B004A] to-[#E01A76] rounded-[1rem] flex items-center justify-center text-white shadow-md rotate-3">
-              <Sparkles size={22} strokeWidth={2.5} />
+            {/* 🔥 HAMBURGER MENU BUTTON 🔥 */}
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-1 text-gray-500 hover:text-[#8B004A] hover:bg-gray-100 rounded-full transition-colors active:scale-90"
+            >
+              <Menu size={24} strokeWidth={2.5} />
+            </button>
+            
+            <div className="w-10 h-10 bg-gradient-to-tr from-[#8B004A] to-[#E01A76] rounded-[0.8rem] flex items-center justify-center text-white shadow-sm shrink-0">
+              {activeScenario.icon}
             </div>
-            <div>
-              <h2 className="text-[16px] font-playful font-bold text-[#8B004A] tracking-wide leading-tight">AI Voice Tutor</h2>
+            <div className="overflow-hidden">
+              <h2 className="text-[16px] font-playful font-bold text-[#8B004A] tracking-wide leading-tight truncate">
+                {activeScenario.title}
+              </h2>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Online
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shrink-0"></span> Tutor Ready
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-1.5 bg-[#FFB800]/15 px-3 py-1.5 rounded-xl border-2 border-[#FFB800]/30 shadow-sm">
-            <Bot size={12} className="text-[#8B004A]" />
-            <span className="text-[10px] font-playful font-bold text-[#8B004A] uppercase tracking-wider">Coach</span>
           </div>
         </div>
 
@@ -326,7 +401,6 @@ export default function AIVoiceTutor({ userEmail }) {
               }`}>
                 {chat.text}
 
-                {/* AI REPLAY BUTTON - Ab yahan direct playPremiumAudio call hoga */}
                 {chat.role === "ai" && (
                   <button 
                     onClick={() => playPremiumAudio(chat.text, chat.audioBase64)}
@@ -388,9 +462,7 @@ export default function AIVoiceTutor({ userEmail }) {
               onClick={toggleMic}
               disabled={isProcessing || isPlayingAudio}
               className={`p-3 rounded-full transition-all duration-300 outline-none shrink-0 ${
-                isMicActive 
-                  ? "bg-[#E01A76] text-white shadow-md animate-pulse" 
-                  : "bg-transparent text-gray-500 hover:bg-gray-200"
+                isMicActive ? "bg-[#E01A76] text-white shadow-md animate-pulse" : "bg-transparent text-gray-500 hover:bg-gray-200"
               } disabled:opacity-50`}
             >
               {isMicActive ? <MicOff size={22} strokeWidth={2.5} /> : <Mic size={22} strokeWidth={2.5} />}
@@ -399,7 +471,7 @@ export default function AIVoiceTutor({ userEmail }) {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Tap mic to speak, or type here..."
+              placeholder="React to the scenario..."
               className="flex-1 max-h-24 bg-transparent outline-none resize-none py-3 px-2 text-sm font-bold text-gray-800 placeholder:text-gray-400 no-scrollbar"
               rows={Math.min(3, inputText.split('\n').length)}
               disabled={isProcessing}

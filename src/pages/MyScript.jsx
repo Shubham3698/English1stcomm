@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import toast from "react-hot-toast";
 import { Capacitor } from '@capacitor/core';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
-import { Volume2, Plus, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Volume2, Plus, X, Loader2, ChevronLeft, ChevronRight, Bookmark, ArrowRight } from "lucide-react";
 
 // 🔥 IMPORT YOUR FULL SCRIPT HERE 🔥
 import fullScriptData from '../full_script.json'; 
@@ -15,6 +15,10 @@ export default function MyScript() {
   const [playingIndex, setPlayingIndex] = useState(null);
   
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // 🔥 NEW: Saved Words State & Sidebar State 🔥
+  const [savedWords, setSavedWords] = useState([]);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   const [popup, setPopup] = useState({ 
     visible: false, 
@@ -38,6 +42,24 @@ export default function MyScript() {
       API_URL = `http://${currentHost}:3000`; 
     }
   }
+
+  // Fetch previously saved words from backend
+  useEffect(() => {
+    const fetchSavedVocab = async () => {
+      const userEmail = localStorage.getItem("eng_userEmail");
+      if (!userEmail) return;
+      try {
+        const res = await fetch(`${API_URL}/api/mybucket/vocab?email=${userEmail}`);
+        if(res.ok) {
+          const data = await res.json();
+          if(data.vocab) setSavedWords(data.vocab);
+        }
+      } catch (error) {
+        console.log("Could not fetch old words");
+      }
+    };
+    fetchSavedVocab();
+  }, [API_URL]);
 
   useEffect(() => {
     audioRef.current = new Audio();
@@ -175,6 +197,7 @@ export default function MyScript() {
 
       if (response.ok) {
         toast.success(`'${popup.phrase}' added! 🎯`);
+        setSavedWords(prev => [{ word: popup.phrase, context: popup.context }, ...prev]);
         setPopup((prev) => ({ ...prev, visible: false, isAddingMode: false }));
         window.getSelection().removeAllRanges();
       } else {
@@ -184,6 +207,32 @@ export default function MyScript() {
       toast.error(`Network Error ❌`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // 🔥 JUMP TO WORD LOGIC 🔥
+  const handleJumpToPhrase = (savedItem) => {
+    const blockIndex = fullScriptData.findIndex(block => 
+      block.text && block.text.includes(savedItem.context)
+    );
+
+    if (blockIndex !== -1) {
+      const targetPage = Math.floor(blockIndex / ITEMS_PER_PAGE) + 1;
+      setCurrentPage(targetPage);
+      setIsDrawerOpen(false);
+
+      setTimeout(() => {
+        const element = document.getElementById(`block-${blockIndex}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('bg-[#FFB800]/30', 'transition-all', 'duration-500', 'rounded-xl', 'p-2');
+          setTimeout(() => {
+            element.classList.remove('bg-[#FFB800]/30', 'p-2');
+          }, 2000);
+        }
+      }, 300);
+    } else {
+      toast.error("Could not locate this phrase in the script!");
     }
   };
 
@@ -199,6 +248,7 @@ export default function MyScript() {
           {cleanSentence.split(' ').map((word, wIdx) => {
             const cleanWord = word.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim().toLowerCase();
             const isSelected = popup.visible && popup.context === cleanSentence && popup.phrase.split(' ').includes(cleanWord);
+            const isSaved = savedWords.some(sw => sw.context === cleanSentence && sw.word.split(' ').includes(cleanWord));
 
             return (
               <span 
@@ -207,7 +257,9 @@ export default function MyScript() {
                 className={`script-word cursor-pointer px-[2px] rounded transition-all duration-200 inline-block font-body ${
                   isSelected 
                     ? 'bg-[#FFB800] text-[#8B004A] font-bold shadow-sm scale-105'
-                    : 'hover:bg-[#FFB800]/40 hover:text-[#8B004A]'
+                    : isSaved 
+                      ? 'text-[#E01A76] hover:bg-[#FFB800]/40' 
+                      : 'hover:bg-[#FFB800]/40 hover:text-[#8B004A]'
                 }`}
               >
                 {word}{' '}
@@ -219,12 +271,14 @@ export default function MyScript() {
     });
   };
 
+  // 🔥 PAGINATION CALCULATION 🔥
   const totalPages = Math.ceil((fullScriptData?.length || 0) / ITEMS_PER_PAGE);
   const currentScriptData = fullScriptData?.slice(
     (currentPage - 1) * ITEMS_PER_PAGE, 
     currentPage * ITEMS_PER_PAGE
   ) || [];
 
+  // 🔥 MISSING PAGINATION FUNCTIONS RESTORED 🔥
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
@@ -241,7 +295,6 @@ export default function MyScript() {
 
   return (
     <>
-      {/* 🔥 INLINE CSS FOR FONTS AND ANIMATIONS 🔥 */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap');
@@ -265,7 +318,7 @@ export default function MyScript() {
 
       <div className="min-h-screen bg-[#F2EFE7] text-gray-800 p-4 md:p-8 relative overflow-x-hidden pb-32 font-body selection:bg-[#FFB800]/30 selection:text-[#8B004A]">
         
-        {/* VIBRANT GLOWING ORBS FOR BLUR EFFECT (From your theme) */}
+        {/* GLOWING ORBS */}
         <div className="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-gradient-to-br from-[#E01A76]/20 to-[#8B004A]/10 rounded-full blur-[100px] pointer-events-none animate-pulse" style={{animationDuration: '6s'}}></div>
         <div className="fixed top-[30%] right-[-20%] w-[60vw] h-[60vw] bg-[#FFB800]/15 rounded-full blur-[120px] pointer-events-none"></div>
 
@@ -283,12 +336,13 @@ export default function MyScript() {
 
           {/* SCRIPT RENDERER */}
           <div className="space-y-6 text-[17px] leading-relaxed">
-            {currentScriptData.map((block, index) => {
-              const isPlayingThis = playingIndex === index;
+            {currentScriptData.map((block, relativeIndex) => {
+              const absoluteIndex = (currentPage - 1) * ITEMS_PER_PAGE + relativeIndex;
+              const isPlayingThis = playingIndex === absoluteIndex;
               
               const PlayButton = () => (
                 <button 
-                  onClick={() => playPremiumAudio(block.text, index)}
+                  onClick={() => playPremiumAudio(block.text, absoluteIndex)}
                   disabled={isPlayingAudio && !isPlayingThis}
                   className={`ml-3 p-1.5 rounded-full border-2 transition-all shrink-0 ${
                     isPlayingThis 
@@ -302,7 +356,7 @@ export default function MyScript() {
 
               if (block.type === 'sceneHeading') {
                 return (
-                  <div key={index} className="pt-8 pb-2 font-black font-heading text-gray-900 uppercase flex items-center tracking-widest text-[15px] border-b-2 border-gray-100 w-max pr-4">
+                  <div key={absoluteIndex} id={`block-${absoluteIndex}`} className="pt-8 pb-2 font-black font-heading text-gray-900 uppercase flex items-center tracking-widest text-[15px] border-b-2 border-gray-100 w-max pr-4">
                     {renderClickableText(block.text)}
                     <PlayButton />
                   </div>
@@ -310,7 +364,7 @@ export default function MyScript() {
               }
               if (block.type === 'action') {
                 return (
-                  <div key={index} className="text-gray-600 mb-6 relative font-body font-medium">
+                  <div key={absoluteIndex} id={`block-${absoluteIndex}`} className="text-gray-600 mb-6 relative font-body font-medium">
                     <span className="absolute -left-12 top-0 hidden md:flex items-center h-full"><PlayButton /></span>
                     {renderClickableText(block.text)}
                     <span className="md:hidden inline-flex align-middle"><PlayButton /></span>
@@ -319,7 +373,7 @@ export default function MyScript() {
               }
               if (block.type === 'dialogue') {
                 return (
-                  <div key={index} className="flex flex-col md:flex-row gap-1 md:gap-6 my-5 bg-gradient-to-r from-gray-50 to-white p-5 rounded-2xl border border-gray-100 shadow-sm relative group hover:border-[#8B004A]/20 transition-colors">
+                  <div key={absoluteIndex} id={`block-${absoluteIndex}`} className="flex flex-col md:flex-row gap-1 md:gap-6 my-5 bg-gradient-to-r from-gray-50 to-white p-5 rounded-2xl border border-gray-100 shadow-sm relative group hover:border-[#8B004A]/20 transition-colors">
                     <div className="md:w-1/4 text-left md:text-right pt-0.5 flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2">
                       <span className="text-[#E01A76] font-black font-heading text-[14px] tracking-widest uppercase bg-[#E01A76]/10 px-3 py-1 rounded-xl">
                         {block.character}
@@ -414,6 +468,58 @@ export default function MyScript() {
             </div>
           </div>
         )}
+
+{/* 🔥 FLOATING ACTION BUTTON (OPEN SAVED WORDS) 🔥 */}
+        <button 
+          onClick={() => setIsDrawerOpen(true)}
+          // Yahan bottom-28 add kiya hai taaki mobile me upar dikhe, aur md:bottom-8 desktop ke liye
+          className="fixed bottom-28 md:bottom-8 right-5 md:right-8 z-50 bg-gradient-to-r from-[#FFB800] to-[#F0AD00] text-[#8B004A] p-4 rounded-full shadow-2xl hover:scale-110 transition-transform flex items-center justify-center"
+        >
+          <Bookmark size={28} strokeWidth={2.5} />
+          {savedWords.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-[#E01A76] text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">
+              {savedWords.length}
+            </span>
+          )}
+        </button>
+        {/* 🔥 SAVED WORDS SIDEBAR / DRAWER 🔥 */}
+        <div className={`fixed inset-0 bg-[#4A0027]/40 backdrop-blur-sm z-[110] transition-opacity duration-300 ${isDrawerOpen ? "opacity-100 visible" : "opacity-0 invisible"}`} onClick={() => setIsDrawerOpen(false)} />
+        
+        <div className={`fixed top-0 right-0 h-full w-[90%] max-w-[360px] bg-[#F2EFE7] border-l-4 border-[#8B004A] z-[120] transform transition-transform duration-500 ease-in-out flex flex-col shadow-2xl ${isDrawerOpen ? "translate-x-0" : "translate-x-full"}`}>
+          <div className="bg-white p-6 flex justify-between items-center border-b border-gray-200">
+            <h2 className="text-xl font-black text-[#8B004A] font-heading flex items-center gap-2">
+              <Bookmark size={20} /> My Bucket
+            </h2>
+            <button onClick={() => setIsDrawerOpen(false)} className="p-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-600 transition-colors">
+              <X size={20} strokeWidth={2.5}/>
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {savedWords.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center text-gray-400 opacity-60">
+                <Bookmark size={48} className="mb-4" />
+                <p className="font-heading font-bold text-lg">No words saved yet</p>
+                <p className="text-sm">Highlight and save words from the script to see them here.</p>
+              </div>
+            ) : (
+              savedWords.map((item, idx) => (
+                <div key={idx} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 hover:border-[#FFB800] transition-all group">
+                  <h3 className="font-black text-[#8B004A] text-lg mb-1">{item.word}</h3>
+                  <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed mb-3">"{item.context}"</p>
+                  
+                  <button 
+                    onClick={() => handleJumpToPhrase(item)}
+                    className="w-full py-2.5 bg-gray-50 text-gray-600 hover:bg-[#FFB800] hover:text-[#8B004A] rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border border-gray-200 hover:border-transparent font-heading"
+                  >
+                    Jump to word <ArrowRight size={16} strokeWidth={3}/>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </div>
     </>
   );

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { Loader2, Search, FileText, PlaySquare, Clock, FastForward, Volume2, Plus, X, Bookmark, ArrowRight, ChevronLeft, Layers } from "lucide-react";
+// 🚀 NAYA IMPORT: Capacitor for mobile app
+import { Capacitor } from '@capacitor/core';
 
 export default function YoutubePlayer() {
   const [inputUrl, setInputUrl] = useState("");
@@ -18,7 +20,10 @@ export default function YoutubePlayer() {
   const activeLineRef = useRef(null);
   const popupRef = useRef(null);
 
-  const API_URL = "http://localhost:3000"; 
+  // 🚀 FIX: App ke liye live server, Web ke liye localhost
+  const API_URL = Capacitor.isNativePlatform() 
+    ? "https://serdeptry1st.onrender.com" 
+    : (window.location.hostname === "localhost" ? "http://localhost:3000" : "https://serdeptry1st.onrender.com");
 
   const [savedWords, setSavedWords] = useState([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -51,7 +56,7 @@ export default function YoutubePlayer() {
       }
     };
     fetchSavedVocab();
-  }, []);
+  }, [API_URL]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -589,7 +594,6 @@ export default function YoutubePlayer() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {/* 🚀 Pronounce Button */}
                     <button 
                       onClick={(e) => { e.stopPropagation(); speakWord(item.word); }}
                       className="w-8 h-8 shrink-0 rounded-full bg-[#8B004A]/10 text-[#8B004A] hover:bg-[#E01A76] hover:text-white flex items-center justify-center transition-colors shadow-sm"
@@ -597,17 +601,14 @@ export default function YoutubePlayer() {
                     >
                       <Volume2 size={16} strokeWidth={2.5} />
                     </button>
-                    {/* 🚀 Word */}
                     <h3 className="font-black text-[#8B004A] text-lg group-hover:text-[#E01A76] transition-colors">
                       {item.word}
                     </h3>
                   </div>
-                  {/* 🚀 Play Indicator */}
                   <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-[#FFB800]/20 transition-colors">
                     <PlaySquare size={14} className="text-gray-400 group-hover:text-[#8B004A]" strokeWidth={3}/>
                   </div>
                 </div>
-                {/* 🚀 Context (Sentence) right below word */}
                 <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed ml-[44px] italic">
                   "{item.context}"
                 </p>

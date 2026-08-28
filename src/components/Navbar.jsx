@@ -198,7 +198,8 @@ export default function Navbar() {
           {[
             { label: "Home", path: "/home" },
             { label: "Community", path: "/" },
-            { label: "Movie Scripts", path: "/script" }, // 🔥 SCRIPT OPTION ADDED HERE
+            { label: "Movie Scripts", path: "/script" },
+            { label: "YT Stream", path: "/yt-stream" }, // 🚀 NAYA OPTION YAHAN ADD KIYA HAI
             { label: "Practice", path: "/vocab-deck" },
             { label: "Dictionary", path: "/find-vocab" },
             { label: "Saved Words", onClick: () => goToPath("/saved-posts") },

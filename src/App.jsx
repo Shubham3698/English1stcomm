@@ -29,6 +29,7 @@ import SquadChat from './pages/SquadChat';
 import SquadList from './pages/SquadList'; 
 import SinglePostView from './pages/SinglePostView';
 import MyScript from './pages/MyScript';
+import YoutubePlayer from './pages/YoutubePlayer';
 
 export default function App() {
   const userEmail = localStorage.getItem("eng_userEmail");
@@ -157,6 +158,7 @@ export default function App() {
           <Route path="/squad-chat" element={<SquadChat />} />
           <Route path="/post/:postId" element={<SinglePostView />} />
           <Route path="/script" element={<MyScript />} />
+          <Route path="/yt-stream" element={<YoutubePlayer />} />
         </Routes>
         <BottomNav />
       </div>
